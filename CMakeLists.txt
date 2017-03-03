@@ -6,6 +6,8 @@ set(CMAKE_AUTOMOC ON)
 
 find_package(Qt5Widgets)
 
+include_directories ("${PROJECT_SOURCE_DIR}/include")
+
 file(GLOB_RECURSE SOURCES src/*.cpp)
 add_executable(fips ${SOURCES})
 target_link_libraries(fips Qt5::Widgets)
