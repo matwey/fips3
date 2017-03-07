@@ -5,11 +5,14 @@
 
 class AbstractFITSStorage {
 private:
+	quint8* data_;
+	qint64 size_;
 public:
-	virtual ~AbstractFITSStorage() = default;
+	AbstractFITSStorage(quint8* data, qint64 size);
+	virtual ~AbstractFITSStorage() = 0;
 
-	virtual quint8* data() const = 0;
-	virtual qint64 size() const = 0;
+	inline quint8* data() const { return data_; }
+	inline qint64 size() const { return size_; }
 };
 
 #endif // _ABSTRACTFITSSTORAGE_H_
