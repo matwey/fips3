@@ -3,13 +3,43 @@
 #include <mmapfitsstorage.h>
 #include <fits.h>
 
+namespace {
+
+struct DataUnitCreateHelper {
+	FITS::AbstractDataUnit* data_unit_;
+	AbstractFITSStorage::Page& begin_;
+	const AbstractFITSStorage::Page& end_;
+	quint64 height_;
+	quint64 width_;
+
+	template<class T> void operator() (T*) {
+		data_unit_ = new FITS::DataUnit<T>(begin_, end_, height_, width_);
+	}
+};
+
+}
+
 FITS::FITS(AbstractFITSStorage* fits_storage):
 	fits_storage_(fits_storage) {
 
 	AbstractFITSStorage::Page begin = fits_storage->begin();
 	AbstractFITSStorage::Page end = fits_storage->end();
 	header_unit_ = std::unique_ptr<HeaderUnit>(new HeaderUnit(begin, end));
-	data_unit_
+
+	bool ok = false;
+
+	auto bitpix = header_unit_->header("BITPIX");
+
+	auto naxis = header_unit_->header("NAXIS").toInt(&ok);
+	if (!ok || naxis != 2) throw FITS::WrongHeaderValue("NAXIS", header_unit_->header("NAXIS"));
+
+	auto naxis1 = header_unit_->header("NAXIS1").toLongLong(&ok);
+	if (!ok) throw FITS::WrongHeaderValue("NAXIS1", header_unit_->header("NAXIS1"));
+
+	auto naxis2 = header_unit_->header("NAXIS2").toLongLong(&ok);
+	if (!ok) throw FITS::WrongHeaderValue("NAXIS2",header_unit_->header("NAXIS2"));
+
+	data_unit_ = std::unique_ptr<AbstractDataUnit>(AbstractDataUnit::createFromBitpix(bitpix, begin, end, naxis1, naxis2));
 }
 FITS::FITS(QFileDevice* file_device): FITS(new MMapFITSStorage(file_device)) {
 }
@@ -25,6 +55,22 @@ void FITS::UnexpectedEnd::raise() const {
 QException* FITS::UnexpectedEnd::clone() const {
 	return new FITS::UnexpectedEnd(*this);
 }
+FITS::WrongHeaderValue::WrongHeaderValue(const QString& key, const QString& value) {
+}
+void FITS::WrongHeaderValue::raise() const {
+	throw *this;
+}
+QException* FITS::WrongHeaderValue::clone() const {
+	return new FITS::WrongHeaderValue(*this);
+}
+FITS::UnsupportedBitpix::UnsupportedBitpix(const QString& bitpix): WrongHeaderValue("BITPIX", bitpix) {
+}
+void FITS::UnsupportedBitpix::raise() const {
+	throw *this;
+}
+QException* FITS::UnsupportedBitpix::clone() const {
+	return new FITS::UnsupportedBitpix(*this);
+}
 FITS::HeaderUnit::HeaderUnit(AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end) {
 	bool foundEnd = false;
 
@@ -33,6 +79,7 @@ FITS::HeaderUnit::HeaderUnit(AbstractFITSStorage::Page& begin, const AbstractFIT
 			QString key = QString::fromLatin1(reinterpret_cast<const char*>(record), 8).trimmed();
 			if (key == QString("END")) {
 				foundEnd = true;
+				++begin;
 				break;
 			}
 			QString value = QString::fromLatin1(reinterpret_cast<const char*>(record) + 10, 70);
@@ -59,3 +106,9 @@ FITS::AbstractDataUnit::AbstractDataUnit(AbstractFITSStorage::Page& begin, const
 	begin.advanceInBytes(full_size);
 }
 FITS::AbstractDataUnit::~AbstractDataUnit() = default;
+
+FITS::AbstractDataUnit* FITS::AbstractDataUnit::createFromBitpix(const QString& bitpix, AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end, quint64 height, quint64 width) {
+	DataUnitCreateHelper c {0, begin, end, height, width};
+	bitpixToType(bitpix, c);
+	return c.data_unit_;
+}

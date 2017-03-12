@@ -23,6 +23,22 @@ public:
 		virtual QException* clone() const override;
 	};
 
+	class WrongHeaderValue: public Exception {
+	public:
+		WrongHeaderValue(const QString& key, const QString& value);
+
+		virtual void raise() const override;
+		virtual QException* clone() const override;
+	};
+
+	class UnsupportedBitpix: public WrongHeaderValue {
+	public:
+		UnsupportedBitpix(const QString& bitpix);
+
+		virtual void raise() const override;
+		virtual QException* clone() const override;
+	};
+
 	class HeaderUnit {
 	private:
 		std::map<QString, QString> headers_;
@@ -47,6 +63,9 @@ public:
 		inline const quint8* data() const { return data_; }
 		inline quint64 height() const { return height_; }
 		inline quint64 width()  const { return width_; }
+
+		template<class F> static void bitpixToType(const QString& bitpix, F fun);
+		static AbstractDataUnit* createFromBitpix(const QString& bitpix, AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end, quint64 height, quint64 width);
 	};
 
 	template<class T> class DataUnit: public AbstractDataUnit {
@@ -67,5 +86,23 @@ public:
 
 	inline const HeaderUnit& header_unit() const { return *header_unit_; }
 };
+
+template<class F> void FITS::AbstractDataUnit::bitpixToType(const QString& bitpix, F fun) {
+	if (bitpix == "8") {
+		fun(static_cast<quint8*>(0));
+	} else if (bitpix == "16") {
+		fun(static_cast<qint16*>(0));
+	} else if (bitpix == "32") {
+		fun(static_cast<qint32*>(0));
+	} else if (bitpix == "64") {
+		fun(static_cast<qint64*>(0));
+	} else if (bitpix == "-32") {
+		fun(static_cast<float*>(0));
+	} else if (bitpix == "-64") {
+		fun(static_cast<double*>(0));
+	} else {
+		throw FITS::UnsupportedBitpix(bitpix);
+	}
+}
 
 #endif // _FITS_H_

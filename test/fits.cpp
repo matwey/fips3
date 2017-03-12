@@ -22,6 +22,10 @@ void TestFits::parseHeaderUnit2() {
 	file->open(QIODevice::ReadOnly);
 	FITS fits(file);
 	QTRY_COMPARE(fits.header_unit().header("SIMPLE"), QString("T"));
+	QTRY_COMPARE(fits.header_unit().header("BITPIX"), QString("16"));
+	QTRY_COMPARE(fits.header_unit().header("NAXIS"), QString("2"));
+	QTRY_COMPARE(fits.header_unit().header("NAXIS1"), QString("10"));
+	QTRY_COMPARE(fits.header_unit().header("NAXIS2"), QString("10"));
 }
 
 QTEST_MAIN(TestFits)
