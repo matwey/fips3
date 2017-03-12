@@ -6,6 +6,7 @@
 #include <abstractfitsstorage.h>
 #include <exception.h>
 
+#include <map>
 #include <memory>
 
 class FITS {
@@ -20,6 +21,17 @@ public:
 	public:
 		virtual void raise() const override;
 		virtual QException* clone() const override;
+	};
+
+	class HeaderUnit {
+	private:
+		std::map<QString, QString> headers_;
+	public:
+		HeaderUnit(AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end);
+
+		inline const QString& header(const QString& key) const {
+			return headers_.at(key);
+		}
 	};
 
 	class AbstractDataUnit {
@@ -47,9 +59,13 @@ public:
 	};
 private:
 	std::unique_ptr<AbstractFITSStorage> fits_storage_;
+	std::unique_ptr<HeaderUnit> header_unit_;
+	std::unique_ptr<AbstractDataUnit> data_unit_;
 public:
 	FITS(AbstractFITSStorage* fits_storage);
 	FITS(QFileDevice* file_device);
+
+	inline const HeaderUnit& header_unit() const { return *header_unit_; }
 };
 
 #endif // _FITS_H_

@@ -40,6 +40,9 @@ public:
 		inline bool operator==(const Page& other) const {
 			return data_ == other.data_;
 		}
+		inline bool operator!=(const Page& other) const {
+			return data_ != other.data_;
+		}
 	};
 private:
 	quint8* data_;
@@ -52,7 +55,9 @@ public:
 	inline qint64 size() const { return size_; }
 
 	inline Page cbegin() const { return Page(data_); }
-	inline Page cend() const { return Page(data_ + (size_ / 2880 + 1 ) * 2880); }
+	inline Page cend()   const { return Page(data_ + (size_ / 2880 + 1 ) * 2880); }
+	inline Page begin() const { return cbegin(); }
+	inline Page end()   const { return cend(); }
 };
 
 #endif // _ABSTRACTFITSSTORAGE_H_
