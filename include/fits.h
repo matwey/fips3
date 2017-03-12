@@ -85,6 +85,7 @@ public:
 	FITS(QFileDevice* file_device);
 
 	inline const HeaderUnit& header_unit() const { return *header_unit_; }
+	inline const AbstractDataUnit& data_unit() const { return *data_unit_; } 
 };
 
 template<class F> void FITS::AbstractDataUnit::bitpixToType(const QString& bitpix, F fun) {
