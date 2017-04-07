@@ -4,6 +4,9 @@
 #include <mainwindow.h>
 
 int main(int argc, char** argv) {
+	// See related note on http://doc.qt.io/qt-5/qopenglwidget.html
+	QSurfaceFormat::setDefaultFormat(QSurfaceFormat::defaultFormat());
+
 	QApplication app(argc, argv);
 
 	QCoreApplication::setApplicationName("fips");
