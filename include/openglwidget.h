@@ -14,7 +14,7 @@
 
 class OpenGLWidget: public QOpenGLWidget, protected QOpenGLFunctions {
 public:
-	OpenGLWidget(QWidget *parent, const QString &fits_filename);
+	OpenGLWidget(QWidget *parent, FITS* fits);
 	~OpenGLWidget();
 
 protected:
@@ -23,8 +23,7 @@ protected:
 	void paintGL() override;
 
 private:
-	const QString fits_filename_;
-	FITS *fits_;
+	std::unique_ptr<FITS> fits_;
 	QImage *img_;
 	QOpenGLTexture *texture_;
 //	GLuint textureID;

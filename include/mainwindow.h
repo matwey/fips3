@@ -10,7 +10,6 @@
 class MainWindow:
 	public QMainWindow {
 private:
-	QString fits_filename_;
 	std::unique_ptr<OpenGLWidget> open_gl_widget_;
 public:
 	MainWindow(const QString& fits_filename);

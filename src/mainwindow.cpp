@@ -3,9 +3,11 @@
 #include <mainwindow.h>
 
 MainWindow::MainWindow(const QString& fits_filename):
-	QMainWindow(),
-	fits_filename_(fits_filename),
-	open_gl_widget_(new OpenGLWidget(this, fits_filename_)) {
+	QMainWindow() {
+
+	QFile* file = new QFile(fits_filename);
+	file->open(QIODevice::ReadOnly);
+	open_gl_widget_.reset(new OpenGLWidget(this, new FITS(file)));
 
 	resize(800, 448);
 }

@@ -2,20 +2,17 @@
 
 #include <openglwidget.h>
 
-OpenGLWidget::OpenGLWidget(QWidget *parent, const QString &fits_filename):
-		QOpenGLWidget(parent),
-		fits_filename_(fits_filename){
+OpenGLWidget::OpenGLWidget(QWidget *parent, FITS* fits):
+	QOpenGLWidget(parent),
+	fits_(fits) {
+
 	resize(800, 448);
-	QFile* file = new QFile(fits_filename_);
-	file->open(QIODevice::ReadOnly);
-	fits_ = new FITS(file);
 	img_ = new QImage(fits_->data_unit().data(), fits_->data_unit().width(), fits_->data_unit().height(), /*sizeof(*(fits_->data_unit().data())) * fits_->data_unit().width(),*/ QImage::Format_Grayscale8);
 }
 
 OpenGLWidget::~OpenGLWidget() {
 	makeCurrent();
 
-	delete fits_;
 	delete img_;
 	delete texture_;
 	delete program_;
