@@ -7,12 +7,13 @@
 
 #include <openglwidget.h>
 
-class MainWindow: public QMainWindow {
+class MainWindow:
+	public QMainWindow {
 private:
-	const QString fits_filename_;
+	QString fits_filename_;
 	std::unique_ptr<OpenGLWidget> open_gl_widget_;
 public:
-	MainWindow();
+	MainWindow(const QString& fits_filename);
 };
 
 #endif // _MAINWINDOW_H_

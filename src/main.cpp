@@ -20,7 +20,7 @@ int main(int argc, char** argv) {
 
 	const QStringList args = parser.positionalArguments();
 
-	MainWindow w;
+	MainWindow w(args[0]);
 	w.show();
 
 	return app.exec();
