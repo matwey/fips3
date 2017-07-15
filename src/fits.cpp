@@ -6,14 +6,14 @@
 namespace {
 
 struct DataUnitCreateHelper {
-	FITS::AbstractDataUnit* data_unit_;
+	FITS::AbstractDataUnit** data_unit_ref_;
 	AbstractFITSStorage::Page& begin_;
 	const AbstractFITSStorage::Page& end_;
 	quint64 height_;
 	quint64 width_;
 
 	template<class T> void operator() (T*) {
-		data_unit_ = new FITS::DataUnit<T>(begin_, end_, height_, width_);
+		*data_unit_ref_ = new FITS::DataUnit<T>(begin_, end_, height_, width_);
 	}
 };
 
@@ -33,13 +33,15 @@ FITS::FITS(AbstractFITSStorage* fits_storage):
 	auto naxis = header_unit_->header("NAXIS").toInt(&ok);
 	if (!ok || naxis != 2) throw FITS::WrongHeaderValue("NAXIS", header_unit_->header("NAXIS"));
 
-	auto naxis1 = header_unit_->header("NAXIS1").toLongLong(&ok);
+	// width
+	auto naxis1 = header_unit_->header("NAXIS1").toULongLong(&ok);
 	if (!ok) throw FITS::WrongHeaderValue("NAXIS1", header_unit_->header("NAXIS1"));
 
-	auto naxis2 = header_unit_->header("NAXIS2").toLongLong(&ok);
+	// height
+	auto naxis2 = header_unit_->header("NAXIS2").toULongLong(&ok);
 	if (!ok) throw FITS::WrongHeaderValue("NAXIS2",header_unit_->header("NAXIS2"));
 
-	data_unit_ = std::unique_ptr<AbstractDataUnit>(AbstractDataUnit::createFromBitpix(bitpix, begin, end, naxis1, naxis2));
+	data_unit_ = std::unique_ptr<AbstractDataUnit>(AbstractDataUnit::createFromBitpix(bitpix, begin, end, naxis2, naxis1));
 }
 FITS::FITS(QFileDevice* file_device): FITS(new MMapFITSStorage(file_device)) {
 }
@@ -108,7 +110,8 @@ FITS::AbstractDataUnit::AbstractDataUnit(AbstractFITSStorage::Page& begin, const
 FITS::AbstractDataUnit::~AbstractDataUnit() = default;
 
 FITS::AbstractDataUnit* FITS::AbstractDataUnit::createFromBitpix(const QString& bitpix, AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end, quint64 height, quint64 width) {
-	DataUnitCreateHelper c {0, begin, end, height, width};
+	FITS::AbstractDataUnit* data_unit;
+	DataUnitCreateHelper c {&data_unit, begin, end, height, width};
 	bitpixToType(bitpix, c);
-	return c.data_unit_;
+	return data_unit;
 }

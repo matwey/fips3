@@ -10,6 +10,7 @@ class TestFits: public QObject
 private slots:
 	void parseHeaderUnit1();
 	void parseHeaderUnit2();
+	void parseDataUnitShape();
 };
 
 void TestFits::parseHeaderUnit1() {
@@ -26,6 +27,13 @@ void TestFits::parseHeaderUnit2() {
 	QTRY_COMPARE(fits.header_unit().header("NAXIS"), QString("2"));
 	QTRY_COMPARE(fits.header_unit().header("NAXIS1"), QString("10"));
 	QTRY_COMPARE(fits.header_unit().header("NAXIS2"), QString("10"));
+}
+void TestFits::parseDataUnitShape() {
+	QFile* file = new QFile(DATA_ROOT "/sombrero.fits");
+	file->open(QIODevice::ReadOnly);
+	const FITS fits(file);
+	QTRY_COMPARE(fits.data_unit().height(), static_cast<quint64>(448));
+	QTRY_COMPARE(fits.data_unit().width (), static_cast<quint64>(800));
 }
 
 QTEST_MAIN(TestFits)
