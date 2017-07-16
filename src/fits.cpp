@@ -81,8 +81,7 @@ FITS::HeaderUnit::HeaderUnit(AbstractFITSStorage::Page& begin, const AbstractFIT
 			QString key = QString::fromLatin1(reinterpret_cast<const char*>(record), 8).trimmed();
 			if (key == QString("END")) {
 				foundEnd = true;
-				++begin;
-				break;
+				continue;
 			}
 			QString value = QString::fromLatin1(reinterpret_cast<const char*>(record) + 10, 70);
 			int comment = value.indexOf(QChar('/'));
