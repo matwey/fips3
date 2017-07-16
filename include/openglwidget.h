@@ -24,7 +24,7 @@ protected:
 
 private:
 	std::unique_ptr<FITS> fits_;
-	QImage *img_;
+	std::unique_ptr<QImage> img_;
 	QOpenGLTexture *texture_;
 //	GLuint textureID;
 	QOpenGLBuffer vbo_;

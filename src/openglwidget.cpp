@@ -4,16 +4,15 @@
 
 OpenGLWidget::OpenGLWidget(QWidget *parent, FITS* fits):
 	QOpenGLWidget(parent),
-	fits_(fits) {
-
+	fits_(fits),
+	img_(new QImage(fits_->data_unit().data(), fits_->data_unit().width(), fits_->data_unit().height(), QImage::Format_Grayscale8))
+	{
 	resize(800, 448);
-	img_ = new QImage(fits_->data_unit().data(), fits_->data_unit().width(), fits_->data_unit().height(), /*sizeof(*(fits_->data_unit().data())) * fits_->data_unit().width(),*/ QImage::Format_Grayscale8);
 }
 
 OpenGLWidget::~OpenGLWidget() {
 	makeCurrent();
 
-	delete img_;
 	delete texture_;
 	delete program_;
 	vbo_.destroy();
