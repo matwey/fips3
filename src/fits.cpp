@@ -77,12 +77,11 @@ FITS::HeaderUnit::HeaderUnit(AbstractFITSStorage::Page& begin, const AbstractFIT
 	bool foundEnd = false;
 
 	for (; begin != end && !foundEnd; ++begin) {
-		for (const quint8* record = begin.data(); record != begin.data() + 2880; record += 80) {
+		for (const quint8* record = begin.data(); record != begin.data() + 2880 && !foundEnd; record += 80) {
 			QString key = QString::fromLatin1(reinterpret_cast<const char*>(record), 8).trimmed();
 			if (key == QString("END")) {
 				foundEnd = true;
-				++begin;
-				break;
+				continue;
 			}
 			QString value = QString::fromLatin1(reinterpret_cast<const char*>(record) + 10, 70);
 			int comment = value.indexOf(QChar('/'));

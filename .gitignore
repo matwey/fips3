@@ -1,5 +1,6 @@
-cmake-build-debug/
+.DS_Store
 .idea/
 [._]*.s[a-w][a-z]
 [._]s[a-w][a-z]
-.DS_Store
+build/
+cmake-build-debug/
