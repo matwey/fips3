@@ -5,7 +5,9 @@
 OpenGLWidget::OpenGLWidget(QWidget *parent, FITS* fits):
 	QOpenGLWidget(parent),
 	fits_(fits),
-	img_(new QImage(fits_->data_unit().data(), fits_->data_unit().width(), fits_->data_unit().height(), QImage::Format_Grayscale8))
+//	texture_deleter(this),
+	texture_(new QOpenGLTexture(QOpenGLTexture::Target2D)/*, texture_deleter*/),
+	program_(new QOpenGLShaderProgram)
 	{
 	resize(800, 448);
 }
@@ -13,8 +15,8 @@ OpenGLWidget::OpenGLWidget(QWidget *parent, FITS* fits):
 OpenGLWidget::~OpenGLWidget() {
 	makeCurrent();
 
-	delete texture_;
-	delete program_;
+	texture_.reset(nullptr);
+	program_.reset(nullptr);
 	vbo_.destroy();
 
 	doneCurrent();
@@ -26,15 +28,13 @@ void OpenGLWidget::initializeGL() {
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glDisable(GL_DEPTH_TEST);
 
-	texture_ = new QOpenGLTexture(*img_);
-//	glGenTextures(1, &textureID);
-//	glBindTexture(GL_TEXTURE_2D, textureID);
-//	glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, fits_->data_unit().width(), fits_->data_unit().height(), 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, fits_->data_unit().data());
-//	glGenerateMipmap(GL_TEXTURE_2D);  //Generate mipmaps now!!!
-//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	texture_->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
+	texture_->setMagnificationFilter(QOpenGLTexture::Nearest);
+	texture_->setFormat(QOpenGLTexture::LuminanceFormat);
+	texture_->setMipLevels(4);
+	texture_->setSize(fits_->data_unit().width(), fits_->data_unit().height());
+	texture_->allocateStorage(QOpenGLTexture::Luminance, QOpenGLTexture::UInt8);
+	texture_->setData(QOpenGLTexture::Luminance, QOpenGLTexture::UInt8, fits_->data_unit().data());
 
 	vbo_.create();
 	vbo_.bind();
@@ -42,9 +42,9 @@ void OpenGLWidget::initializeGL() {
 
 	QOpenGLShader *vshader = new QOpenGLShader(QOpenGLShader::Vertex, this);
 	const char *vsrc =
-			"attribute mediump vec2 VertexUV;\n"
+			"attribute highp vec2 VertexUV;\n"
 			"attribute highp vec3 vertexCoord;\n"
-			"varying mediump vec2 UV;\n"
+			"varying highp vec2 UV;\n"
 			"void main(){\n"
 			"	gl_Position =  vec4(vertexCoord,1);\n"
 			"	UV = VertexUV;\n"
@@ -53,14 +53,13 @@ void OpenGLWidget::initializeGL() {
 
 	QOpenGLShader *fshader = new QOpenGLShader(QOpenGLShader::Fragment, this);
 	const char *fsrc =
-			"varying mediump vec2 UV;\n"
-			"uniform sampler2D texture;\n"
+			"varying highp vec2 UV;\n"
+			"uniform highp sampler2D texture;\n"
 			"void main(){\n"
 			"	gl_FragColor = texture2D(texture, UV);\n"
 			"}\n";
 	fshader->compileSourceCode(fsrc);
 
-	program_ = new QOpenGLShaderProgram;
 	program_->addShader(vshader);
 	program_->addShader(fshader);
 	program_->bindAttributeLocation("vertexCoord", program_vertex_coord_attribute);
@@ -86,7 +85,6 @@ void OpenGLWidget::paintGL() {
 	program_->setAttributeBuffer(program_vertex_uv_attribute,    GL_FLOAT, 3 * sizeof(GLfloat), 2, 5 * sizeof(GLfloat));
 
 	texture_->bind();
-//	glBindTexture(GL_TEXTURE_2D, textureID);
 
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 }
