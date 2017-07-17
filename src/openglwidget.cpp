@@ -41,6 +41,7 @@ void OpenGLWidget::initializeGL() {
 
 	QOpenGLShader *vshader = new QOpenGLShader(QOpenGLShader::Vertex, this);
 	const char *vsrc =
+			"#version 120\n"
 			"attribute highp vec2 VertexUV;\n"
 			"attribute highp vec3 vertexCoord;\n"
 			"varying highp vec2 UV;\n"
@@ -52,6 +53,7 @@ void OpenGLWidget::initializeGL() {
 
 	QOpenGLShader *fshader = new QOpenGLShader(QOpenGLShader::Fragment, this);
 	const char *fsrc =
+			"#version 120\n"
 			"varying highp vec2 UV;\n"
 			"uniform highp sampler2D texture;\n"
 			"void main(){\n"
