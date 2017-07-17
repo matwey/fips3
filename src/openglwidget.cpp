@@ -5,9 +5,10 @@
 OpenGLWidget::OpenGLWidget(QWidget *parent, FITS* fits):
 	QOpenGLWidget(parent),
 	fits_(fits),
-//	texture_deleter(this),
-	texture_(new QOpenGLTexture(QOpenGLTexture::Target2D)/*, texture_deleter*/),
-	program_(new QOpenGLShaderProgram)
+	texture_deleter_(this),
+	texture_(new QOpenGLTexture(QOpenGLTexture::Target2D), texture_deleter_),
+	program_deleter_(this),
+	program_(new QOpenGLShaderProgram, program_deleter_)
 	{
 	resize(800, 448);
 }
@@ -15,8 +16,6 @@ OpenGLWidget::OpenGLWidget(QWidget *parent, FITS* fits):
 OpenGLWidget::~OpenGLWidget() {
 	makeCurrent();
 
-	texture_.reset(nullptr);
-	program_.reset(nullptr);
 	vbo_.destroy();
 
 	doneCurrent();

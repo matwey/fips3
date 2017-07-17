@@ -13,20 +13,21 @@
 #include <fits.h>
 
 class OpenGLWidget: public QOpenGLWidget, protected QOpenGLFunctions {
-//public:
-//	template<class T> class OpenGLDeleter: public std::default_delete<T> {
-//	private:
-//		QOpenGLWidget *openGL_widget_;
-//	public:
-//		OpenGLDeleter(QOpenGLWidget *openGL_widget):
-//				std::default_delete<T>(),
-//				openGL_widget_(openGL_widget){}
-//		void operator() (T* ptr){
-//			openGL_widget_->makeCurrent();
-//			std::default_delete<T>::operator()(ptr);
-//			openGL_widget_->doneCurrent();
-//		};
-//	};
+public:
+	template<class T> class OpenGLDeleter {
+	private:
+		QOpenGLWidget *openGL_widget_;
+	public:
+		OpenGLDeleter(QOpenGLWidget *openGL_widget):
+				openGL_widget_(openGL_widget){}
+		void operator() (T* ptr) {
+			openGL_widget_->makeCurrent();
+			delete ptr;
+			openGL_widget_->doneCurrent();
+		};
+	};
+
+	template<class T> using openGL_unique_ptr = std::unique_ptr<T, OpenGLDeleter<T>>;
 
 public:
 	OpenGLWidget(QWidget *parent, FITS* fits);
@@ -39,9 +40,10 @@ protected:
 
 private:
 	std::unique_ptr<FITS> fits_;
-//	OpenGLDeleter<QOpenGLTexture> texture_deleter;
-	std::unique_ptr<QOpenGLTexture> texture_;
-	std::unique_ptr<QOpenGLShaderProgram> program_;
+	OpenGLDeleter<QOpenGLTexture> texture_deleter_;
+	openGL_unique_ptr<QOpenGLTexture> texture_;
+	OpenGLDeleter<QOpenGLShaderProgram> program_deleter_;
+	openGL_unique_ptr<QOpenGLShaderProgram> program_;
 	QOpenGLBuffer vbo_;
 	static const int program_vertex_coord_attribute = 0;
 	static const int program_vertex_uv_attribute    = 1;
