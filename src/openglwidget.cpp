@@ -42,9 +42,9 @@ void OpenGLWidget::initializeGL() {
 	QOpenGLShader *vshader = new QOpenGLShader(QOpenGLShader::Vertex, this);
 	const char *vsrc =
 			"#version 120\n"
-			"attribute highp vec2 VertexUV;\n"
-			"attribute highp vec3 vertexCoord;\n"
-			"varying highp vec2 UV;\n"
+			"attribute vec2 VertexUV;\n"
+			"attribute vec3 vertexCoord;\n"
+			"varying vec2 UV;\n"
 			"void main(){\n"
 			"	gl_Position =  vec4(vertexCoord,1);\n"
 			"	UV = VertexUV;\n"
@@ -54,8 +54,8 @@ void OpenGLWidget::initializeGL() {
 	QOpenGLShader *fshader = new QOpenGLShader(QOpenGLShader::Fragment, this);
 	const char *fsrc =
 			"#version 120\n"
-			"varying highp vec2 UV;\n"
-			"uniform highp sampler2D texture;\n"
+			"varying vec2 UV;\n"
+			"uniform sampler2D texture;\n"
 			"void main(){\n"
 			"	gl_FragColor = texture2D(texture, UV);\n"
 			"}\n";
