@@ -48,11 +48,11 @@ void OpenGLWidget::initializeGL() {
 
 	texture_->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
 	texture_->setMagnificationFilter(QOpenGLTexture::Nearest);
-	texture_->setFormat(QOpenGLTexture::LuminanceFormat);
+	texture_->setFormat(QOpenGLTexture::R8_UNorm);
 	texture_->setMipLevels(4);
 	texture_->setSize(fits_->data_unit().width(), fits_->data_unit().height());
-	texture_->allocateStorage(QOpenGLTexture::Luminance, QOpenGLTexture::UInt8);
-	texture_->setData(QOpenGLTexture::Luminance, QOpenGLTexture::UInt8, fits_->data_unit().data());
+	texture_->allocateStorage(QOpenGLTexture::Red, QOpenGLTexture::UInt8);
+	texture_->setData(QOpenGLTexture::Red, QOpenGLTexture::UInt8, fits_->data_unit().data());
 
 	vbo_.create();
 	vbo_.bind();
@@ -60,7 +60,7 @@ void OpenGLWidget::initializeGL() {
 
 	QOpenGLShader *vshader = new QOpenGLShader(QOpenGLShader::Vertex, this);
 	const char *vsrc =
-			"#version 120\n"
+			"#version 110\n"
 			"attribute vec2 VertexUV;\n"
 			"attribute vec3 vertexCoord;\n"
 			"varying vec2 UV;\n"
@@ -72,20 +72,20 @@ void OpenGLWidget::initializeGL() {
 
 	QOpenGLShader *fshader = new QOpenGLShader(QOpenGLShader::Fragment, this);
 	const char *fsrc =
-			"#version 120\n"
+			"#version 110\n"
 			"varying vec2 UV;\n"
 			"uniform sampler2D texture;\n"
 			"void main(){\n"
-			"	gl_FragColor = texture2D(texture, UV);\n"
+			"	gl_FragColor = vec4(vec3(texture2D(texture, UV).r), 1);\n"
 			"}\n";
 	fshader->compileSourceCode(fsrc);
 
-	if (not program_->addShader(vshader)) throw ShaderLoadingError();
-	if (not program_->addShader(fshader)) throw ShaderLoadingError();
+	if (! program_->addShader(vshader)) throw ShaderLoadingError();
+	if (! program_->addShader(fshader)) throw ShaderLoadingError();
 	program_->bindAttributeLocation("vertexCoord", program_vertex_coord_attribute);
 	program_->bindAttributeLocation("vertexUV",    program_vertex_uv_attribute);
-	if (not program_->link()) throw ShaderLoadingError();
-	if (not program_->bind()) throw ShaderBindingError();
+	if (! program_->link()) throw ShaderLoadingError();
+	if (! program_->bind()) throw ShaderBindingError();
 	program_->setUniformValue("texture", program_texture_uniform);
 }
 
