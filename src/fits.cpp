@@ -108,6 +108,8 @@ FITS::AbstractDataUnit::AbstractDataUnit(AbstractFITSStorage::Page& begin, const
 }
 FITS::AbstractDataUnit::~AbstractDataUnit() = default;
 
+FITS::AbstractDataUnit::VisitorBase::~VisitorBase() = default;
+
 FITS::AbstractDataUnit* FITS::AbstractDataUnit::createFromBitpix(const QString& bitpix, AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end, quint64 height, quint64 width) {
 	FITS::AbstractDataUnit* data_unit;
 	DataUnitCreateHelper c {&data_unit, begin, end, height, width};
