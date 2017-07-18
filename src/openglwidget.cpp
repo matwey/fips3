@@ -2,20 +2,39 @@
 
 #include <openglwidget.h>
 
+void OpenGLWidget::Exception::raise() const {
+	throw *this;
+}
+QException* OpenGLWidget::Exception::clone() const {
+	return new OpenGLWidget::Exception(*this);
+}
+void OpenGLWidget::ShaderLoadingError::raise() const {
+	throw *this;
+}
+QException* OpenGLWidget::ShaderLoadingError::clone() const {
+	return new OpenGLWidget::ShaderLoadingError(*this);
+}
+void OpenGLWidget::ShaderBindingError::raise() const {
+	throw *this;
+}
+QException* OpenGLWidget::ShaderBindingError::clone() const {
+	return new OpenGLWidget::ShaderBindingError(*this);
+}
+
 OpenGLWidget::OpenGLWidget(QWidget *parent, FITS* fits):
 	QOpenGLWidget(parent),
-	fits_(fits) {
-
+	fits_(fits),
+	texture_deleter_(this),
+	texture_(new QOpenGLTexture(QOpenGLTexture::Target2D), texture_deleter_),
+	program_deleter_(this),
+	program_(new QOpenGLShaderProgram, program_deleter_)
+	{
 	resize(800, 448);
-	img_ = new QImage(fits_->data_unit().data(), fits_->data_unit().width(), fits_->data_unit().height(), /*sizeof(*(fits_->data_unit().data())) * fits_->data_unit().width(),*/ QImage::Format_Grayscale8);
 }
 
 OpenGLWidget::~OpenGLWidget() {
 	makeCurrent();
 
-	delete img_;
-	delete texture_;
-	delete program_;
 	vbo_.destroy();
 
 	doneCurrent();
@@ -27,15 +46,13 @@ void OpenGLWidget::initializeGL() {
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glDisable(GL_DEPTH_TEST);
 
-	texture_ = new QOpenGLTexture(*img_);
-//	glGenTextures(1, &textureID);
-//	glBindTexture(GL_TEXTURE_2D, textureID);
-//	glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, fits_->data_unit().width(), fits_->data_unit().height(), 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, fits_->data_unit().data());
-//	glGenerateMipmap(GL_TEXTURE_2D);  //Generate mipmaps now!!!
-//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	texture_->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
+	texture_->setMagnificationFilter(QOpenGLTexture::Nearest);
+	texture_->setFormat(QOpenGLTexture::R8_UNorm);
+	texture_->setMipLevels(4);
+	texture_->setSize(fits_->data_unit().width(), fits_->data_unit().height());
+	texture_->allocateStorage(QOpenGLTexture::Red, QOpenGLTexture::UInt8);
+	texture_->setData(QOpenGLTexture::Red, QOpenGLTexture::UInt8, fits_->data_unit().data());
 
 	vbo_.create();
 	vbo_.bind();
@@ -43,9 +60,10 @@ void OpenGLWidget::initializeGL() {
 
 	QOpenGLShader *vshader = new QOpenGLShader(QOpenGLShader::Vertex, this);
 	const char *vsrc =
-			"attribute mediump vec2 VertexUV;\n"
-			"attribute highp vec3 vertexCoord;\n"
-			"varying mediump vec2 UV;\n"
+			"#version 110\n"
+			"attribute vec2 VertexUV;\n"
+			"attribute vec3 vertexCoord;\n"
+			"varying vec2 UV;\n"
 			"void main(){\n"
 			"	gl_Position =  vec4(vertexCoord,1);\n"
 			"	UV = VertexUV;\n"
@@ -54,20 +72,20 @@ void OpenGLWidget::initializeGL() {
 
 	QOpenGLShader *fshader = new QOpenGLShader(QOpenGLShader::Fragment, this);
 	const char *fsrc =
-			"varying mediump vec2 UV;\n"
+			"#version 110\n"
+			"varying vec2 UV;\n"
 			"uniform sampler2D texture;\n"
 			"void main(){\n"
-			"	gl_FragColor = texture2D(texture, UV);\n"
+			"	gl_FragColor = vec4(vec3(texture2D(texture, UV).r), 1);\n"
 			"}\n";
 	fshader->compileSourceCode(fsrc);
 
-	program_ = new QOpenGLShaderProgram;
-	program_->addShader(vshader);
-	program_->addShader(fshader);
+	if (! program_->addShader(vshader)) throw ShaderLoadingError();
+	if (! program_->addShader(fshader)) throw ShaderLoadingError();
 	program_->bindAttributeLocation("vertexCoord", program_vertex_coord_attribute);
 	program_->bindAttributeLocation("vertexUV",    program_vertex_uv_attribute);
-	program_->link();
-	program_->bind();
+	if (! program_->link()) throw ShaderLoadingError();
+	if (! program_->bind()) throw ShaderBindingError();
 	program_->setUniformValue("texture", program_texture_uniform);
 }
 
@@ -87,7 +105,6 @@ void OpenGLWidget::paintGL() {
 	program_->setAttributeBuffer(program_vertex_uv_attribute,    GL_FLOAT, 3 * sizeof(GLfloat), 2, 5 * sizeof(GLfloat));
 
 	texture_->bind();
-//	glBindTexture(GL_TEXTURE_2D, textureID);
 
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 }
