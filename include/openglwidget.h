@@ -10,10 +10,30 @@
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLWidget>
 
+#include <exception.h>
+
 #include <fits.h>
 
 class OpenGLWidget: public QOpenGLWidget, protected QOpenGLFunctions {
 public:
+	class Exception: public ::Exception {
+	public:
+		virtual void raise() const override;
+		virtual QException* clone() const override;
+	};
+
+	class ShaderLoadingError: public Exception {
+	public:
+		virtual void raise() const override;
+		virtual QException* clone() const override;
+	};
+
+	class ShaderBindingError: public Exception {
+	public:
+		virtual void raise() const override;
+		virtual QException* clone() const override;
+	};
+
 	template<class T> class OpenGLDeleter {
 	private:
 		QOpenGLWidget *openGL_widget_;

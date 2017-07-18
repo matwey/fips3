@@ -2,6 +2,25 @@
 
 #include <openglwidget.h>
 
+void OpenGLWidget::Exception::raise() const {
+	throw *this;
+}
+QException* OpenGLWidget::Exception::clone() const {
+	return new OpenGLWidget::Exception(*this);
+}
+void OpenGLWidget::ShaderLoadingError::raise() const {
+	throw *this;
+}
+QException* OpenGLWidget::ShaderLoadingError::clone() const {
+	return new OpenGLWidget::ShaderLoadingError(*this);
+}
+void OpenGLWidget::ShaderBindingError::raise() const {
+	throw *this;
+}
+QException* OpenGLWidget::ShaderBindingError::clone() const {
+	return new OpenGLWidget::ShaderBindingError(*this);
+}
+
 OpenGLWidget::OpenGLWidget(QWidget *parent, FITS* fits):
 	QOpenGLWidget(parent),
 	fits_(fits),
@@ -61,12 +80,12 @@ void OpenGLWidget::initializeGL() {
 			"}\n";
 	fshader->compileSourceCode(fsrc);
 
-	program_->addShader(vshader);
-	program_->addShader(fshader);
+	if (not program_->addShader(vshader)) throw ShaderLoadingError();
+	if (not program_->addShader(fshader)) throw ShaderLoadingError();
 	program_->bindAttributeLocation("vertexCoord", program_vertex_coord_attribute);
 	program_->bindAttributeLocation("vertexUV",    program_vertex_uv_attribute);
-	program_->link();
-	program_->bind();
+	if (not program_->link()) throw ShaderLoadingError();
+	if (not program_->bind()) throw ShaderBindingError();
 	program_->setUniformValue("texture", program_texture_uniform);
 }
 
