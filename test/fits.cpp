@@ -50,7 +50,7 @@ void TestFits::parseHeaderUnit4() {
 	QTRY_COMPARE(page_begin, header_end);
 }
 void TestFits::parseDataUnitShape() {
-	QFile* file = new QFile(DATA_ROOT "/sombrero.fits");
+	QFile* file = new QFile(DATA_ROOT "/sombrero8.fits");
 	file->open(QIODevice::ReadOnly);
 	const FITS fits(file);
 	QTRY_COMPARE(fits.data_unit().height(), static_cast<quint64>(448));
