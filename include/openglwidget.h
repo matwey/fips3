@@ -4,6 +4,7 @@
 #include <QOpenGLBuffer>
 #include <QOpenGLContext>
 #include <QOpenGLFunctions>
+#include <QOpenGLPixelTransferOptions>
 #include <QOpenGLShader>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLTexture>
@@ -22,13 +23,19 @@ public:
 		virtual QException* clone() const override;
 	};
 
-	class ShaderLoadingError: public Exception {
+	class ShaderLoadError: public Exception {
 	public:
 		virtual void raise() const override;
 		virtual QException* clone() const override;
 	};
 
-	class ShaderBindingError: public Exception {
+	class ShaderBindError: public Exception {
+	public:
+		virtual void raise() const override;
+		virtual QException* clone() const override;
+	};
+
+	class ShaderCompileError: public Exception {
 	public:
 		virtual void raise() const override;
 		virtual QException* clone() const override;
@@ -62,12 +69,13 @@ private:
 	std::unique_ptr<FITS> fits_;
 	OpenGLDeleter<QOpenGLTexture> texture_deleter_;
 	openGL_unique_ptr<QOpenGLTexture> texture_;
+	OpenGLDeleter<QOpenGLPixelTransferOptions> pixel_transfer_options_deleter_;
+	openGL_unique_ptr<QOpenGLPixelTransferOptions> pixel_transfer_options_;
 	OpenGLDeleter<QOpenGLShaderProgram> program_deleter_;
 	openGL_unique_ptr<QOpenGLShaderProgram> program_;
 	QOpenGLBuffer vbo_;
 	static const int program_vertex_coord_attribute = 0;
 	static const int program_vertex_uv_attribute    = 1;
-	static const int program_texture_uniform = 0;
 
 	static constexpr GLfloat vbo_data[] = {
 			-1.0f, -1.0f, 0.0f, 0.0f, 0.0f,

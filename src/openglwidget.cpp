@@ -8,17 +8,23 @@ void OpenGLWidget::Exception::raise() const {
 QException* OpenGLWidget::Exception::clone() const {
 	return new OpenGLWidget::Exception(*this);
 }
-void OpenGLWidget::ShaderLoadingError::raise() const {
+void OpenGLWidget::ShaderLoadError::raise() const {
 	throw *this;
 }
-QException* OpenGLWidget::ShaderLoadingError::clone() const {
-	return new OpenGLWidget::ShaderLoadingError(*this);
+QException* OpenGLWidget::ShaderLoadError::clone() const {
+	return new OpenGLWidget::ShaderLoadError(*this);
 }
-void OpenGLWidget::ShaderBindingError::raise() const {
+void OpenGLWidget::ShaderBindError::raise() const {
 	throw *this;
 }
-QException* OpenGLWidget::ShaderBindingError::clone() const {
-	return new OpenGLWidget::ShaderBindingError(*this);
+QException* OpenGLWidget::ShaderBindError::clone() const {
+	return new OpenGLWidget::ShaderBindError(*this);
+}
+void OpenGLWidget::ShaderCompileError::raise() const {
+	throw *this;
+}
+QException* OpenGLWidget::ShaderCompileError::clone() const {
+	return new OpenGLWidget::ShaderCompileError(*this);
 }
 
 OpenGLWidget::OpenGLWidget(QWidget *parent, FITS* fits):
@@ -26,6 +32,8 @@ OpenGLWidget::OpenGLWidget(QWidget *parent, FITS* fits):
 	fits_(fits),
 	texture_deleter_(this),
 	texture_(new QOpenGLTexture(QOpenGLTexture::Target2D), texture_deleter_),
+	pixel_transfer_options_deleter_(this),
+	pixel_transfer_options_(new QOpenGLPixelTransferOptions, pixel_transfer_options_deleter_),
 	program_deleter_(this),
 	program_(new QOpenGLShaderProgram, program_deleter_)
 	{
@@ -52,7 +60,8 @@ void OpenGLWidget::initializeGL() {
 	texture_->setMipLevels(4);
 	texture_->setSize(fits_->data_unit().width(), fits_->data_unit().height());
 	texture_->allocateStorage(QOpenGLTexture::Red, QOpenGLTexture::UInt8);
-	texture_->setData(QOpenGLTexture::Red, QOpenGLTexture::UInt8, fits_->data_unit().data());
+	pixel_transfer_options_->setSwapBytesEnabled(true);
+	texture_->setData(QOpenGLTexture::Red, QOpenGLTexture::UInt8, fits_->data_unit().data(), pixel_transfer_options_.get());
 
 	vbo_.create();
 	vbo_.bind();
@@ -68,7 +77,7 @@ void OpenGLWidget::initializeGL() {
 			"	gl_Position =  vec4(vertexCoord,1);\n"
 			"	UV = VertexUV;\n"
 			"}\n";
-	vshader->compileSourceCode(vsrc);
+	if (! vshader->compileSourceCode(vsrc)) throw ShaderCompileError();
 
 	QOpenGLShader *fshader = new QOpenGLShader(QOpenGLShader::Fragment, this);
 	const char *fsrc =
@@ -78,15 +87,15 @@ void OpenGLWidget::initializeGL() {
 			"void main(){\n"
 			"	gl_FragColor = vec4(vec3(texture2D(texture, UV).r), 1);\n"
 			"}\n";
-	fshader->compileSourceCode(fsrc);
+	if (! fshader->compileSourceCode(fsrc)) throw ShaderCompileError();
 
-	if (! program_->addShader(vshader)) throw ShaderLoadingError();
-	if (! program_->addShader(fshader)) throw ShaderLoadingError();
+	if (! program_->addShader(vshader)) throw ShaderLoadError();
+	if (! program_->addShader(fshader)) throw ShaderLoadError();
 	program_->bindAttributeLocation("vertexCoord", program_vertex_coord_attribute);
 	program_->bindAttributeLocation("vertexUV",    program_vertex_uv_attribute);
-	if (! program_->link()) throw ShaderLoadingError();
-	if (! program_->bind()) throw ShaderBindingError();
-	program_->setUniformValue("texture", program_texture_uniform);
+	if (! program_->link()) throw ShaderLoadError();
+	if (! program_->bind()) throw ShaderBindError();
+	program_->setUniformValue("tex", texture_->textureId());
 }
 
 void OpenGLWidget::resizeGL(int w, int h){
