@@ -51,19 +51,22 @@ OpenGLWidget::~OpenGLWidget() {
 void OpenGLWidget::initializeGL() {
 	initializeOpenGLFunctions();
 
+	QOpenGLContext context;
+	qDebug() << context.hasExtension("GL_ARB_texture_float");
+
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glDisable(GL_DEPTH_TEST);
 
 	texture_->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
 	texture_->setMagnificationFilter(QOpenGLTexture::Nearest);
-	texture_->setFormat(QOpenGLTexture::R16_UNorm);
+	texture_->setFormat(QOpenGLTexture::LuminanceAlphaFormat);
 	qDebug() << glGetError();
 	texture_->setMipLevels(4);
 	texture_->setSize(fits_->data_unit().width(), fits_->data_unit().height());
-	texture_->allocateStorage(QOpenGLTexture::Red, QOpenGLTexture::UInt16);
+	texture_->allocateStorage();
 	qDebug() << glGetError();
-	pixel_transfer_options_->setSwapBytesEnabled(true);
-	texture_->setData(QOpenGLTexture::Red, QOpenGLTexture::UInt16, fits_->data_unit().data(), pixel_transfer_options_.get());
+//	pixel_transfer_options_->setSwapBytesEnabled(true);
+	texture_->setData(QOpenGLTexture::LuminanceAlpha, QOpenGLTexture::UInt8, fits_->data_unit().data(), pixel_transfer_options_.get());
 	qDebug() << glGetError();
 
 	vbo_.create();
@@ -90,11 +93,12 @@ void OpenGLWidget::initializeGL() {
 			"uniform float bzero;\n"
 			"uniform float bscale;\n"
 			"void main(){\n"
-			"	float raw_fits_value = texture2D(texture, UV).r;\n"
-			"	bool sign_mask = raw_fits_value > 0.5;\n"
-			"   float fits_value = raw_fits_value - float(sign_mask);\n"
-			"	float physical_value = bscale * fits_value + bzero;\n"
-			"	gl_FragColor = vec4(vec3(physical_value), 1);\n"
+			"	vec4 raw_color = texture2D(texture, UV);\n"
+			"	float raw_fits_value = (raw_color.a + raw_color.r * 256.0) / 257.0;\n"
+//			"	bool sign_mask = raw_fits_value > 0.5;\n"
+//			"   float fits_value = raw_fits_value - float(sign_mask);\n"
+//			"	float physical_value = bscale * fits_value + bzero;\n"
+			"	gl_FragColor = vec4(vec3(raw_fits_value), 1);\n"
 			"}\n";
 	if (! fshader->compileSourceCode(fsrc)) throw ShaderCompileError();
 
@@ -104,7 +108,7 @@ void OpenGLWidget::initializeGL() {
 	program_->bindAttributeLocation("vertexUV",    program_vertex_uv_attribute);
 	if (! program_->link()) throw ShaderLoadError();
 	if (! program_->bind()) throw ShaderBindError();
-	program_->setUniformValue("tex", texture_->textureId());
+//	program_->setUniformValue("tex", texture_->textureId());
 	// TODO: get bzero & bscale values from FITS header
 	program_->setUniformValue("bzero", 0.5f);
 	program_->setUniformValue("bscale", 1.0f);
