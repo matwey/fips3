@@ -59,7 +59,10 @@ void OpenGLWidget::initializeGL() {
 		void operator() (const FITS::DataUnit<quint8>&) const {
 			*texture_format = QOpenGLTexture::AlphaFormat;
 			*pixel_format = QOpenGLTexture::Alpha;
-			*fragment_shader_source_main_ = "gl_FragColor = vec4(texture2D(texture, UV).aaa, 1);\n";
+			*fragment_shader_source_main_ =
+					"	float fits_value = texture2D(texture, UV).a;\n"
+					"	float physical_value = bscale * fits_value + bzero;\n"
+					"	gl_FragColor = vec4(vec3(physical_value), 1);\n";
 		}
 		void operator() (const FITS::DataUnit<qint16>&) const {
 			*texture_format = QOpenGLTexture::LuminanceAlphaFormat;
@@ -73,7 +76,15 @@ void OpenGLWidget::initializeGL() {
 					"	gl_FragColor = vec4(vec3(physical_value), 1);\n";
 		}
 		void operator() (const FITS::DataUnit<qint32>&) const {
-			qDebug() << "BITPIX==32 is not implemented";
+			*texture_format = QOpenGLTexture::RGBAFormat;
+			*pixel_format = QOpenGLTexture::RGBA;
+			*fragment_shader_source_main_ =
+					"	vec4 raw_color = texture2D(texture, UV);\n"
+					"	float raw_fits_value = (raw_color.a + raw_color.b * 256.0 + raw_color.g * 65536.0 + raw_color.r * 16777216.0) / 16777217.0;\n"
+					"	bool sign_mask = raw_fits_value > 0.5;\n"
+					"   float fits_value = raw_fits_value - float(sign_mask);\n"
+					"	float physical_value = bscale * fits_value + bzero;\n"
+					"	gl_FragColor = vec4(vec3(physical_value), 1);\n";
 		}
 		void operator() (const FITS::DataUnit<qint64>&) const {
 			qDebug() << "BITPIX==64 is not implemented";
