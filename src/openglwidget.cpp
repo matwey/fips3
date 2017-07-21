@@ -51,6 +51,46 @@ OpenGLWidget::~OpenGLWidget() {
 void OpenGLWidget::initializeGL() {
 	initializeOpenGLFunctions();
 
+	struct texture_loader {
+		QOpenGLTexture::TextureFormat* texture_format;
+		QOpenGLTexture::PixelFormat* pixel_format;
+		QString* fragment_shader_source_main_;
+
+		void operator() (const FITS::DataUnit<quint8>&) const {
+			*texture_format = QOpenGLTexture::AlphaFormat;
+			*pixel_format = QOpenGLTexture::Alpha;
+			*fragment_shader_source_main_ = "gl_FragColor = vec4(texture2D(texture, UV).aaa, 1);\n";
+		}
+		void operator() (const FITS::DataUnit<qint16>&) const {
+			*texture_format = QOpenGLTexture::LuminanceAlphaFormat;
+			*pixel_format = QOpenGLTexture::LuminanceAlpha;
+			*fragment_shader_source_main_ =
+					"	vec4 raw_color = texture2D(texture, UV);\n"
+					"	float raw_fits_value = (raw_color.a + raw_color.r * 256.0) / 257.0;\n"
+					"	bool sign_mask = raw_fits_value > 0.5;\n"
+					"   float fits_value = raw_fits_value - float(sign_mask);\n"
+					"	float physical_value = bscale * fits_value + bzero;\n"
+					"	gl_FragColor = vec4(vec3(physical_value), 1);\n";
+		}
+		void operator() (const FITS::DataUnit<qint32>&) const {
+			qDebug() << "BITPIX==32 is not implemented";
+		}
+		void operator() (const FITS::DataUnit<qint64>&) const {
+			qDebug() << "BITPIX==64 is not implemented";
+		}
+		void operator() (const FITS::DataUnit<float>&) const {
+			qDebug() << "BITPIX==-32 is not implemented";
+		}
+		void operator() (const FITS::DataUnit<double>&) const {
+			qDebug() << "BITPIX==-64 is not implemented";
+		}
+	};
+
+	QString fragment_shader_source_main;
+	QOpenGLTexture::TextureFormat texture_format;
+	QOpenGLTexture::PixelFormat pixel_format;
+	fits_->data_unit().apply(texture_loader{&texture_format, &pixel_format, &fragment_shader_source_main});
+
 	QOpenGLContext context;
 	qDebug() << context.hasExtension("GL_ARB_texture_float");
 
@@ -59,14 +99,16 @@ void OpenGLWidget::initializeGL() {
 
 	texture_->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
 	texture_->setMagnificationFilter(QOpenGLTexture::Nearest);
-	texture_->setFormat(QOpenGLTexture::LuminanceAlphaFormat);
+	texture_->setFormat(texture_format);
 	qDebug() << glGetError();
 	texture_->setMipLevels(4);
+	qDebug() << glGetError();
 	texture_->setSize(fits_->data_unit().width(), fits_->data_unit().height());
+	qDebug() << glGetError();
 	texture_->allocateStorage();
 	qDebug() << glGetError();
 //	pixel_transfer_options_->setSwapBytesEnabled(true);
-	texture_->setData(QOpenGLTexture::LuminanceAlpha, QOpenGLTexture::UInt8, fits_->data_unit().data(), pixel_transfer_options_.get());
+	texture_->setData(pixel_format, QOpenGLTexture::UInt8, fits_->data_unit().data(), pixel_transfer_options_.get());
 	qDebug() << glGetError();
 
 	vbo_.create();
@@ -85,21 +127,16 @@ void OpenGLWidget::initializeGL() {
 			"}\n";
 	if (! vshader->compileSourceCode(vsrc)) throw ShaderCompileError();
 
-	QOpenGLShader *fshader = new QOpenGLShader(QOpenGLShader::Fragment, this);
-	const char *fsrc =
+	QString fsrc =
 			"#version 110\n"
 			"varying vec2 UV;\n"
 			"uniform sampler2D texture;\n"
 			"uniform float bzero;\n"
 			"uniform float bscale;\n"
 			"void main(){\n"
-			"	vec4 raw_color = texture2D(texture, UV);\n"
-			"	float raw_fits_value = (raw_color.a + raw_color.r * 256.0) / 257.0;\n"
-//			"	bool sign_mask = raw_fits_value > 0.5;\n"
-//			"   float fits_value = raw_fits_value - float(sign_mask);\n"
-//			"	float physical_value = bscale * fits_value + bzero;\n"
-			"	gl_FragColor = vec4(vec3(raw_fits_value), 1);\n"
+			+ fragment_shader_source_main +
 			"}\n";
+	QOpenGLShader *fshader = new QOpenGLShader(QOpenGLShader::Fragment, this);
 	if (! fshader->compileSourceCode(fsrc)) throw ShaderCompileError();
 
 	if (! program_->addShader(vshader)) throw ShaderLoadError();
@@ -108,7 +145,6 @@ void OpenGLWidget::initializeGL() {
 	program_->bindAttributeLocation("vertexUV",    program_vertex_uv_attribute);
 	if (! program_->link()) throw ShaderLoadError();
 	if (! program_->bind()) throw ShaderBindError();
-//	program_->setUniformValue("tex", texture_->textureId());
 	// TODO: get bzero & bscale values from FITS header
 	program_->setUniformValue("bzero", 0.5f);
 	program_->setUniformValue("bscale", 1.0f);
