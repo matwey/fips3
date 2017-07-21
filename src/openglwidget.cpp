@@ -54,11 +54,15 @@ void OpenGLWidget::initializeGL() {
 	struct texture_loader {
 		QOpenGLTexture::TextureFormat* texture_format;
 		QOpenGLTexture::PixelFormat* pixel_format;
+		QOpenGLTexture::PixelType *pixel_type;
+		bool* swap_bytes_enabled;
 		QString* fragment_shader_source_main_;
 
 		void operator() (const FITS::DataUnit<quint8>&) const {
 			*texture_format = QOpenGLTexture::AlphaFormat;
 			*pixel_format = QOpenGLTexture::Alpha;
+			*pixel_type = QOpenGLTexture::UInt8;
+			*swap_bytes_enabled = false;
 			*fragment_shader_source_main_ =
 					"	float fits_value = texture2D(texture, UV).a;\n"
 					"	float physical_value = bscale * fits_value + bzero;\n"
@@ -67,6 +71,8 @@ void OpenGLWidget::initializeGL() {
 		void operator() (const FITS::DataUnit<qint16>&) const {
 			*texture_format = QOpenGLTexture::LuminanceAlphaFormat;
 			*pixel_format = QOpenGLTexture::LuminanceAlpha;
+			*pixel_type = QOpenGLTexture::UInt8;
+			*swap_bytes_enabled = false;
 			*fragment_shader_source_main_ =
 					"	vec4 raw_color = texture2D(texture, UV);\n"
 					"	float raw_fits_value = (raw_color.a + raw_color.r * 256.0) / 257.0;\n"
@@ -78,6 +84,8 @@ void OpenGLWidget::initializeGL() {
 		void operator() (const FITS::DataUnit<qint32>&) const {
 			*texture_format = QOpenGLTexture::RGBAFormat;
 			*pixel_format = QOpenGLTexture::RGBA;
+			*pixel_type = QOpenGLTexture::UInt8;
+			*swap_bytes_enabled = false;
 			*fragment_shader_source_main_ =
 					"	vec4 raw_color = texture2D(texture, UV);\n"
 					"	float raw_fits_value = (raw_color.a + raw_color.b * 256.0 + raw_color.g * 65536.0 + raw_color.r * 4294967296.0) / 4295033089.0;\n"
@@ -87,7 +95,17 @@ void OpenGLWidget::initializeGL() {
 					"	gl_FragColor = vec4(vec3(physical_value), 1);\n";
 		}
 		void operator() (const FITS::DataUnit<qint64>&) const {
-			qDebug() << "BITPIX==64 is not implemented";
+			*texture_format = QOpenGLTexture::RGBA16_UNorm;
+			*pixel_format = QOpenGLTexture::RGBA;
+			*pixel_type = QOpenGLTexture::UInt16;
+			*swap_bytes_enabled = true;
+			*fragment_shader_source_main_ =
+				"	vec4 raw_color = texture2D(texture, UV);\n"
+				"	float raw_fits_value = (raw_color.a + raw_color.b * 65536.0 + raw_color.g * 4294967296.0 + raw_color.r * 18446744073709551616.0) / 18446744078004584449.0;\n"
+				"	bool sign_mask = raw_fits_value > 0.5;\n"
+				"   float fits_value = raw_fits_value - float(sign_mask);\n"
+				"	float physical_value = bscale * fits_value + bzero;\n"
+				"	gl_FragColor = vec4(vec3(physical_value), 1);\n";
 		}
 		void operator() (const FITS::DataUnit<float>&) const {
 			qDebug() << "BITPIX==-32 is not implemented";
@@ -97,10 +115,16 @@ void OpenGLWidget::initializeGL() {
 		}
 	};
 
-	QString fragment_shader_source_main;
 	QOpenGLTexture::TextureFormat texture_format;
 	QOpenGLTexture::PixelFormat pixel_format;
-	fits_->data_unit().apply(texture_loader{&texture_format, &pixel_format, &fragment_shader_source_main});
+	QOpenGLTexture::PixelType pixel_type;
+	bool swap_bytes_enabled;
+	QString fragment_shader_source_main;
+	fits_->data_unit().apply(texture_loader{&texture_format,
+											&pixel_format,
+											&pixel_type,
+											&swap_bytes_enabled,
+											&fragment_shader_source_main});
 
 	QOpenGLContext context;
 	qDebug() << context.hasExtension("GL_ARB_texture_float");
@@ -118,8 +142,8 @@ void OpenGLWidget::initializeGL() {
 	qDebug() << glGetError();
 	texture_->allocateStorage();
 	qDebug() << glGetError();
-//	pixel_transfer_options_->setSwapBytesEnabled(true);
-	texture_->setData(pixel_format, QOpenGLTexture::UInt8, fits_->data_unit().data(), pixel_transfer_options_.get());
+	pixel_transfer_options_->setSwapBytesEnabled(swap_bytes_enabled);
+	texture_->setData(pixel_format, pixel_type, fits_->data_unit().data(), pixel_transfer_options_.get());
 	qDebug() << glGetError();
 
 	vbo_.create();
