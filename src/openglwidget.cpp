@@ -80,7 +80,7 @@ void OpenGLWidget::initializeGL() {
 			*pixel_format = QOpenGLTexture::RGBA;
 			*fragment_shader_source_main_ =
 					"	vec4 raw_color = texture2D(texture, UV);\n"
-					"	float raw_fits_value = (raw_color.a + raw_color.b * 256.0 + raw_color.g * 65536.0 + raw_color.r * 16777216.0) / 16777217.0;\n"
+					"	float raw_fits_value = (raw_color.a + raw_color.b * 256.0 + raw_color.g * 65536.0 + raw_color.r * 4294967296.0) / 4295033089.0;\n"
 					"	bool sign_mask = raw_fits_value > 0.5;\n"
 					"   float fits_value = raw_fits_value - float(sign_mask);\n"
 					"	float physical_value = bscale * fits_value + bzero;\n"
