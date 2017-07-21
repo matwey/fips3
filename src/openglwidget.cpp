@@ -56,12 +56,15 @@ void OpenGLWidget::initializeGL() {
 
 	texture_->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
 	texture_->setMagnificationFilter(QOpenGLTexture::Nearest);
-	texture_->setFormat(QOpenGLTexture::R8_UNorm);
+	texture_->setFormat(QOpenGLTexture::R16_UNorm);
+	qDebug() << glGetError();
 	texture_->setMipLevels(4);
 	texture_->setSize(fits_->data_unit().width(), fits_->data_unit().height());
-	texture_->allocateStorage(QOpenGLTexture::Red, QOpenGLTexture::UInt8);
+	texture_->allocateStorage(QOpenGLTexture::Red, QOpenGLTexture::UInt16);
+	qDebug() << glGetError();
 	pixel_transfer_options_->setSwapBytesEnabled(true);
-	texture_->setData(QOpenGLTexture::Red, QOpenGLTexture::UInt8, fits_->data_unit().data(), pixel_transfer_options_.get());
+	texture_->setData(QOpenGLTexture::Red, QOpenGLTexture::UInt16, fits_->data_unit().data(), pixel_transfer_options_.get());
+	qDebug() << glGetError();
 
 	vbo_.create();
 	vbo_.bind();
@@ -84,8 +87,14 @@ void OpenGLWidget::initializeGL() {
 			"#version 110\n"
 			"varying vec2 UV;\n"
 			"uniform sampler2D texture;\n"
+			"uniform float bzero;\n"
+			"uniform float bscale;\n"
 			"void main(){\n"
-			"	gl_FragColor = vec4(vec3(texture2D(texture, UV).r), 1);\n"
+			"	float raw_fits_value = texture2D(texture, UV).r;\n"
+			"	bool sign_mask = raw_fits_value > 0.5;\n"
+			"   float fits_value = raw_fits_value - float(sign_mask);\n"
+			"	float physical_value = bscale * fits_value + bzero;\n"
+			"	gl_FragColor = vec4(vec3(physical_value), 1);\n"
 			"}\n";
 	if (! fshader->compileSourceCode(fsrc)) throw ShaderCompileError();
 
@@ -96,6 +105,9 @@ void OpenGLWidget::initializeGL() {
 	if (! program_->link()) throw ShaderLoadError();
 	if (! program_->bind()) throw ShaderBindError();
 	program_->setUniformValue("tex", texture_->textureId());
+	// TODO: get bzero & bscale values from FITS header
+	program_->setUniformValue("bzero", 0.5f);
+	program_->setUniformValue("bscale", 1.0f);
 }
 
 void OpenGLWidget::resizeGL(int w, int h){
