@@ -108,12 +108,32 @@ void OpenGLWidget::initializeGL() {
 				"	gl_FragColor = vec4(vec3(physical_value), 1);\n";
 		}
 		void operator() (const FITS::DataUnit<float>&) const {
-			qDebug() << "BITPIX==-32 is not implemented";
+			if (! QOpenGLContext().hasExtension("GL_ARB_texture_float")) {
+				// TODO recode data from float to int32
+				qDebug() << "BITPIX==-32 is not implemented";
+			} else {
+				// Constant from GL_ARB_texture_float extension documentation:
+				// https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_texture_float.txt
+				static const quint64 alpha32f_arb = 0x8816;
+//				static const quint64 texture_alpha_type_arb = 0x8C13;
+				*texture_format = static_cast<QOpenGLTexture::TextureFormat>(alpha32f_arb);
+				*pixel_format = QOpenGLTexture::Alpha;
+				*pixel_type = QOpenGLTexture::Float32;
+				*swap_bytes_enabled = false;
+				*fragment_shader_source_main_ =
+					"	float fits_value = texture2D(texture, UV).a;\n"
+//					"	float physical_value = bscale * fits_value + bzero;\n"
+					"	gl_FragColor = vec4(vec3(fits_value == 0.0), 1);\n";
+			}
 		}
 		void operator() (const FITS::DataUnit<double>&) const {
 			qDebug() << "BITPIX==-64 is not implemented";
 		}
 	};
+
+	qDebug() << "GL_ARB_color_buffer_float " << QOpenGLContext().hasExtension("GL_ARB_color_buffer_float");
+	qDebug() << "GL_ARB_texture_float " << QOpenGLContext().hasExtension("GL_ARB_texture_float");
+
 
 	QOpenGLTexture::TextureFormat texture_format;
 	QOpenGLTexture::PixelFormat pixel_format;
@@ -126,8 +146,6 @@ void OpenGLWidget::initializeGL() {
 											&swap_bytes_enabled,
 											&fragment_shader_source_main});
 
-	QOpenGLContext context;
-	qDebug() << context.hasExtension("GL_ARB_texture_float");
 
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glDisable(GL_DEPTH_TEST);
@@ -164,6 +182,7 @@ void OpenGLWidget::initializeGL() {
 
 	QString fsrc =
 			"#version 110\n"
+//			"#extension GL_ARB_texture_float : require\n"
 			"varying vec2 UV;\n"
 			"uniform sampler2D texture;\n"
 			"uniform float bzero;\n"
