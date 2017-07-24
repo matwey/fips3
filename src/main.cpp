@@ -22,6 +22,11 @@ int main(int argc, char** argv) {
 
 	const QStringList args = parser.positionalArguments();
 
+	if (args.length() != 1) {
+		parser.showHelp(1);
+		return 1;
+	}
+
 	MainWindow w(args[0]);
 	w.show();
 
