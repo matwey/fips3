@@ -108,9 +108,10 @@ void OpenGLWidget::initializeGL() {
 				"	gl_FragColor = vec4(vec3(physical_value), 1);\n";
 		}
 		void operator() (const FITS::DataUnit<float>&) const {
+			// TODO: Check GL_ARB_color_buffer_float, GL_OES_texture_float.
 			if (! QOpenGLContext().hasExtension("GL_ARB_texture_float")) {
-				// TODO recode data from float to int32
-				qDebug() << "BITPIX==-32 is not implemented";
+				// TODO: recode data from float into (u)int32
+				qDebug() << "BITPIX==-32 is not implemented for this hardware";
 			} else {
 				// Constant from GL_ARB_texture_float extension documentation:
 				// https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_texture_float.txt
@@ -119,11 +120,11 @@ void OpenGLWidget::initializeGL() {
 				*texture_format = static_cast<QOpenGLTexture::TextureFormat>(alpha32f_arb);
 				*pixel_format = QOpenGLTexture::Alpha;
 				*pixel_type = QOpenGLTexture::Float32;
-				*swap_bytes_enabled = false;
+				*swap_bytes_enabled = true;
 				*fragment_shader_source_main_ =
 					"	float fits_value = texture2D(texture, UV).a;\n"
-//					"	float physical_value = bscale * fits_value + bzero;\n"
-					"	gl_FragColor = vec4(vec3(fits_value == 0.0), 1);\n";
+					"	float physical_value = bscale * fits_value + bzero;\n"
+					"	gl_FragColor = vec4(vec3(physical_value), 1);\n";
 			}
 		}
 		void operator() (const FITS::DataUnit<double>&) const {
@@ -150,12 +151,12 @@ void OpenGLWidget::initializeGL() {
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glDisable(GL_DEPTH_TEST);
 
-	texture_->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
+	texture_->setMinificationFilter(QOpenGLTexture::Nearest);
 	texture_->setMagnificationFilter(QOpenGLTexture::Nearest);
 	texture_->setFormat(texture_format);
 	qDebug() << glGetError();
-	texture_->setMipLevels(4);
-	qDebug() << glGetError();
+//	texture_->setMipLevels(0);
+//	qDebug() << glGetError();
 	texture_->setSize(fits_->data_unit().width(), fits_->data_unit().height());
 	qDebug() << glGetError();
 	texture_->allocateStorage();
