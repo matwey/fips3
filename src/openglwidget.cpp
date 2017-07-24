@@ -1,6 +1,7 @@
 #include <QFile>
 
 #include <openglwidget.h>
+#include <QOpenGLFunctions_3_0>
 
 void OpenGLWidget::Exception::raise() const {
 	throw *this;
@@ -52,6 +53,7 @@ void OpenGLWidget::initializeGL() {
 	initializeOpenGLFunctions();
 
 	struct texture_loader {
+		OpenGLWidget *openGL_widget;
 		QOpenGLTexture::TextureFormat* texture_format;
 		QOpenGLTexture::PixelFormat* pixel_format;
 		QOpenGLTexture::PixelType *pixel_type;
@@ -100,31 +102,30 @@ void OpenGLWidget::initializeGL() {
 			*pixel_type = QOpenGLTexture::UInt16;
 			*swap_bytes_enabled = true;
 			*fragment_shader_source_main_ =
-				"	vec4 raw_color = texture2D(texture, UV);\n"
-				"	float raw_fits_value = (raw_color.a + raw_color.b * 65536.0 + raw_color.g * 4294967296.0 + raw_color.r * 18446744073709551616.0) / 18446744078004584449.0;\n"
-				"	bool sign_mask = raw_fits_value > 0.5;\n"
-				"   float fits_value = raw_fits_value - float(sign_mask);\n"
-				"	float physical_value = bscale * fits_value + bzero;\n"
-				"	gl_FragColor = vec4(vec3(physical_value), 1);\n";
+					"	vec4 raw_color = texture2D(texture, UV);\n"
+					"	float raw_fits_value = (raw_color.a + raw_color.b * 65536.0 + raw_color.g * 4294967296.0 + raw_color.r * 18446744073709551616.0) / 18446744078004584449.0;\n"
+					"	bool sign_mask = raw_fits_value > 0.5;\n"
+					"   float fits_value = raw_fits_value - float(sign_mask);\n"
+					"	float physical_value = bscale * fits_value + bzero;\n"
+					"	gl_FragColor = vec4(vec3(physical_value), 1);\n";
 		}
 		void operator() (const FITS::DataUnit<float>&) const {
 			// TODO: Check GL_ARB_color_buffer_float, GL_OES_texture_float.
-			if (! QOpenGLContext().hasExtension("GL_ARB_texture_float")) {
+			if (! openGL_widget->context()->hasExtension("GL_ARB_texture_float")) {
 				// TODO: recode data from float into (u)int32
 				qDebug() << "BITPIX==-32 is not implemented for this hardware";
 			} else {
 				// Constant from GL_ARB_texture_float extension documentation:
 				// https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_texture_float.txt
 				static const quint64 alpha32f_arb = 0x8816;
-//				static const quint64 texture_alpha_type_arb = 0x8C13;
 				*texture_format = static_cast<QOpenGLTexture::TextureFormat>(alpha32f_arb);
 				*pixel_format = QOpenGLTexture::Alpha;
 				*pixel_type = QOpenGLTexture::Float32;
 				*swap_bytes_enabled = true;
 				*fragment_shader_source_main_ =
-					"	float fits_value = texture2D(texture, UV).a;\n"
-					"	float physical_value = bscale * fits_value + bzero;\n"
-					"	gl_FragColor = vec4(vec3(physical_value), 1);\n";
+						"	float fits_value = texture2D(texture, UV).a;\n"
+						"	float physical_value = bscale * fits_value + bzero;\n"
+						"	gl_FragColor = vec4(vec3(physical_value), 1);\n";
 			}
 		}
 		void operator() (const FITS::DataUnit<double>&) const {
@@ -132,8 +133,8 @@ void OpenGLWidget::initializeGL() {
 		}
 	};
 
-	qDebug() << "GL_ARB_color_buffer_float " << QOpenGLContext().hasExtension("GL_ARB_color_buffer_float");
-	qDebug() << "GL_ARB_texture_float " << QOpenGLContext().hasExtension("GL_ARB_texture_float");
+	qDebug() << "GL_ARB_color_buffer_float " << context()->hasExtension("GL_ARB_color_buffer_float");
+	qDebug() << "GL_ARB_texture_float " << context()->hasExtension("GL_ARB_texture_float");
 
 
 	QOpenGLTexture::TextureFormat texture_format;
@@ -141,7 +142,8 @@ void OpenGLWidget::initializeGL() {
 	QOpenGLTexture::PixelType pixel_type;
 	bool swap_bytes_enabled;
 	QString fragment_shader_source_main;
-	fits_->data_unit().apply(texture_loader{&texture_format,
+	fits_->data_unit().apply(texture_loader{this,
+											&texture_format,
 											&pixel_format,
 											&pixel_type,
 											&swap_bytes_enabled,
@@ -155,11 +157,10 @@ void OpenGLWidget::initializeGL() {
 	texture_->setMagnificationFilter(QOpenGLTexture::Nearest);
 	texture_->setFormat(texture_format);
 	qDebug() << glGetError();
-//	texture_->setMipLevels(0);
-//	qDebug() << glGetError();
 	texture_->setSize(fits_->data_unit().width(), fits_->data_unit().height());
 	qDebug() << glGetError();
-	texture_->allocateStorage();
+	// We use this overloading to provide a possibility to use texture internal format unsupported by QT
+	texture_->allocateStorage(pixel_format, pixel_type);
 	qDebug() << glGetError();
 	pixel_transfer_options_->setSwapBytesEnabled(swap_bytes_enabled);
 	texture_->setData(pixel_format, pixel_type, fits_->data_unit().data(), pixel_transfer_options_.get());
