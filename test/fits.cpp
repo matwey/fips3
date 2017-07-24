@@ -12,6 +12,8 @@ private slots:
 	void parseHeaderUnit2();
 	void parseHeaderUnit3();
 	void parseHeaderUnit4();
+	void parseHeaderBzero1();
+	void parseHeaderBscale1();
 	void parseDataUnitShape();
 	void visitDataUnit1();
 };
@@ -49,6 +51,18 @@ void TestFits::parseHeaderUnit4() {
 
 	FITS::HeaderUnit hdr(page_begin, page_end);
 	QTRY_COMPARE(page_begin, header_end);
+}
+void TestFits::parseHeaderBzero1() {
+	QFile* file = new QFile(DATA_ROOT "/header_end.fits");
+	file->open(QIODevice::ReadOnly);
+	FITS fits(file);
+	QCOMPARE(fits.header_unit().bzero(), 0.0);
+}
+void TestFits::parseHeaderBscale1() {
+	QFile* file = new QFile(DATA_ROOT "/header_end.fits");
+	file->open(QIODevice::ReadOnly);
+	FITS fits(file);
+	QCOMPARE(fits.header_unit().bscale(), 1.0);
 }
 void TestFits::parseDataUnitShape() {
 	QFile* file = new QFile(DATA_ROOT "/sombrero8.fits");

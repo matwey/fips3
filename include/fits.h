@@ -2,6 +2,7 @@
 #define _FITS_H_
 
 #include <QFileDevice>
+#include <QVariant>
 
 #include <abstractfitsstorage.h>
 #include <exception.h>
@@ -48,6 +49,24 @@ public:
 		inline const QString& header(const QString& key) const {
 			return headers_.at(key);
 		}
+		inline const QString& header(const QString& key, const QString& def) const {
+			auto it = headers_.find(key);
+			return (it != headers_.end() ? it->second : def);
+		}
+		template<class T> inline T header_as(const QString& key) const {
+			QVariant v(headers_.at(key));
+			if (!v.canConvert<T>())
+				throw WrongHeaderValue(key, v.value<QString>());
+			return v.value<T>();
+		}
+		template<class T> inline T header_as(const QString& key, const T& def) const {
+			auto it = headers_.find(key);
+			return (it != headers_.end() && QVariant(it->second).canConvert<T>() ?
+				qvariant_cast<T>(it->second) : def);
+		}
+
+		inline double bscale() const { return header_as<double>("BSCALE", 1.0); }
+		inline double bzero()  const { return header_as<double>("BZERO", 0.0); }
 	};
 
 	class AbstractDataUnit;

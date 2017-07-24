@@ -199,8 +199,8 @@ void OpenGLWidget::initializeGL() {
 	if (! program_->link()) throw ShaderLoadError();
 	if (! program_->bind()) throw ShaderBindError();
 	// TODO: get bzero & bscale values from FITS header
-	program_->setUniformValue("bzero", 0.5f);
-	program_->setUniformValue("bscale", 1.0f);
+	program_->setUniformValue("bzero",  static_cast<GLfloat>(fits_->header_unit().bzero()));
+	program_->setUniformValue("bscale", static_cast<GLfloat>(fits_->header_unit().bscale()));
 }
 
 void OpenGLWidget::resizeGL(int w, int h) {
