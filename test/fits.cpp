@@ -13,6 +13,7 @@ private slots:
 	void parseHeaderUnit3();
 	void parseHeaderUnit4();
 	void parseDataUnitShape();
+	void visitDataUnit1();
 };
 
 void TestFits::parseHeaderUnit1() {
@@ -50,11 +51,36 @@ void TestFits::parseHeaderUnit4() {
 	QTRY_COMPARE(page_begin, header_end);
 }
 void TestFits::parseDataUnitShape() {
-	QFile* file = new QFile(DATA_ROOT "/sombrero.fits");
+	QFile* file = new QFile(DATA_ROOT "/sombrero8.fits");
 	file->open(QIODevice::ReadOnly);
 	const FITS fits(file);
 	QTRY_COMPARE(fits.data_unit().height(), static_cast<quint64>(448));
 	QTRY_COMPARE(fits.data_unit().width (), static_cast<quint64>(800));
+}
+void TestFits::visitDataUnit1() {
+	QFile* file = new QFile(DATA_ROOT "/header_end.fits");
+	file->open(QIODevice::ReadOnly);
+	FITS fits(file);
+	struct test_fun {
+		void operator() (const FITS::DataUnit<quint8>&) const {
+			QFAIL("Wrong overloading");
+		}
+		void operator() (const FITS::DataUnit<qint16>&) const {
+		}
+		void operator() (const FITS::DataUnit<qint32>&) const {
+			QFAIL("Wrong overloading");
+		}
+		void operator() (const FITS::DataUnit<qint64>&) const {
+			QFAIL("Wrong overloading");
+		}
+		void operator() (const FITS::DataUnit<float>&) const {
+			QFAIL("Wrong overloading");
+		}
+		void operator() (const FITS::DataUnit<double>&) const {
+			QFAIL("Wrong overloading");
+		}
+	};
+	fits.data_unit().apply(test_fun{});
 }
 
 QTEST_MAIN(TestFits)

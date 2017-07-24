@@ -50,12 +50,28 @@ public:
 		}
 	};
 
+	class AbstractDataUnit;
+	template<class T> class DataUnit;
+
 	class AbstractDataUnit {
 	private:
 		const quint8* data_;
 		quint32 size_;
 		quint64 height_;
 		quint64 width_;
+
+	protected:
+		struct VisitorBase {
+			virtual ~VisitorBase() = 0;
+			virtual void visit(const DataUnit<quint8>&) = 0;
+			virtual void visit(const DataUnit<qint16>&) = 0;
+			virtual void visit(const DataUnit<qint32>&) = 0;
+			virtual void visit(const DataUnit<qint64>&) = 0;
+			virtual void visit(const DataUnit<float>&) = 0;
+			virtual void visit(const DataUnit<double>&) = 0;
+		};
+
+		virtual void do_apply(VisitorBase* visitor) const = 0;
 	public:
 		AbstractDataUnit(AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end, quint32 size, quint64 height, quint64 width);
 		virtual ~AbstractDataUnit() = 0;
@@ -64,11 +80,33 @@ public:
 		inline quint64 height() const { return height_; }
 		inline quint64 width()  const { return width_; }
 
+		template<class F> void apply(F fun) const {
+			struct Visitor: public VisitorBase {
+				F* fun_;
+
+				inline Visitor(F* fun): fun_(fun), VisitorBase() {}
+
+				virtual void visit(const DataUnit<quint8>& x) override { (*fun_)(x); };
+				virtual void visit(const DataUnit<qint16>& x) override { (*fun_)(x); };
+				virtual void visit(const DataUnit<qint32>& x) override { (*fun_)(x); };
+				virtual void visit(const DataUnit<qint64>& x) override { (*fun_)(x); };
+				virtual void visit(const DataUnit<float>& x)  override { (*fun_)(x); };
+				virtual void visit(const DataUnit<double>& x) override { (*fun_)(x); };
+			};
+
+			Visitor v{&fun};
+			do_apply(&v);
+		}
+
 		template<class F> static void bitpixToType(const QString& bitpix, F fun);
 		static AbstractDataUnit* createFromBitpix(const QString& bitpix, AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end, quint64 height, quint64 width);
 	};
 
 	template<class T> class DataUnit: public AbstractDataUnit {
+	protected:
+		virtual void do_apply(VisitorBase* visitor) const override {
+			visitor->visit(*this);
+		}
 	public:
 		inline DataUnit(AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end, quint64 height, quint64 width):
 			AbstractDataUnit(begin, end, sizeof(T), height, width) {}
