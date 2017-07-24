@@ -27,8 +27,15 @@ int main(int argc, char** argv) {
 		return 1;
 	}
 
-	MainWindow w(args[0]);
-	w.show();
+	try {
+		MainWindow w(args[0]);
+		w.show();
 
-	return app.exec();
+		return app.exec();
+	} catch (const std::exception& e) {
+		qCritical() << e.what();
+		return 1;
+	}
+
+	return 0;
 }
