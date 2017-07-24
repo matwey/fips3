@@ -36,10 +36,7 @@ OpenGLWidget::OpenGLWidget(QWidget *parent, FITS* fits):
 	pixel_transfer_options_deleter_(this),
 	pixel_transfer_options_(new QOpenGLPixelTransferOptions, pixel_transfer_options_deleter_),
 	program_deleter_(this),
-	program_(new QOpenGLShaderProgram, program_deleter_)
-	{
-	resize(800, 448);
-}
+	program_(new QOpenGLShaderProgram, program_deleter_) {}
 
 OpenGLWidget::~OpenGLWidget() {
 	makeCurrent();
@@ -206,7 +203,7 @@ void OpenGLWidget::initializeGL() {
 	program_->setUniformValue("bscale", 1.0f);
 }
 
-void OpenGLWidget::resizeGL(int w, int h){
+void OpenGLWidget::resizeGL(int w, int h) {
 	w *= devicePixelRatio();
 	h *= devicePixelRatio();
 
