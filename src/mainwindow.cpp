@@ -45,40 +45,44 @@ MainWindow::MainWindow(const QString& fits_filename): QMainWindow() {
 	menu_bar_.reset(new QMenuBar(nullptr));
 	view_menu_.reset(menu_bar_->addMenu(tr("&View")));
 
-	zoomIn_action_.reset (view_menu_->addAction(tr("Zoom &In (25%)"),  this, &MainWindow::zoomIn));
+	zoomIn_action_.reset (view_menu_->addAction(tr("Zoom &In"),  this, &MainWindow::zoomIn));
 	zoomIn_action_->setShortcut (QKeySequence::ZoomIn);
 
-	zoomOut_action_.reset(view_menu_->addAction(tr("Zoom &Out (25%)"), this, &MainWindow::zoomOut));
+	zoomOut_action_.reset(view_menu_->addAction(tr("Zoom &Out"), this, &MainWindow::zoomOut));
 	zoomOut_action_->setShortcut(QKeySequence::ZoomOut);
+
+	fitToWindow_action_.reset(view_menu_->addAction(tr("&Fit to Window"), this, &MainWindow::fitToWindow));
+	fitToWindow_action_->setShortcut(tr("Ctrl+F"));
 }
 
 void MainWindow::zoomIn() {
-	zoom(1.25);
+	zoomWidget(zoomIn_factor);
 }
 
 void MainWindow::zoomOut() {
-	zoom(0.80);
+	zoomWidget(zoomOut_factor);
 }
 
-void MainWindow::zoom(double zoom_factor) {
-	scale_factor_ *= zoom_factor;
+void MainWindow::fitToWindow() {
+	scaleWidget(size());
+}
 
-	// Resize OpenGL widget
-	auto widget_size = QSize(*fits_size_);
-	widget_size.scale(widget_size * scale_factor_, Qt::KeepAspectRatio);
-	open_gl_widget_->resize(widget_size);
+void MainWindow::zoomWidget(double zoom_factor) {
+	scaleWidget(open_gl_widget_->size() * zoom_factor);
 
 	// Keep scrolls on the same relative position
 	adjustScrollBar(scroll_area_->horizontalScrollBar(), zoom_factor);
 	adjustScrollBar(scroll_area_->verticalScrollBar(),   zoom_factor);
 }
 
+void MainWindow::scaleWidget(const QSize& size) {
+	QSize widget_size(*fits_size_);
+	widget_size.scale(size, Qt::KeepAspectRatio);
+	open_gl_widget_->resize(widget_size);
+}
+
 void MainWindow::adjustScrollBar(QScrollBar* scroll_bar, double zoom_factor) {
 	scroll_bar->setValue(
 			static_cast<int>(zoom_factor * scroll_bar->value() + ((zoom_factor - 1) * scroll_bar->pageStep()/2))
 	);
-}
-
-double MainWindow::scale_factor() {
-	return scale_factor_;
 }
