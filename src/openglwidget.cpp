@@ -1,7 +1,8 @@
 #include <QFile>
 
+#include <limits>
+
 #include <openglwidget.h>
-#include <QOpenGLFunctions_3_0>
 
 void OpenGLWidget::Exception::raise() const {
 	throw *this;
@@ -50,7 +51,8 @@ void OpenGLWidget::initializeGL() {
 	initializeOpenGLFunctions();
 
 	struct texture_loader {
-		OpenGLWidget *openGL_widget;
+		OpenGLWidget* openGL_widget;
+		GLfloat* normalizer;
 		QOpenGLTexture::TextureFormat* texture_format;
 		QOpenGLTexture::PixelFormat* pixel_format;
 		QOpenGLTexture::PixelType *pixel_type;
@@ -58,6 +60,7 @@ void OpenGLWidget::initializeGL() {
 		QString* fragment_shader_source_main_;
 
 		void operator() (const FITS::DataUnit<quint8>&) const {
+			*normalizer = static_cast<GLfloat>(std::numeric_limits<quint8>::max());
 			*texture_format = QOpenGLTexture::AlphaFormat;
 			*pixel_format = QOpenGLTexture::Alpha;
 			*pixel_type = QOpenGLTexture::UInt8;
@@ -68,6 +71,7 @@ void OpenGLWidget::initializeGL() {
 					"	gl_FragColor = vec4(vec3(physical_value), 1);\n";
 		}
 		void operator() (const FITS::DataUnit<qint16>&) const {
+			*normalizer = static_cast<GLfloat>(std::numeric_limits<qint16>::max()) - static_cast<GLfloat>(std::numeric_limits<qint16>::min());
 			*texture_format = QOpenGLTexture::LuminanceAlphaFormat;
 			*pixel_format = QOpenGLTexture::LuminanceAlpha;
 			*pixel_type = QOpenGLTexture::UInt8;
@@ -81,6 +85,7 @@ void OpenGLWidget::initializeGL() {
 					"	gl_FragColor = vec4(vec3(physical_value), 1);\n";
 		}
 		void operator() (const FITS::DataUnit<qint32>&) const {
+			*normalizer = static_cast<GLfloat>(std::numeric_limits<qint32>::max()) - static_cast<GLfloat>(std::numeric_limits<qint32>::min());
 			*texture_format = QOpenGLTexture::RGBAFormat;
 			*pixel_format = QOpenGLTexture::RGBA;
 			*pixel_type = QOpenGLTexture::UInt8;
@@ -94,6 +99,7 @@ void OpenGLWidget::initializeGL() {
 					"	gl_FragColor = vec4(vec3(physical_value), 1);\n";
 		}
 		void operator() (const FITS::DataUnit<qint64>&) const {
+			*normalizer = static_cast<GLfloat>(std::numeric_limits<qint64>::max()) - static_cast<GLfloat>(std::numeric_limits<qint64>::min());
 			*texture_format = QOpenGLTexture::RGBA16_UNorm;
 			*pixel_format = QOpenGLTexture::RGBA;
 			*pixel_type = QOpenGLTexture::UInt16;
@@ -114,6 +120,7 @@ void OpenGLWidget::initializeGL() {
 			} else {
 				// Constant from GL_ARB_texture_float extension documentation:
 				// https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_texture_float.txt
+				*normalizer = 1.0f;
 				static const quint64 alpha32f_arb = 0x8816;
 				*texture_format = static_cast<QOpenGLTexture::TextureFormat>(alpha32f_arb);
 				*pixel_format = QOpenGLTexture::Alpha;
@@ -130,16 +137,14 @@ void OpenGLWidget::initializeGL() {
 		}
 	};
 
-	qDebug() << "GL_ARB_color_buffer_float " << context()->hasExtension("GL_ARB_color_buffer_float");
-	qDebug() << "GL_ARB_texture_float " << context()->hasExtension("GL_ARB_texture_float");
-
-
+	GLfloat normalizer;
 	QOpenGLTexture::TextureFormat texture_format;
 	QOpenGLTexture::PixelFormat pixel_format;
 	QOpenGLTexture::PixelType pixel_type;
 	bool swap_bytes_enabled;
 	QString fragment_shader_source_main;
 	fits_->data_unit().apply(texture_loader{this,
+											&normalizer,
 											&texture_format,
 											&pixel_format,
 											&pixel_type,
@@ -147,7 +152,7 @@ void OpenGLWidget::initializeGL() {
 											&fragment_shader_source_main});
 
 
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glDisable(GL_DEPTH_TEST);
 
 	texture_->setMinificationFilter(QOpenGLTexture::Nearest);
@@ -181,7 +186,6 @@ void OpenGLWidget::initializeGL() {
 
 	QString fsrc =
 			"#version 110\n"
-//			"#extension GL_ARB_texture_float : require\n"
 			"varying vec2 UV;\n"
 			"uniform sampler2D texture;\n"
 			"uniform float bzero;\n"
@@ -198,8 +202,7 @@ void OpenGLWidget::initializeGL() {
 	program_->bindAttributeLocation("vertexUV",    program_vertex_uv_attribute);
 	if (! program_->link()) throw ShaderLoadError();
 	if (! program_->bind()) throw ShaderBindError();
-	// TODO: get bzero & bscale values from FITS header
-	program_->setUniformValue("bzero",  static_cast<GLfloat>(fits_->header_unit().bzero()));
+	program_->setUniformValue("bzero",  static_cast<GLfloat>(fits_->header_unit().bzero()) / normalizer);
 	program_->setUniformValue("bscale", static_cast<GLfloat>(fits_->header_unit().bscale()));
 }
 
