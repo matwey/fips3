@@ -178,8 +178,9 @@ void OpenGLWidget::initializeGL() {
 			"attribute vec2 VertexUV;\n"
 			"attribute vec3 vertexCoord;\n"
 			"varying vec2 UV;\n"
+			"uniform mat4 MVP;\n"
 			"void main(){\n"
-			"	gl_Position =  vec4(vertexCoord,1);\n"
+			"	gl_Position = MVP * vec4(vertexCoord,1);\n"
 			"	UV = VertexUV;\n"
 			"}\n";
 	if (! vshader->compileSourceCode(vsrc)) throw ShaderCompileError();
@@ -216,6 +217,10 @@ void OpenGLWidget::paintGL() {
 	program_->enableAttributeArray(program_vertex_uv_attribute);
 	program_->setAttributeBuffer(program_vertex_coord_attribute, GL_FLOAT, 0,                   3, 5 * sizeof(GLfloat));
 	program_->setAttributeBuffer(program_vertex_uv_attribute,    GL_FLOAT, 3 * sizeof(GLfloat), 2, 5 * sizeof(GLfloat));
+
+	QMatrix4x4 mvp(base_mvp_);
+	mvp.ortho(-1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f);
+	program_->setUniformValue("MVP", mvp);
 
 	texture_->bind();
 

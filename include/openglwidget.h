@@ -10,6 +10,7 @@
 #include <QOpenGLTexture>
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLWidget>
+#include <QMatrix4x4>
 
 #include <exception.h>
 
@@ -74,9 +75,10 @@ private:
 	OpenGLDeleter<QOpenGLShaderProgram> program_deleter_;
 	openGL_unique_ptr<QOpenGLShaderProgram> program_;
 	QOpenGLBuffer vbo_;
+	QMatrix4x4 base_mvp_;
+
 	static const int program_vertex_coord_attribute = 0;
 	static const int program_vertex_uv_attribute    = 1;
-
 	static constexpr GLfloat vbo_data[] = {
 			-1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
 			 1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
