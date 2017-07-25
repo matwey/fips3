@@ -43,7 +43,13 @@ MainWindow::MainWindow(const QString& fits_filename): QMainWindow() {
 	scroll_area_->setWidget(open_gl_widget_.get());
 
 	// Set menu actions
-	menu_bar_.reset(new QMenuBar(nullptr));
+	// Use common menu for all windows on Mac
+	#ifdef Q_OS_MAC
+		menu_bar_.reset(new QMenuBar(nullptr));
+	#else
+		// TODO: fix layout of menu on non-MacOS
+		menu_bar_.reset(new QMenuBar(this));
+	#endif
 	view_menu_.reset(menu_bar_->addMenu(tr("&View")));
 
 	zoomIn_action_.reset (view_menu_->addAction(tr("Zoom &In"),  this, &MainWindow::zoomIn));
