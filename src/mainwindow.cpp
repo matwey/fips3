@@ -1,6 +1,7 @@
 #include <memory>
 
 #include <QFile>
+#include <QVBoxLayout>
 
 #include <mainwindow.h>
 
@@ -46,9 +47,13 @@ MainWindow::MainWindow(const QString& fits_filename): QMainWindow() {
 	// Use common menu for all windows on Mac
 	#ifdef Q_OS_MAC
 		menu_bar_.reset(new QMenuBar(nullptr));
+		// TODO: move from if-else block to support Ubuntu Unity menu bar
+		menu_bar_->setNativeMenuBar(true);
 	#else
-		// TODO: fix layout of menu on non-MacOS
 		menu_bar_.reset(new QMenuBar(this));
+		// TODO: delete this line to support Ubuntu Unity menu bar
+		menu_bar_->setNativeMenuBar(false);
+		setMenuBar(menu_bar_.get());
 	#endif
 	view_menu_.reset(menu_bar_->addMenu(tr("&View")));
 
