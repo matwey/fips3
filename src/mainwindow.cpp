@@ -114,3 +114,8 @@ void MainWindow::adjustScrollBar(QScrollBar* scroll_bar, double zoom_factor) {
 			static_cast<int>(zoom_factor * scroll_bar->value() + ((zoom_factor - 1) * scroll_bar->pageStep()/2))
 	);
 }
+
+void MainWindow::resizeEvent(QResizeEvent *event) {
+	QMainWindow::resizeEvent(event);
+	updateActions();
+}

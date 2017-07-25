@@ -51,6 +51,8 @@ private:
 	void zoomWidget(double zoom_factor);
 	void scaleWidget(const QSize& size);
 	void adjustScrollBar(QScrollBar *scrollBar, double zoom_factor);
+protected:
+	void resizeEvent(QResizeEvent* event) override;
 public:
 	MainWindow(const QString& fits_filename);
 };
