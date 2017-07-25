@@ -46,6 +46,8 @@ private:
 	void zoomOut();
 	void fitToWindow();
 
+	void updateActions();
+
 	void zoomWidget(double zoom_factor);
 	void scaleWidget(const QSize& size);
 	void adjustScrollBar(QScrollBar *scrollBar, double zoom_factor);

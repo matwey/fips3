@@ -42,6 +42,7 @@ MainWindow::MainWindow(const QString& fits_filename): QMainWindow() {
 	open_gl_widget_->resize(size());
 	scroll_area_->setWidget(open_gl_widget_.get());
 
+	// Set menu actions
 	menu_bar_.reset(new QMenuBar(nullptr));
 	view_menu_.reset(menu_bar_->addMenu(tr("&View")));
 
@@ -53,6 +54,8 @@ MainWindow::MainWindow(const QString& fits_filename): QMainWindow() {
 
 	fitToWindow_action_.reset(view_menu_->addAction(tr("&Fit to Window"), this, &MainWindow::fitToWindow));
 	fitToWindow_action_->setShortcut(tr("Ctrl+F"));
+
+	updateActions();
 }
 
 void MainWindow::zoomIn() {
@@ -67,6 +70,23 @@ void MainWindow::fitToWindow() {
 	scaleWidget(size());
 }
 
+void MainWindow::updateActions() {
+	QSize window_size(size());
+	QSize widget_size(open_gl_widget_->size());
+
+	// Disable "Fit to Window" action if it will do nothing
+	fitToWindow_action_->setEnabled(
+			window_size.width()  != widget_size.width() &&
+			window_size.height() != widget_size.height()
+	);
+
+	// Disable "Zoom Out" action if image is too small to zoomed in after zoomed out
+	auto min_widget_side_after_zoomOut = static_cast<int>(std::min(widget_size.width(), widget_size.height()) * zoomOut_factor);
+	zoomOut_action_->setEnabled(
+		static_cast<int>(min_widget_side_after_zoomOut * zoomIn_factor) > min_widget_side_after_zoomOut
+	);
+}
+
 void MainWindow::zoomWidget(double zoom_factor) {
 	scaleWidget(open_gl_widget_->size() * zoom_factor);
 
@@ -79,6 +99,8 @@ void MainWindow::scaleWidget(const QSize& size) {
 	QSize widget_size(*fits_size_);
 	widget_size.scale(size, Qt::KeepAspectRatio);
 	open_gl_widget_->resize(widget_size);
+
+	updateActions();
 }
 
 void MainWindow::adjustScrollBar(QScrollBar* scroll_bar, double zoom_factor) {
