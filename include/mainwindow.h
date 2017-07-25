@@ -2,6 +2,7 @@
 #define _MAINWINDOW_H_
 
 #include <QMainWindow>
+#include <QScrollArea>
 
 #include <memory>
 
@@ -26,6 +27,7 @@ public:
 	};
 private:
 	std::unique_ptr<OpenGLWidget> open_gl_widget_;
+	std::unique_ptr<QScrollArea>  scroll_area;
 public:
 	MainWindow(const QString& fits_filename);
 };
