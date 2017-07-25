@@ -207,10 +207,6 @@ void OpenGLWidget::initializeGL() {
 }
 
 void OpenGLWidget::resizeGL(int w, int h) {
-	w *= devicePixelRatio();
-	h *= devicePixelRatio();
-
-	glViewport(0, 0, w, h);
 }
 
 void OpenGLWidget::paintGL() {
