@@ -30,9 +30,9 @@ MainWindow::MainWindow(const QString& fits_filename): QMainWindow() {
 	std::unique_ptr<FITS> fits{new FITS(file.release())};
 	resize(fits->data_unit().width(), fits->data_unit().height());
 
-	scroll_area.reset(new QScrollArea(this));
-	scroll_area->resize(size());
-	open_gl_widget_.reset(new OpenGLWidget(scroll_area.get(), fits.release()));
-	open_gl_widget_->resize(size() * 2);
-	scroll_area->setWidget(open_gl_widget_.get());
+	scroll_area_.reset(new QScrollArea(this));
+	scroll_area_->resize(size());
+	open_gl_widget_.reset(new OpenGLWidget(scroll_area_.get(), fits.release()));
+	open_gl_widget_->resize(size());
+	scroll_area_->setWidget(open_gl_widget_.get());
 }

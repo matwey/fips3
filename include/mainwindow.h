@@ -26,8 +26,8 @@ public:
 		virtual QException* clone() const override;
 	};
 private:
+	std::unique_ptr<QScrollArea>  scroll_area_;
 	std::unique_ptr<OpenGLWidget> open_gl_widget_;
-	std::unique_ptr<QScrollArea>  scroll_area;
 public:
 	MainWindow(const QString& fits_filename);
 };
