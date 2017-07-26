@@ -61,10 +61,15 @@ public:
 	OpenGLWidget(QWidget *parent, FITS* fits);
 	~OpenGLWidget();
 
+	void setViewport(const QRect& viewport);
+	inline const QRect& viewport() const { return viewport_; }
+	inline QSize fits_size() const { return fits_->data_unit().size(); }
+
 protected:
 	void initializeGL() override;
 	void resizeGL(int w, int h) override;
 	void paintGL() override;
+	QSize sizeHint() const override;
 
 private:
 	std::unique_ptr<FITS> fits_;
@@ -87,6 +92,8 @@ private:
 			 1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
 			 1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
 	};
+
+	QRect viewport_;
 };
 
 

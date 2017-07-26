@@ -3,13 +3,11 @@
 
 #include <QMainWindow>
 #include <QMenuBar>
-#include <QScrollArea>
-#include <QScrollBar>
 
 #include <memory>
 
 #include <exception.h>
-#include <openglwidget.h>
+#include <scrollarea.h>
 
 class MainWindow:
 	public QMainWindow {
@@ -37,8 +35,7 @@ private:
 	std::unique_ptr<QAction> zoomOut_action_;
 	std::unique_ptr<QAction> fitToWindow_action_;
 
-	std::unique_ptr<QScrollArea>  scroll_area_;
-	std::unique_ptr<OpenGLWidget> open_gl_widget_;
+	std::unique_ptr<ScrollArea>  scroll_area_;
 
 	std::unique_ptr<QSize> fits_size_;
 
@@ -49,7 +46,7 @@ private:
 	void updateActions();
 
 	void zoomWidget(double zoom_factor);
-	void scaleWidget(const QSize& size);
+	void scaleWidget(const QRect& viewport);
 	void adjustScrollBar(QScrollBar *scrollBar, double zoom_factor);
 protected:
 	void resizeEvent(QResizeEvent* event) override;

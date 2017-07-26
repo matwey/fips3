@@ -37,11 +37,8 @@ MainWindow::MainWindow(const QString& fits_filename): QMainWindow() {
 	resize(*fits_size_);
 
 	// Create scroll area and put there open_gl_widget
-	scroll_area_.reset(new QScrollArea(this));
+	scroll_area_.reset(new ScrollArea(this, fits.release()));
 	setCentralWidget(scroll_area_.get());
-	open_gl_widget_.reset(new OpenGLWidget(scroll_area_.get(), fits.release()));
-	open_gl_widget_->resize(size());
-	scroll_area_->setWidget(open_gl_widget_.get());
 
 	// Set menu actions
 	// Use common menu for all windows on Mac
@@ -74,46 +71,45 @@ void MainWindow::zoomOut() {
 }
 
 void MainWindow::fitToWindow() {
-	scaleWidget(scroll_area_->size());
+//	scaleWidget(scroll_area_->size());
 }
 
 void MainWindow::updateActions() {
-	QSize window_size(scroll_area_->viewport()->size());
-	QSize widget_size(open_gl_widget_->size());
-
-	// Disable "Fit to Window" action if it will do nothing
-	fitToWindow_action_->setEnabled(
-			window_size.width()  != widget_size.width() &&
-			window_size.height() != widget_size.height()
-	);
-
-	// Disable "Zoom Out" action if image is too small to zoomed in after zoomed out
-	auto min_widget_side_after_zoomOut = static_cast<int>(std::min(widget_size.width(), widget_size.height()) * zoomOut_factor);
-	zoomOut_action_->setEnabled(
-		static_cast<int>(min_widget_side_after_zoomOut * zoomIn_factor) > min_widget_side_after_zoomOut
-	);
+//	QSize window_size(scroll_area_->viewport()->size());
+//	QSize widget_size(open_gl_widget_->size());
+//
+//	// Disable "Fit to Window" action if it will do nothing
+//	fitToWindow_action_->setEnabled(
+//			window_size.width()  != widget_size.width() &&
+//			window_size.height() != widget_size.height()
+//	);
+//
+//	// Disable "Zoom Out" action if image is too small to zoomed in after zoomed out
+//	auto min_widget_side_after_zoomOut = static_cast<int>(std::min(widget_size.width(), widget_size.height()) * zoomOut_factor);
+//	zoomOut_action_->setEnabled(
+//		static_cast<int>(min_widget_side_after_zoomOut * zoomIn_factor) > min_widget_side_after_zoomOut
+//	);
 }
 
 void MainWindow::zoomWidget(double zoom_factor) {
-	scaleWidget(open_gl_widget_->size() * zoom_factor);
-
-	// Keep scrolls on the same relative position
-	adjustScrollBar(scroll_area_->horizontalScrollBar(), zoom_factor);
-	adjustScrollBar(scroll_area_->verticalScrollBar(),   zoom_factor);
+	const auto old_viewport = scroll_area_->viewportViewport();
+	const auto new_viewport_size = scroll_area_->viewport()->size().scaled(old_viewport.size() / zoom_factor, Qt::KeepAspectRatio);
+	const auto new_viewport_top_left = old_viewport.topLeft()
+						  + QPoint((old_viewport.width() - new_viewport_size.width()) / 2, (old_viewport.height() - new_viewport_size.height()) / 2);
+	scaleWidget(QRect(new_viewport_top_left, new_viewport_size));
 }
 
-void MainWindow::scaleWidget(const QSize& size) {
-	QSize widget_size(*fits_size_);
-	widget_size.scale(size, Qt::KeepAspectRatio);
-	open_gl_widget_->resize(widget_size);
-
+void MainWindow::scaleWidget(const QRect& viewport) {
+	scroll_area_->setViewportViewport(viewport);
+//	qDebug() << (scroll_area_->viewport()->isVisible() && scroll_area_->viewport()->updatesEnabled());
+//	scroll_area_->viewport()->update();
 	updateActions();
 }
 
 void MainWindow::adjustScrollBar(QScrollBar* scroll_bar, double zoom_factor) {
-	scroll_bar->setValue(
-			static_cast<int>(zoom_factor * scroll_bar->value() + ((zoom_factor - 1) * scroll_bar->pageStep()/2))
-	);
+//	scroll_bar->setValue(
+//			static_cast<int>(zoom_factor * scroll_bar->value() + ((zoom_factor - 1) * scroll_bar->pageStep()/2))
+//	);
 }
 
 void MainWindow::resizeEvent(QResizeEvent *event) {

@@ -1,6 +1,5 @@
 #include <QFile>
-
-#include <limits>
+#include <QPoint>
 
 #include <openglwidget.h>
 
@@ -37,7 +36,9 @@ OpenGLWidget::OpenGLWidget(QWidget *parent, FITS* fits):
 	pixel_transfer_options_deleter_(this),
 	pixel_transfer_options_(new QOpenGLPixelTransferOptions, pixel_transfer_options_deleter_),
 	program_deleter_(this),
-	program_(new QOpenGLShaderProgram, program_deleter_) {}
+	program_(new QOpenGLShaderProgram, program_deleter_),
+	viewport_(QPoint(0, 0), fits_->data_unit().size()) {
+}
 
 OpenGLWidget::~OpenGLWidget() {
 	makeCurrent();
@@ -218,13 +219,27 @@ void OpenGLWidget::paintGL() {
 	program_->setAttributeBuffer(program_vertex_coord_attribute, GL_FLOAT, 0,                   3, 5 * sizeof(GLfloat));
 	program_->setAttributeBuffer(program_vertex_uv_attribute,    GL_FLOAT, 3 * sizeof(GLfloat), 2, 5 * sizeof(GLfloat));
 
+	const auto left  = viewport_.left()  * 2.0f / (fits_size().width() - 1.0f) - 1.0f;
+	const auto right = viewport_.right() * 2.0f / (fits_size().width() - 1.0f) - 1.0f;
+	const auto bottom = 1 - viewport_.bottom() * 2.0f / (fits_size().height() - 1.0f);
+	const auto top    = 1 - viewport_.top()    * 2.0f / (fits_size().height() - 1.0f);
+
 	QMatrix4x4 mvp(base_mvp_);
-	mvp.ortho(-1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f);
+	mvp.ortho(left, right, bottom, top, -1.0f, 1.0f);
 	program_->setUniformValue("MVP", mvp);
 
 	texture_->bind();
 
 	glDrawArrays(GL_TRIANGLES, 0, 6);
+}
+
+QSize OpenGLWidget::sizeHint() const {
+	return fits_size();
+}
+
+void OpenGLWidget::setViewport(const QRect& viewport) {
+	viewport_ = viewport;
+	update();
 }
 
 constexpr GLfloat OpenGLWidget::vbo_data[];
