@@ -47,12 +47,8 @@ MainWindow::MainWindow(const QString& fits_filename): QMainWindow() {
 	// Use common menu for all windows on Mac
 	#ifdef Q_OS_MAC
 		menu_bar_.reset(new QMenuBar(nullptr));
-		// TODO: move from if-else block to support Ubuntu Unity menu bar
-		menu_bar_->setNativeMenuBar(true);
 	#else
 		menu_bar_.reset(new QMenuBar(this));
-		// TODO: delete this line to support Ubuntu Unity menu bar
-		menu_bar_->setNativeMenuBar(false);
 		setMenuBar(menu_bar_.get());
 	#endif
 	view_menu_.reset(menu_bar_->addMenu(tr("&View")));
@@ -82,7 +78,7 @@ void MainWindow::fitToWindow() {
 }
 
 void MainWindow::updateActions() {
-	QSize window_size(scroll_area_->size());
+	QSize window_size(scroll_area_->viewport()->size());
 	QSize widget_size(open_gl_widget_->size());
 
 	// Disable "Fit to Window" action if it will do nothing
