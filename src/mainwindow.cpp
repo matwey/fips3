@@ -78,11 +78,11 @@ void MainWindow::zoomOut() {
 }
 
 void MainWindow::fitToWindow() {
-	scaleWidget(size());
+	scaleWidget(scroll_area_->size());
 }
 
 void MainWindow::updateActions() {
-	QSize window_size(size());
+	QSize window_size(scroll_area_->size());
 	QSize widget_size(open_gl_widget_->size());
 
 	// Disable "Fit to Window" action if it will do nothing
