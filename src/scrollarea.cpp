@@ -11,19 +11,19 @@ ScrollArea::ScrollArea(QWidget *parent, FITS *fits):
 
 void ScrollArea::scrollContentsBy(int dx, int dy) {
 	QAbstractScrollArea::scrollContentsBy(dx, dy);
-	setViewportViewport( viewportViewport().translated(dx, dy) );
+	setViewportViewrect(viewportViewrect().translated(dx, dy));
 }
 
-void ScrollArea::setViewportViewport(const QRect& viewport) {
-	open_gl_widget_->setViewport(viewport);
-	updateBars(viewport);
+void ScrollArea::setViewportViewrect(const QRect &viewrect) {
+	open_gl_widget_->setViewrect(viewrect);
+	updateBars(viewrect);
 }
 
-void ScrollArea::updateBars(const QRect &viewport) {
-	verticalScrollBar()->setPageStep(viewport.height());
-	horizontalScrollBar()->setPageStep(viewport.width());
-	verticalScrollBar()->setRange(0, open_gl_widget_->fits_size().height() - viewport.height());
-	horizontalScrollBar()->setRange(0, open_gl_widget_->fits_size().width() - viewport.width());
+void ScrollArea::updateBars(const QRect &viewrect) {
+	verticalScrollBar()->setPageStep(viewrect.height());
+	horizontalScrollBar()->setPageStep(viewrect.width());
+	verticalScrollBar()->setRange(0, open_gl_widget_->fits_size().height() - viewrect.height());
+	horizontalScrollBar()->setRange(0, open_gl_widget_->fits_size().width() - viewrect.width());
 //	verticalScrollBar()->setValue(viewport.top());
 //	horizontalScrollBar()->setValue(viewport.left());
 }

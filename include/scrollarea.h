@@ -11,12 +11,12 @@ protected:
 	virtual void scrollContentsBy(int dx, int dy) override;
 public:
 	ScrollArea(QWidget *parent, FITS* fits);
-	void setViewportViewport(const QRect& viewport);
-	inline const QRect& viewportViewport() const { return open_gl_widget_->viewport(); }
+	void setViewportViewrect(const QRect &viewrect);
+	inline const QRect& viewportViewrect() const { return open_gl_widget_->viewrect(); }
 private:
 	std::unique_ptr<OpenGLWidget> open_gl_widget_;
 
-	void updateBars(const QRect& viewport);
+	void updateBars(const QRect& viewrect);
 };
 
 #endif //_SCROLLAREA_H

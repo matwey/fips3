@@ -37,7 +37,7 @@ OpenGLWidget::OpenGLWidget(QWidget *parent, FITS* fits):
 	pixel_transfer_options_(new QOpenGLPixelTransferOptions, pixel_transfer_options_deleter_),
 	program_deleter_(this),
 	program_(new QOpenGLShaderProgram, program_deleter_),
-	viewport_(QPoint(0, 0), fits_->data_unit().size()) {
+	viewrect_(QPoint(0, 0), fits_->data_unit().size()) {
 }
 
 OpenGLWidget::~OpenGLWidget() {
@@ -206,6 +206,10 @@ void OpenGLWidget::initializeGL() {
 	if (! program_->bind()) throw ShaderBindError();
 	program_->setUniformValue("bzero",  static_cast<GLfloat>(fits_->header_unit().bzero()) / normalizer);
 	program_->setUniformValue("bscale", static_cast<GLfloat>(fits_->header_unit().bscale()));
+	program_->enableAttributeArray(program_vertex_coord_attribute);
+	program_->enableAttributeArray(program_vertex_uv_attribute);
+	program_->setAttributeBuffer(program_vertex_coord_attribute, GL_FLOAT, 0,                   3, 5 * sizeof(GLfloat));
+	program_->setAttributeBuffer(program_vertex_uv_attribute,    GL_FLOAT, 3 * sizeof(GLfloat), 2, 5 * sizeof(GLfloat));
 }
 
 void OpenGLWidget::resizeGL(int w, int h) {
@@ -214,16 +218,10 @@ void OpenGLWidget::resizeGL(int w, int h) {
 void OpenGLWidget::paintGL() {
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	program_->enableAttributeArray(program_vertex_coord_attribute);
-	program_->enableAttributeArray(program_vertex_uv_attribute);
-	program_->setAttributeBuffer(program_vertex_coord_attribute, GL_FLOAT, 0,                   3, 5 * sizeof(GLfloat));
-	program_->setAttributeBuffer(program_vertex_uv_attribute,    GL_FLOAT, 3 * sizeof(GLfloat), 2, 5 * sizeof(GLfloat));
-
-	const auto left  = viewport_.left()  * 2.0f / (fits_size().width() - 1.0f) - 1.0f;
-	const auto right = viewport_.right() * 2.0f / (fits_size().width() - 1.0f) - 1.0f;
-	const auto bottom = 1 - viewport_.bottom() * 2.0f / (fits_size().height() - 1.0f);
-	const auto top    = 1 - viewport_.top()    * 2.0f / (fits_size().height() - 1.0f);
-
+	const auto left  = viewrect_.left()  * 2.0f / (fits_size().width() - 1.0f) - 1.0f;
+	const auto right = viewrect_.right() * 2.0f / (fits_size().width() - 1.0f) - 1.0f;
+	const auto bottom = 1 - viewrect_.bottom() * 2.0f / (fits_size().height() - 1.0f);
+	const auto top    = 1 - viewrect_.top()    * 2.0f / (fits_size().height() - 1.0f);
 	QMatrix4x4 mvp(base_mvp_);
 	mvp.ortho(left, right, bottom, top, -1.0f, 1.0f);
 	program_->setUniformValue("MVP", mvp);
@@ -237,8 +235,8 @@ QSize OpenGLWidget::sizeHint() const {
 	return fits_size();
 }
 
-void OpenGLWidget::setViewport(const QRect& viewport) {
-	viewport_ = viewport;
+void OpenGLWidget::setViewrect(const QRect &viewrect) {
+	viewrect_ = viewrect;
 	update();
 }
 

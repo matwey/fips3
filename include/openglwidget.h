@@ -59,10 +59,10 @@ public:
 
 public:
 	OpenGLWidget(QWidget *parent, FITS* fits);
-	~OpenGLWidget();
+	~OpenGLWidget() override;
 
-	void setViewport(const QRect& viewport);
-	inline const QRect& viewport() const { return viewport_; }
+	void setViewrect(const QRect &viewrect);
+	inline const QRect& viewrect() const { return viewrect_; }
 	inline QSize fits_size() const { return fits_->data_unit().size(); }
 
 protected:
@@ -93,7 +93,7 @@ private:
 			 1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
 	};
 
-	QRect viewport_;
+	QRect viewrect_;
 };
 
 

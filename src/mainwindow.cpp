@@ -92,15 +92,15 @@ void MainWindow::updateActions() {
 }
 
 void MainWindow::zoomWidget(double zoom_factor) {
-	const auto old_viewport = scroll_area_->viewportViewport();
+	const auto old_viewport = scroll_area_->viewportViewrect();
 	const auto new_viewport_size = scroll_area_->viewport()->size().scaled(old_viewport.size() / zoom_factor, Qt::KeepAspectRatio);
 	const auto new_viewport_top_left = old_viewport.topLeft()
 						  + QPoint((old_viewport.width() - new_viewport_size.width()) / 2, (old_viewport.height() - new_viewport_size.height()) / 2);
 	scaleWidget(QRect(new_viewport_top_left, new_viewport_size));
 }
 
-void MainWindow::scaleWidget(const QRect& viewport) {
-	scroll_area_->setViewportViewport(viewport);
+void MainWindow::scaleWidget(const QRect& viewrect) {
+	scroll_area_->setViewportViewrect(viewrect);
 //	qDebug() << (scroll_area_->viewport()->isVisible() && scroll_area_->viewport()->updatesEnabled());
 //	scroll_area_->viewport()->update();
 	updateActions();

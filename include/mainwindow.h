@@ -46,7 +46,7 @@ private:
 	void updateActions();
 
 	void zoomWidget(double zoom_factor);
-	void scaleWidget(const QRect& viewport);
+	void scaleWidget(const QRect& viewrect);
 	void adjustScrollBar(QScrollBar *scrollBar, double zoom_factor);
 protected:
 	void resizeEvent(QResizeEvent* event) override;
