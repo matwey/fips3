@@ -1,3 +1,4 @@
+#include <QResizeEvent>
 #include <QScrollBar>
 
 #include <scrollzoomarea.h>
@@ -39,4 +40,14 @@ void ScrollZoomArea::updateBars(const QRectF &viewrect) {
 	verticalScrollBar()  ->setRange(0, open_gl_widget_->fits_size().height() - open_gl_widget_->pixelViewrect().height());
 	horizontalScrollBar()->setValue(open_gl_widget_->pixelViewrect().left());
 	verticalScrollBar()  ->setValue(open_gl_widget_->pixelViewrect().top());
+}
+
+void ScrollZoomArea::resizeEvent(QResizeEvent* event) {
+	QAbstractScrollArea::resizeEvent(event);
+
+	QRect new_pixel_viewrect(open_gl_widget_->pixelViewrect());
+	new_pixel_viewrect.setSize(event->size());
+	open_gl_widget_->resize(event->size());
+	open_gl_widget_->setPixelViewrect(new_pixel_viewrect);
+	updateBars(open_gl_widget_->viewrect());
 }

@@ -34,6 +34,7 @@ private:
 
 	void updateBars(const QRectF &viewrect);
 	void translatePixelViewport(int x, int y);
+	void resizeEvent(QResizeEvent* event) override;
 };
 
 #endif //_SCROLLZOOMAREA_H

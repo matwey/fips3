@@ -245,11 +245,15 @@ void OpenGLWidget::setViewrect(const QRectF &viewrect) {
 }
 
 void OpenGLWidget::setPixelViewrect(const QRect& pixel_viewrect) {
+	pixel_viewrect_ = pixel_viewrect;
+
 	const auto left   = static_cast<double>(pixel_viewrect.left()  ) / fits_size().width();
 	const auto top    = static_cast<double>(pixel_viewrect.top()   ) / fits_size().height();
 	const auto width  = static_cast<double>(pixel_viewrect.width() ) / fits_size().width();
 	const auto height = static_cast<double>(pixel_viewrect.height()) / fits_size().height();
-	setViewrect({left, top, width, height});
+	viewrect_ = {left, top, width, height};
+
+	update();
 }
 
 constexpr GLfloat OpenGLWidget::vbo_data[];
