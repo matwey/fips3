@@ -37,7 +37,7 @@ OpenGLWidget::OpenGLWidget(QWidget *parent, FITS* fits):
 	pixel_transfer_options_(new QOpenGLPixelTransferOptions, pixel_transfer_options_deleter_),
 	program_deleter_(this),
 	program_(new QOpenGLShaderProgram, program_deleter_),
-	viewrect_(QPoint(0, 0), fits_->data_unit().size()) {
+	viewrect_(0, 0, 1, 1) {
 }
 
 OpenGLWidget::~OpenGLWidget() {
@@ -208,8 +208,8 @@ void OpenGLWidget::initializeGL() {
 	program_->setUniformValue("bscale", static_cast<GLfloat>(fits_->header_unit().bscale()));
 	program_->enableAttributeArray(program_vertex_coord_attribute);
 	program_->enableAttributeArray(program_vertex_uv_attribute);
-	program_->setAttributeBuffer(program_vertex_coord_attribute, GL_FLOAT, 0,                   3, 5 * sizeof(GLfloat));
-	program_->setAttributeBuffer(program_vertex_uv_attribute,    GL_FLOAT, 3 * sizeof(GLfloat), 2, 5 * sizeof(GLfloat));
+	program_->setAttributeBuffer(program_vertex_coord_attribute, GL_FLOAT, 0,                   3, 3 * sizeof(GLfloat));
+	program_->setAttributeBuffer(program_vertex_uv_attribute,    GL_FLOAT, 0 * sizeof(GLfloat), 2, 3 * sizeof(GLfloat));
 }
 
 void OpenGLWidget::resizeGL(int w, int h) {
@@ -218,12 +218,9 @@ void OpenGLWidget::resizeGL(int w, int h) {
 void OpenGLWidget::paintGL() {
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	const auto left  = viewrect_.left()  * 2.0f / (fits_size().width() - 1.0f) - 1.0f;
-	const auto right = viewrect_.right() * 2.0f / (fits_size().width() - 1.0f) - 1.0f;
-	const auto bottom = 1 - viewrect_.bottom() * 2.0f / (fits_size().height() - 1.0f);
-	const auto top    = 1 - viewrect_.top()    * 2.0f / (fits_size().height() - 1.0f);
 	QMatrix4x4 mvp(base_mvp_);
-	mvp.ortho(left, right, bottom, top, -1.0f, 1.0f);
+	// QT and OpenGL have different coordinate systems, we should swap top and bottom
+	mvp.ortho(viewrect_.left(), viewrect_.right(), viewrect_.top(), viewrect_.bottom(), -1.0f, 1.0f);
 	program_->setUniformValue("MVP", mvp);
 
 	texture_->bind();
@@ -235,8 +232,15 @@ QSize OpenGLWidget::sizeHint() const {
 	return fits_size();
 }
 
-void OpenGLWidget::setViewrect(const QRect &viewrect) {
+void OpenGLWidget::setViewrect(const QRectF &viewrect) {
 	viewrect_ = viewrect;
+
+	const int left =   qRound(viewrect_.left()   * fits_size().width());
+	const int top  =   qRound(viewrect_.top()    * fits_size().height());
+	const int width =  qRound(viewrect_.width()  * fits_size().width());
+	const int height = qRound(viewrect_.height() * fits_size().height());
+	pixel_viewrect_ = {left, top, width, height};
+
 	update();
 }
 

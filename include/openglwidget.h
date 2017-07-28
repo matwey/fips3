@@ -61,8 +61,9 @@ public:
 	OpenGLWidget(QWidget *parent, FITS* fits);
 	~OpenGLWidget() override;
 
-	void setViewrect(const QRect &viewrect);
-	inline const QRect& viewrect() const { return viewrect_; }
+	void setViewrect(const QRectF &viewrect);
+	inline const QRectF& viewrect() const { return viewrect_; }
+	inline const QRect& pixelViewrect() const { return pixel_viewrect_; }
 	inline QSize fits_size() const { return fits_->data_unit().size(); }
 
 protected:
@@ -84,16 +85,19 @@ private:
 
 	static const int program_vertex_coord_attribute = 0;
 	static const int program_vertex_uv_attribute    = 1;
+	// Square which is made from two triangles. Each line is xyz coordinates of triangle vertex (0-2 - first triangle,
+	// 3-5 - second triangle). First and seconds columns are used as corresponding UV-coordinates.
 	static constexpr GLfloat vbo_data[] = {
-			-1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-			 1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-			-1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
-			-1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
-			 1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-			 1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
+			0.0f, 0.0f, 0.0f,
+			1.0f, 0.0f, 0.0f,
+			0.0f, 1.0f, 0.0f,
+			0.0f, 1.0f, 0.0f,
+			1.0f, 0.0f, 0.0f,
+			1.0f, 1.0f, 0.0f,
 	};
 
-	QRect viewrect_;
+	QRectF viewrect_;
+	QRect pixel_viewrect_;
 };
 
 

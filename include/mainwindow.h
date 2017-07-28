@@ -7,7 +7,7 @@
 #include <memory>
 
 #include <exception.h>
-#include <scrollarea.h>
+#include <scrollzoomarea.h>
 
 class MainWindow:
 	public QMainWindow {
@@ -22,8 +22,8 @@ public:
 	public:
 		FileOpenError(const QString& reason);
 
-		virtual void raise() const override;
-		virtual QException* clone() const override;
+		void raise() const override;
+		QException* clone() const override;
 	};
 private:
 	static constexpr double zoomIn_factor = 1.25;
@@ -35,7 +35,7 @@ private:
 	std::unique_ptr<QAction> zoomOut_action_;
 	std::unique_ptr<QAction> fitToWindow_action_;
 
-	std::unique_ptr<ScrollArea>  scroll_area_;
+	std::unique_ptr<ScrollZoomArea>  scroll_zoom_area_;
 
 	std::unique_ptr<QSize> fits_size_;
 
@@ -44,10 +44,6 @@ private:
 	void fitToWindow();
 
 	void updateActions();
-
-	void zoomWidget(double zoom_factor);
-	void scaleWidget(const QRect& viewrect);
-	void adjustScrollBar(QScrollBar *scrollBar, double zoom_factor);
 protected:
 	void resizeEvent(QResizeEvent* event) override;
 public:
