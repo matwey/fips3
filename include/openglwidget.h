@@ -66,6 +66,7 @@ public:
 	void setPixelViewrect(const QRect& pixel_viewrect);
 	inline const QRect& pixelViewrect() const { return pixel_viewrect_; }
 	inline QSize fits_size() const { return fits_->data_unit().size(); }
+	QRect viewrectToPixelViewrect (const QRectF& viewrect) const;
 
 protected:
 	void initializeGL() override;
@@ -99,6 +100,9 @@ private:
 
 	QRectF viewrect_;
 	QRect pixel_viewrect_;
+
+	// Returns true if viewrect has been corrected
+	bool correct_viewrect();
 };
 
 

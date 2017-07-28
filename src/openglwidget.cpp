@@ -37,7 +37,8 @@ OpenGLWidget::OpenGLWidget(QWidget *parent, FITS* fits):
 	pixel_transfer_options_(new QOpenGLPixelTransferOptions, pixel_transfer_options_deleter_),
 	program_deleter_(this),
 	program_(new QOpenGLShaderProgram, program_deleter_),
-	viewrect_(0, 0, 1, 1) {
+	viewrect_(0, 0, 1, 1),
+	pixel_viewrect_(QPoint(0, 0), fits_size()) {
 }
 
 OpenGLWidget::~OpenGLWidget() {
@@ -234,26 +235,61 @@ QSize OpenGLWidget::sizeHint() const {
 
 void OpenGLWidget::setViewrect(const QRectF &viewrect) {
 	viewrect_ = viewrect;
-
-	const int left =   qRound(viewrect_.left()   * fits_size().width());
-	const int top  =   qRound(viewrect_.top()    * fits_size().height());
-	const int width =  qRound(viewrect_.width()  * fits_size().width());
-	const int height = qRound(viewrect_.height() * fits_size().height());
-	pixel_viewrect_ = {left, top, width, height};
-
+	correct_viewrect();
+	pixel_viewrect_ = viewrectToPixelViewrect(viewrect_);
 	update();
+}
+
+QRect OpenGLWidget::viewrectToPixelViewrect(const QRectF& viewrect) const {
+	const int left =   qRound(viewrect.left()   * (fits_size().width()  - 1));
+	const int top  =   qRound(viewrect.top()    * (fits_size().height() - 1));
+	const int width =  qRound(viewrect.width()  * fits_size().width());
+	const int height = qRound(viewrect.height() * fits_size().height());
+	return {left, top, width, height};
 }
 
 void OpenGLWidget::setPixelViewrect(const QRect& pixel_viewrect) {
 	pixel_viewrect_ = pixel_viewrect;
 
-	const auto left   = static_cast<double>(pixel_viewrect.left()  ) / fits_size().width();
-	const auto top    = static_cast<double>(pixel_viewrect.top()   ) / fits_size().height();
+	const auto left   = static_cast<double>(pixel_viewrect.left()  ) / (fits_size().width()  - 1);
+	const auto top    = static_cast<double>(pixel_viewrect.top()   ) / (fits_size().height() - 1);
 	const auto width  = static_cast<double>(pixel_viewrect.width() ) / fits_size().width();
 	const auto height = static_cast<double>(pixel_viewrect.height()) / fits_size().height();
 	viewrect_ = {left, top, width, height};
+	if (correct_viewrect()){
+		pixel_viewrect_ = viewrectToPixelViewrect(viewrect_);
+	}
 
 	update();
+}
+
+bool OpenGLWidget::correct_viewrect() {
+	auto viewrect = viewrect_;
+	if (viewrect_.left() < 0) {
+		viewrect_.moveLeft(0);
+
+	}
+	if (viewrect.top() < 0 ) {
+		viewrect.moveTop(0);
+	}
+	if (viewrect.right() > 1) {
+		viewrect.moveRight(1);
+	}
+	if (viewrect.bottom() > 1) {
+		viewrect.moveBottom(1);
+	}
+	if (viewrect.size().width() > 1) {
+		viewrect.moveCenter({0.5, viewrect.center().y()});
+	}
+	if (viewrect.size().height() > 1) {
+		viewrect.moveCenter({viewrect.center().x(), 0.5});
+	}
+
+	if ( viewrect != viewrect_ ){
+		viewrect_ = viewrect;
+		return true;
+	}
+	return false;
 }
 
 constexpr GLfloat OpenGLWidget::vbo_data[];
