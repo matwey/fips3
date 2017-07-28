@@ -20,16 +20,20 @@ struct ZoomParam {
 };
 
 class ScrollZoomArea: public QAbstractScrollArea {
-protected:
-	void scrollContentsBy(int dx, int dy) override;
+	Q_OBJECT
 public:
 	ScrollZoomArea(QWidget *parent, FITS* fits);
+
 	void zoomViewport(double zoom_factor);
 	void zoomViewport(const ZoomParam& zoom);
+private slots:
+	inline void translatePixelViewportX(int x) { translatePixelViewport(x, open_gl_widget_->pixelViewrect().top());  }
+	inline void translatePixelViewportY(int y) { translatePixelViewport(open_gl_widget_->pixelViewrect().left(), y); }
 private:
 	std::unique_ptr<OpenGLWidget> open_gl_widget_;
 
 	void updateBars(const QRectF &viewrect);
+	void translatePixelViewport(int x, int y);
 };
 
 #endif //_SCROLLZOOMAREA_H

@@ -5,11 +5,8 @@
 ScrollZoomArea::ScrollZoomArea(QWidget *parent, FITS *fits):
 		QAbstractScrollArea(parent),
 		open_gl_widget_(new OpenGLWidget(viewport(), fits)) {
-}
-
-void ScrollZoomArea::scrollContentsBy(int dx, int dy) {
-	QAbstractScrollArea::scrollContentsBy(dx, dy);
-//	open_gl_widget_->setViewrect(open_gl_widget_->viewrect().translated(dx, dy));
+	connect(horizontalScrollBar(), SIGNAL(valueChanged(int)), this, SLOT(translatePixelViewportX(int)));
+	connect(verticalScrollBar(),   SIGNAL(valueChanged(int)), this, SLOT(translatePixelViewportY(int)));
 }
 
 void ScrollZoomArea::zoomViewport(double zoom_factor) {
@@ -27,6 +24,12 @@ void ScrollZoomArea::zoomViewport(const ZoomParam& zoom) {
 	const QRectF new_viewrect(new_top_left, new_size);
 	open_gl_widget_->setViewrect(new_viewrect);
 	updateBars(new_viewrect);
+}
+
+void ScrollZoomArea::translatePixelViewport(int x, int y) {
+	QRect new_pixel_viewrect(open_gl_widget_->pixelViewrect());
+	new_pixel_viewrect.moveTopLeft({x, y});
+	open_gl_widget_->setPixelViewrect(new_pixel_viewrect);
 }
 
 void ScrollZoomArea::updateBars(const QRectF &viewrect) {

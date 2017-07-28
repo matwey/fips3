@@ -219,8 +219,8 @@ void OpenGLWidget::paintGL() {
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	QMatrix4x4 mvp(base_mvp_);
-	// QT and OpenGL have different coordinate systems, we should swap top and bottom
-	mvp.ortho(viewrect_.left(), viewrect_.right(), viewrect_.top(), viewrect_.bottom(), -1.0f, 1.0f);
+	// QT and OpenGL have different coordinate systems, we should change y-axes direction
+	mvp.ortho(viewrect_.left(), viewrect_.right(), 1 - viewrect_.bottom(), 1 - viewrect_.top(), -1.0f, 1.0f);
 	program_->setUniformValue("MVP", mvp);
 
 	texture_->bind();
@@ -242,6 +242,14 @@ void OpenGLWidget::setViewrect(const QRectF &viewrect) {
 	pixel_viewrect_ = {left, top, width, height};
 
 	update();
+}
+
+void OpenGLWidget::setPixelViewrect(const QRect& pixel_viewrect) {
+	const auto left   = static_cast<double>(pixel_viewrect.left()  ) / fits_size().width();
+	const auto top    = static_cast<double>(pixel_viewrect.top()   ) / fits_size().height();
+	const auto width  = static_cast<double>(pixel_viewrect.width() ) / fits_size().width();
+	const auto height = static_cast<double>(pixel_viewrect.height()) / fits_size().height();
+	setViewrect({left, top, width, height});
 }
 
 constexpr GLfloat OpenGLWidget::vbo_data[];
