@@ -10,6 +10,7 @@
 #include <QOpenGLTexture>
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLWidget>
+#include <QMatrix4x4>
 
 #include <exception.h>
 
@@ -66,12 +67,20 @@ public:
 
 public:
 	OpenGLWidget(QWidget *parent, FITS* fits);
-	~OpenGLWidget();
+	~OpenGLWidget() override;
+
+	void setViewrect(const QRectF &viewrect);
+	inline const QRectF& viewrect() const { return viewrect_; }
+	void setPixelViewrect(const QRect& pixel_viewrect);
+	inline const QRect& pixelViewrect() const { return pixel_viewrect_; }
+	inline QSize fits_size() const { return fits_->data_unit().size(); }
+	QRect viewrectToPixelViewrect (const QRectF& viewrect) const;
 
 protected:
 	void initializeGL() override;
 	void resizeGL(int w, int h) override;
 	void paintGL() override;
+	QSize sizeHint() const override;
 
 private:
 	std::unique_ptr<FITS> fits_;
@@ -82,17 +91,26 @@ private:
 	OpenGLDeleter<QOpenGLShaderProgram> program_deleter_;
 	openGL_unique_ptr<QOpenGLShaderProgram> program_;
 	QOpenGLBuffer vbo_;
+	QMatrix4x4 base_mvp_;
+
 	static const int program_vertex_coord_attribute = 0;
 	static const int program_vertex_uv_attribute    = 1;
-
+	// Square which is made from two triangles. Each line is xyz coordinates of triangle vertex (0-2 - first triangle,
+	// 3-5 - second triangle). First and seconds columns are used as corresponding UV-coordinates.
 	static constexpr GLfloat vbo_data[] = {
-			-1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-			 1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-			-1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
-			-1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
-			 1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-			 1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
+			0.0f, 0.0f, 0.0f,
+			1.0f, 0.0f, 0.0f,
+			0.0f, 1.0f, 0.0f,
+			0.0f, 1.0f, 0.0f,
+			1.0f, 0.0f, 0.0f,
+			1.0f, 1.0f, 0.0f,
 	};
+
+	QRectF viewrect_;
+	QRect pixel_viewrect_;
+
+	// Returns true if viewrect has been corrected
+	bool correct_viewrect();
 };
 
 

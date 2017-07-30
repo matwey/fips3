@@ -2,6 +2,7 @@
 #define _FITS_H_
 
 #include <QFileDevice>
+#include <QSize>
 #include <QVariant>
 
 #include <abstractfitsstorage.h>
@@ -102,6 +103,7 @@ public:
 		inline const quint8* data() const { return data_; }
 		inline quint64 height() const { return height_; }
 		inline quint64 width()  const { return width_; }
+		inline QSize size() const { return QSize(width_, height_); }
 
 		template<class F> void apply(F fun) const {
 			struct Visitor: public VisitorBase {
