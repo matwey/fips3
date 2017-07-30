@@ -45,11 +45,16 @@ FITS::FITS(AbstractFITSStorage* fits_storage):
 }
 FITS::FITS(QFileDevice* file_device): FITS(new MMapFITSStorage(file_device)) {
 }
+FITS::Exception::Exception(const QString& what): ::Exception(what) {
+}
 void FITS::Exception::raise() const {
 	throw *this;
 }
 QException* FITS::Exception::clone() const {
 	return new FITS::Exception(*this);
+}
+FITS::UnexpectedEnd::UnexpectedEnd():
+	FITS::Exception(QString("Unexpected end of file reached")) {
 }
 void FITS::UnexpectedEnd::raise() const {
 	throw *this;
@@ -57,7 +62,8 @@ void FITS::UnexpectedEnd::raise() const {
 QException* FITS::UnexpectedEnd::clone() const {
 	return new FITS::UnexpectedEnd(*this);
 }
-FITS::WrongHeaderValue::WrongHeaderValue(const QString& key, const QString& value) {
+FITS::WrongHeaderValue::WrongHeaderValue(const QString& key, const QString& value):
+	FITS::Exception(QString("Wrong header pair found: '" + key + "' = '" + value + "'")) {
 }
 void FITS::WrongHeaderValue::raise() const {
 	throw *this;

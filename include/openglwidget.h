@@ -19,24 +19,32 @@ class OpenGLWidget: public QOpenGLWidget, protected QOpenGLFunctions {
 public:
 	class Exception: public ::Exception {
 	public:
+		explicit Exception(const QString& what);
+
 		virtual void raise() const override;
 		virtual QException* clone() const override;
 	};
 
 	class ShaderLoadError: public Exception {
 	public:
+		ShaderLoadError();
+
 		virtual void raise() const override;
 		virtual QException* clone() const override;
 	};
 
 	class ShaderBindError: public Exception {
 	public:
+		ShaderBindError();
+
 		virtual void raise() const override;
 		virtual QException* clone() const override;
 	};
 
 	class ShaderCompileError: public Exception {
 	public:
+		ShaderCompileError();
+
 		virtual void raise() const override;
 		virtual QException* clone() const override;
 	};

@@ -2,6 +2,7 @@
 #define _MAINWINDOW_H_
 
 #include <QMainWindow>
+#include <QString>
 
 #include <memory>
 
@@ -13,6 +14,8 @@ class MainWindow:
 public:
 	class Exception: public ::Exception {
 	public:
+		explicit Exception(const QString& what);
+
 		virtual void raise() const override;
 		virtual QException* clone() const override;
 	};

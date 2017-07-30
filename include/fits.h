@@ -14,12 +14,16 @@ class FITS {
 public:
 	class Exception: public ::Exception {
 	public:
+		explicit Exception(const QString& what);
+
 		virtual void raise() const override;
 		virtual QException* clone() const override;
 	};
 
 	class UnexpectedEnd: public Exception {
 	public:
+		UnexpectedEnd();
+
 		virtual void raise() const override;
 		virtual QException* clone() const override;
 	};

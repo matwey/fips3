@@ -4,6 +4,9 @@
 
 #include <mainwindow.h>
 
+MainWindow::Exception::Exception(const QString& what):
+	::Exception(what) {
+}
 void MainWindow::Exception::raise() const {
 	throw *this;
 }
@@ -11,7 +14,8 @@ QException* MainWindow::Exception::clone() const {
 	return new MainWindow::Exception(*this);
 }
 
-MainWindow::FileOpenError::FileOpenError(const QString& reason) {
+MainWindow::FileOpenError::FileOpenError(const QString& reason):
+	MainWindow::Exception(reason) {
 }
 void MainWindow::FileOpenError::raise() const {
 	throw *this;

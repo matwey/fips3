@@ -3,11 +3,23 @@
 #include <openglwidget.h>
 #include <QOpenGLFunctions_3_0>
 
+OpenGLWidget::Exception::Exception(const QString& what):
+	::Exception(what) {
+}
 void OpenGLWidget::Exception::raise() const {
 	throw *this;
 }
 QException* OpenGLWidget::Exception::clone() const {
 	return new OpenGLWidget::Exception(*this);
+}
+/*
+ * FIXME: here obtain opengl error code and conver to string description
+ * An example:
+ *
+ * ShaderLoadError(int error_code): OpenGLWidget::Exception(QString(glCodeToString(error_code))) {
+ */
+OpenGLWidget::ShaderLoadError::ShaderLoadError():
+	OpenGLWidget::Exception("Cannot load the shader") {
 }
 void OpenGLWidget::ShaderLoadError::raise() const {
 	throw *this;
@@ -15,11 +27,17 @@ void OpenGLWidget::ShaderLoadError::raise() const {
 QException* OpenGLWidget::ShaderLoadError::clone() const {
 	return new OpenGLWidget::ShaderLoadError(*this);
 }
+OpenGLWidget::ShaderBindError::ShaderBindError():
+	OpenGLWidget::Exception("Cannot bind the shader") {
+}
 void OpenGLWidget::ShaderBindError::raise() const {
 	throw *this;
 }
 QException* OpenGLWidget::ShaderBindError::clone() const {
 	return new OpenGLWidget::ShaderBindError(*this);
+}
+OpenGLWidget::ShaderCompileError::ShaderCompileError():
+	OpenGLWidget::Exception("Cannot compile the shader") {
 }
 void OpenGLWidget::ShaderCompileError::raise() const {
 	throw *this;
