@@ -21,15 +21,17 @@ public:
 
 	void zoomViewport(double zoom_factor);
 	void zoomViewport(const ZoomParam& zoom);
-private slots:
-	inline void translatePixelViewportX(int x) { translatePixelViewport(x, open_gl_widget_->pixelViewrect().top());  }
-	inline void translatePixelViewportY(int y) { translatePixelViewport(open_gl_widget_->pixelViewrect().left(), y); }
-private:
-	std::unique_ptr<OpenGLWidget> open_gl_widget_;
 
+	inline OpenGLWidget* viewport() const { return static_cast<OpenGLWidget*>(QAbstractScrollArea::viewport()); }
+private slots:
+	inline void translatePixelViewportX(int x) { translatePixelViewport(x, viewport()->pixelViewrect().top());  }
+	inline void translatePixelViewportY(int y) { translatePixelViewport(viewport()->pixelViewrect().left(), y); }
+protected:
+	virtual bool viewportEvent(QEvent* event) override;
+private:
 	void updateBars(const QRectF &viewrect);
 	void translatePixelViewport(int x, int y);
-	void resizeEvent(QResizeEvent* event) override;
+	virtual void resizeEvent(QResizeEvent* event) override;
 };
 
 #endif //_SCROLLZOOMAREA_H

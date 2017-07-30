@@ -4,8 +4,12 @@
 #include <scrollzoomarea.h>
 
 ScrollZoomArea::ScrollZoomArea(QWidget *parent, FITS *fits):
-		QAbstractScrollArea(parent),
-		open_gl_widget_(new OpenGLWidget(viewport(), fits)) {
+	QAbstractScrollArea(parent) {
+
+	std::unique_ptr<OpenGLWidget> open_gl_widget{new OpenGLWidget(this, fits)};
+	/* setViewport promises to take ownership */
+	setViewport(open_gl_widget.release());
+
 	connect(horizontalScrollBar(), SIGNAL(valueChanged(int)), this, SLOT(translatePixelViewportX(int)));
 	connect(verticalScrollBar(),   SIGNAL(valueChanged(int)), this, SLOT(translatePixelViewportY(int)));
 }
@@ -15,7 +19,7 @@ void ScrollZoomArea::zoomViewport(double zoom_factor) {
 }
 
 void ScrollZoomArea::zoomViewport(const ZoomParam& zoom) {
-	const auto old_viewrect = open_gl_widget_->viewrect();
+	const auto old_viewrect = viewport()->viewrect();
 	const auto new_size = old_viewrect.size() / zoom.factor;
 	const auto new_top_left =
 			old_viewrect.topLeft()
@@ -24,23 +28,23 @@ void ScrollZoomArea::zoomViewport(const ZoomParam& zoom) {
 				(old_viewrect.height() - new_size.height()) / 2
 			);
 	const QRectF new_viewrect(new_top_left, new_size);
-	open_gl_widget_->setViewrect(new_viewrect);
+	viewport()->setViewrect(new_viewrect);
 	updateBars(new_viewrect);
 }
 
 void ScrollZoomArea::translatePixelViewport(int x, int y) {
-	QRect new_pixel_viewrect(open_gl_widget_->pixelViewrect());
+	QRect new_pixel_viewrect(viewport()->pixelViewrect());
 	new_pixel_viewrect.moveTopLeft({x, y});
-	open_gl_widget_->setPixelViewrect(new_pixel_viewrect);
+	viewport()->setPixelViewrect(new_pixel_viewrect);
 }
 
 void ScrollZoomArea::updateBars(const QRectF &viewrect) {
-	horizontalScrollBar()->setPageStep(open_gl_widget_->pixelViewrect().width());
-	verticalScrollBar()  ->setPageStep(open_gl_widget_->pixelViewrect().height());
-	horizontalScrollBar()->setRange(0, open_gl_widget_->fits_size().width()  - open_gl_widget_->pixelViewrect().width()  - 1);
-	verticalScrollBar()  ->setRange(0, open_gl_widget_->fits_size().height() - open_gl_widget_->pixelViewrect().height() - 1);
-	horizontalScrollBar()->setValue(open_gl_widget_->pixelViewrect().left());
-	verticalScrollBar()  ->setValue(open_gl_widget_->pixelViewrect().top());
+	horizontalScrollBar()->setPageStep(viewport()->pixelViewrect().width());
+	verticalScrollBar()  ->setPageStep(viewport()->pixelViewrect().height());
+	horizontalScrollBar()->setRange(0, viewport()->fits_size().width()  - viewport()->pixelViewrect().width()  - 1);
+	verticalScrollBar()  ->setRange(0, viewport()->fits_size().height() - viewport()->pixelViewrect().height() - 1);
+	horizontalScrollBar()->setValue(viewport()->pixelViewrect().left());
+	verticalScrollBar()  ->setValue(viewport()->pixelViewrect().top());
 }
 
 void ScrollZoomArea::resizeEvent(QResizeEvent* event) {
@@ -51,12 +55,15 @@ void ScrollZoomArea::resizeEvent(QResizeEvent* event) {
 		old_viewport_size = event->size();
 	}
 	const auto scale = 0.5 * (
-			static_cast<double>(open_gl_widget_->pixelViewrect().width()) / old_viewport_size.width()
-			+ static_cast<double>(open_gl_widget_->pixelViewrect().height()) / old_viewport_size.height()
+			static_cast<double>(viewport()->pixelViewrect().width()) / old_viewport_size.width()
+			+ static_cast<double>(viewport()->pixelViewrect().height()) / old_viewport_size.height()
 	);
-	QRect new_pixel_viewrect(open_gl_widget_->pixelViewrect());
+	QRect new_pixel_viewrect(viewport()->pixelViewrect());
 	new_pixel_viewrect.setSize(scale * event->size());
-	open_gl_widget_->resize(event->size());
-	open_gl_widget_->setPixelViewrect(new_pixel_viewrect);
-	updateBars(open_gl_widget_->viewrect());
+	viewport()->resize(event->size());
+	viewport()->setPixelViewrect(new_pixel_viewrect);
+	updateBars(viewport()->viewrect());
+}
+bool ScrollZoomArea::viewportEvent(QEvent* event) {
+	return false;
 }
