@@ -10,13 +10,8 @@ struct ZoomParam {
 	QPoint point;
 	double factor;
 
-	ZoomParam(const QPoint& point, double factor):
-			point(point),
-			factor(factor) {}
-
-	ZoomParam(int x, int y, double factor):
-			point(x, y),
-			factor(factor) {}
+	inline ZoomParam(const QPoint& point, double factor): point(point), factor(factor) {}
+	inline ZoomParam(int x, int y, double factor): point(x, y), factor(factor) {}
 };
 
 class ScrollZoomArea: public QAbstractScrollArea {
