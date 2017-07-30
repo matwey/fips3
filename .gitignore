@@ -3,4 +3,4 @@
 [._]*.s[a-w][a-z]
 [._]s[a-w][a-z]
 build/
-cmake-build-debug*/
+cmake-build-*/
