@@ -26,10 +26,10 @@ public:
 private slots:
 	inline void translatePixelViewportX(int x) { translatePixelViewport(x, viewport()->pixelViewrect().top());  }
 	inline void translatePixelViewportY(int y) { translatePixelViewport(viewport()->pixelViewrect().left(), y); }
+	void updateBars();
 protected:
 	virtual bool viewportEvent(QEvent* event) override;
 private:
-	void updateBars(const QRectF &viewrect);
 	void translatePixelViewport(int x, int y);
 };
 

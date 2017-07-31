@@ -18,6 +18,7 @@
 #include <fits.h>
 
 class OpenGLWidget: public QOpenGLWidget, protected QOpenGLFunctions {
+	Q_OBJECT
 public:
 	class Exception: public ::Exception {
 	public:
@@ -85,6 +86,12 @@ public:
 	inline const QRect& pixelViewrect() const { return pixel_viewrect_; }
 	inline QSize fits_size() const { return fits_->data_unit().size(); }
 	QRect viewrectToPixelViewrect (const QRectF& viewrect) const;
+
+signals:
+	void pixelViewrectChanged(const QRect& pixel_viewrect);
+
+private slots:
+
 
 protected:
 	void initializeGL() override;

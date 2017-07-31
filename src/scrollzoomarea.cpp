@@ -12,6 +12,7 @@ ScrollZoomArea::ScrollZoomArea(QWidget *parent, FITS *fits):
 
 	connect(horizontalScrollBar(), SIGNAL(valueChanged(int)), this, SLOT(translatePixelViewportX(int)));
 	connect(verticalScrollBar(),   SIGNAL(valueChanged(int)), this, SLOT(translatePixelViewportY(int)));
+	connect(viewport(), SIGNAL(pixelViewrectChanged(const QRect&)), this, SLOT(updateBars()));
 }
 
 void ScrollZoomArea::zoomViewport(double zoom_factor) {
@@ -29,7 +30,7 @@ void ScrollZoomArea::zoomViewport(const ZoomParam& zoom) {
 			);
 	const QRectF new_viewrect(new_top_left, new_size);
 	viewport()->setViewrect(new_viewrect);
-	updateBars(new_viewrect);
+	updateBars();
 }
 
 void ScrollZoomArea::translatePixelViewport(int x, int y) {
@@ -38,7 +39,7 @@ void ScrollZoomArea::translatePixelViewport(int x, int y) {
 	viewport()->setPixelViewrect(new_pixel_viewrect);
 }
 
-void ScrollZoomArea::updateBars(const QRectF &viewrect) {
+void ScrollZoomArea::updateBars() {
 	horizontalScrollBar()->setPageStep(viewport()->pixelViewrect().width());
 	verticalScrollBar()  ->setPageStep(viewport()->pixelViewrect().height());
 	horizontalScrollBar()->setRange(0, viewport()->fits_size().width()  - viewport()->pixelViewrect().width()  - 1);

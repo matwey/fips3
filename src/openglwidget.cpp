@@ -290,8 +290,12 @@ QSize OpenGLWidget::sizeHint() const {
 void OpenGLWidget::setViewrect(const QRectF &viewrect) {
 	viewrect_ = viewrect;
 	correct_viewrect();
+	const QRect old_pixel_viewrect(pixel_viewrect_);
 	pixel_viewrect_ = viewrectToPixelViewrect(viewrect_);
-	update();
+	if (pixel_viewrect_ != old_pixel_viewrect) {
+		update();
+		emit pixelViewrectChanged(pixel_viewrect_);
+	}
 }
 
 QRect OpenGLWidget::viewrectToPixelViewrect(const QRectF& viewrect) const {
@@ -303,25 +307,17 @@ QRect OpenGLWidget::viewrectToPixelViewrect(const QRectF& viewrect) const {
 }
 
 void OpenGLWidget::setPixelViewrect(const QRect& pixel_viewrect) {
-	pixel_viewrect_ = pixel_viewrect;
-
 	const auto left   = static_cast<double>(pixel_viewrect.left()  ) / (fits_size().width()  - 1);
 	const auto top    = static_cast<double>(pixel_viewrect.top()   ) / (fits_size().height() - 1);
-	const auto width  = static_cast<double>(pixel_viewrect.width() ) / (fits_size().width()  - 1);
-	const auto height = static_cast<double>(pixel_viewrect.height()) / (fits_size().height() - 1);
-	viewrect_ = {left, top, width, height};
-	if (correct_viewrect()){
-		pixel_viewrect_ = viewrectToPixelViewrect(viewrect_);
-	}
-
-	update();
+	const auto width  = static_cast<double>(pixel_viewrect.width() ) / fits_size().width();
+	const auto height = static_cast<double>(pixel_viewrect.height()) / fits_size().height();
+	setViewrect({left, top, width, height});
 }
 
 bool OpenGLWidget::correct_viewrect() {
 	auto viewrect = viewrect_;
 	if (viewrect_.left() < 0) {
 		viewrect_.moveLeft(0);
-
 	}
 	if (viewrect.top() < 0 ) {
 		viewrect.moveTop(0);
