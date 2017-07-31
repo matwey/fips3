@@ -18,5 +18,12 @@ target_link_libraries(fips Qt5::Widgets)
 enable_testing()
 add_executable(test_fits test/fits.cpp src/fits.cpp src/exception.cpp src/abstractfitsstorage.cpp src/mmapfitsstorage.cpp)
 set_target_properties(test_fits PROPERTIES COMPILE_FLAGS -DPROJECT_ROOT='"${PROJECT_SOURCE_DIR}"')
-target_link_libraries(test_fits Qt5::Widgets Qt5::Test)
+# Linked libraries affect ability to run without X11 display.
+#
+# http://doc.qt.io/qt-5/qtest.html#QTEST_MAIN
+#
+# If QT_WIDGETS_LIB is defined, the application object will be a QApplication,
+# if QT_GUI_LIB is defined, the application object will be a QGuiApplication,
+# otherwise it will be a QCoreApplication.
+target_link_libraries(test_fits Qt5::Test)
 add_test(test_fits test_fits)
