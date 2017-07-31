@@ -254,7 +254,20 @@ void OpenGLWidget::initializeGL() {
 	program_->setAttributeBuffer(program_vertex_uv_attribute,    GL_FLOAT, 0 * sizeof(GLfloat), 2, 3 * sizeof(GLfloat));
 }
 
-void OpenGLWidget::resizeGL(int w, int h) {
+void OpenGLWidget::resizeEvent(QResizeEvent* event) {
+	QOpenGLWidget::resizeEvent(event);
+
+	const auto new_widget_size = event->size();
+	auto old_widget_size = event->oldSize();
+	// event->oldSize() for the first call of resizeEvent equals -1,-1
+	if (old_widget_size.width() < 0 || old_widget_size.height() < 0) {
+		old_widget_size = new_widget_size;
+	}
+	const auto new_viewrect_width  = viewrect_.width()  * (static_cast<double>(new_widget_size.width())  - 1.0) / (static_cast<double>(old_widget_size.width())  - 1.0);
+	const auto new_viewrect_height = viewrect_.height() * (new_widget_size.height() - 1.0) / (old_widget_size.height() - 1.0);
+	QRectF new_viewrect(viewrect_);
+	new_viewrect.setSize({new_viewrect_width, new_viewrect_height});
+	setViewrect(new_viewrect);
 }
 
 void OpenGLWidget::paintGL() {
@@ -294,8 +307,8 @@ void OpenGLWidget::setPixelViewrect(const QRect& pixel_viewrect) {
 
 	const auto left   = static_cast<double>(pixel_viewrect.left()  ) / (fits_size().width()  - 1);
 	const auto top    = static_cast<double>(pixel_viewrect.top()   ) / (fits_size().height() - 1);
-	const auto width  = static_cast<double>(pixel_viewrect.width() ) / fits_size().width();
-	const auto height = static_cast<double>(pixel_viewrect.height()) / fits_size().height();
+	const auto width  = static_cast<double>(pixel_viewrect.width() ) / (fits_size().width()  - 1);
+	const auto height = static_cast<double>(pixel_viewrect.height()) / (fits_size().height() - 1);
 	viewrect_ = {left, top, width, height};
 	if (correct_viewrect()){
 		pixel_viewrect_ = viewrectToPixelViewrect(viewrect_);

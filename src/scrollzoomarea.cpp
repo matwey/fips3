@@ -47,23 +47,6 @@ void ScrollZoomArea::updateBars(const QRectF &viewrect) {
 	verticalScrollBar()  ->setValue(viewport()->pixelViewrect().top());
 }
 
-void ScrollZoomArea::resizeEvent(QResizeEvent* event) {
-	QAbstractScrollArea::resizeEvent(event);
-
-	auto old_viewport_size = event->oldSize();
-	if (old_viewport_size.width() < 0 || old_viewport_size.height() < 0){
-		old_viewport_size = event->size();
-	}
-	const auto scale = 0.5 * (
-			static_cast<double>(viewport()->pixelViewrect().width()) / old_viewport_size.width()
-			+ static_cast<double>(viewport()->pixelViewrect().height()) / old_viewport_size.height()
-	);
-	QRect new_pixel_viewrect(viewport()->pixelViewrect());
-	new_pixel_viewrect.setSize(scale * event->size());
-	viewport()->resize(event->size());
-	viewport()->setPixelViewrect(new_pixel_viewrect);
-	updateBars(viewport()->viewrect());
-}
 bool ScrollZoomArea::viewportEvent(QEvent* event) {
 	return false;
 }

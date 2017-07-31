@@ -31,7 +31,6 @@ protected:
 private:
 	void updateBars(const QRectF &viewrect);
 	void translatePixelViewport(int x, int y);
-	virtual void resizeEvent(QResizeEvent* event) override;
 };
 
 #endif //_SCROLLZOOMAREA_H

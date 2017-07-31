@@ -11,6 +11,7 @@
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLWidget>
 #include <QMatrix4x4>
+#include <QResizeEvent>
 
 #include <exception.h>
 
@@ -87,9 +88,9 @@ public:
 
 protected:
 	void initializeGL() override;
-	void resizeGL(int w, int h) override;
 	void paintGL() override;
 	QSize sizeHint() const override;
+	void resizeEvent(QResizeEvent* event) override;
 
 private:
 	std::unique_ptr<FITS> fits_;
