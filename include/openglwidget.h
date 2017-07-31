@@ -20,15 +20,16 @@ class OpenGLWidget: public QOpenGLWidget, protected QOpenGLFunctions {
 public:
 	class Exception: public ::Exception {
 	public:
-		explicit Exception(const QString& what);
+		Exception(const QString &reason, GLenum gl_error_code);
 
 		virtual void raise() const override;
 		virtual QException* clone() const override;
+		static QString glErrorString(GLenum gl_error_code);
 	};
 
 	class ShaderLoadError: public Exception {
 	public:
-		ShaderLoadError();
+		ShaderLoadError(GLenum gl_error_code);
 
 		virtual void raise() const override;
 		virtual QException* clone() const override;
@@ -36,7 +37,7 @@ public:
 
 	class ShaderBindError: public Exception {
 	public:
-		ShaderBindError();
+		ShaderBindError(GLenum gl_error_code);
 
 		virtual void raise() const override;
 		virtual QException* clone() const override;
@@ -44,7 +45,15 @@ public:
 
 	class ShaderCompileError: public Exception {
 	public:
-		ShaderCompileError();
+		ShaderCompileError(GLenum gl_error_code);
+
+		virtual void raise() const override;
+		virtual QException* clone() const override;
+	};
+
+	class TextureCreateError: public Exception {
+	public:
+		TextureCreateError(GLenum gl_error_code);
 
 		virtual void raise() const override;
 		virtual QException* clone() const override;
@@ -111,6 +120,13 @@ private:
 
 	// Returns true if viewrect has been corrected
 	bool correct_viewrect();
+
+	template<class T> void throwIfGLError() throw(T) {
+		const auto gl_error_code = glGetError();
+		if (gl_error_code) {
+			throw T(gl_error_code);
+		}
+	}
 };
 
 

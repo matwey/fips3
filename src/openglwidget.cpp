@@ -3,8 +3,8 @@
 
 #include <openglwidget.h>
 
-OpenGLWidget::Exception::Exception(const QString& what):
-	::Exception(what) {
+OpenGLWidget::Exception::Exception(const QString &what, GLenum gl_error_code):
+	::Exception(what + ": " + glErrorString(gl_error_code)) {
 }
 void OpenGLWidget::Exception::raise() const {
 	throw *this;
@@ -12,14 +12,28 @@ void OpenGLWidget::Exception::raise() const {
 QException* OpenGLWidget::Exception::clone() const {
 	return new OpenGLWidget::Exception(*this);
 }
-/*
- * FIXME: here obtain opengl error code and conver to string description
- * An example:
- *
- * ShaderLoadError(int error_code): OpenGLWidget::Exception(QString(glCodeToString(error_code))) {
- */
-OpenGLWidget::ShaderLoadError::ShaderLoadError():
-	OpenGLWidget::Exception("Cannot load the shader") {
+// From OpenGL ES 2.0 documentation:
+// https://www.khronos.org/registry/OpenGL-Refpages/es2.0/xhtml/glGetError.xml
+QString OpenGLWidget::Exception::glErrorString(GLenum gl_error_code) {
+	switch (gl_error_code) {
+		case GL_NO_ERROR:
+			return "No error has been recorded. The value of this symbolic constant is guaranteed to be 0.";
+		case GL_INVALID_ENUM:
+			return "An unacceptable value is specified for an enumerated argument. The offending command is ignored and has no other side effect than to set the error flag.";
+		case GL_INVALID_VALUE:
+			return "A numeric argument is out of range. The offending command is ignored and has no other side effect than to set the error flag.";
+		case GL_INVALID_OPERATION:
+			return "The specified operation is not allowed in the current state. The offending command is ignored and has no other side effect than to set the error flag.";
+		case GL_INVALID_FRAMEBUFFER_OPERATION:
+			return "The command is trying to render to or read from the framebuffer while the currently bound framebuffer is not framebuffer complete (i.e. the return value from glCheckFramebufferStatus is not GL_FRAMEBUFFER_COMPLETE). The offending command is ignored and has no other side effect than to set the error flag.";
+		case GL_OUT_OF_MEMORY:
+			return "There is not enough memory left to execute the command. The state of the GL is undefined, except for the state of the error flags, after this error is recorded.";
+		default:
+			return "Unknown error";
+	}
+}
+OpenGLWidget::ShaderLoadError::ShaderLoadError(GLenum gl_error_code):
+	OpenGLWidget::Exception("Cannot load the shader", gl_error_code) {
 }
 void OpenGLWidget::ShaderLoadError::raise() const {
 	throw *this;
@@ -27,8 +41,8 @@ void OpenGLWidget::ShaderLoadError::raise() const {
 QException* OpenGLWidget::ShaderLoadError::clone() const {
 	return new OpenGLWidget::ShaderLoadError(*this);
 }
-OpenGLWidget::ShaderBindError::ShaderBindError():
-	OpenGLWidget::Exception("Cannot bind the shader") {
+OpenGLWidget::ShaderBindError::ShaderBindError(GLenum gl_error_code):
+	OpenGLWidget::Exception("Cannot bind the shader", gl_error_code) {
 }
 void OpenGLWidget::ShaderBindError::raise() const {
 	throw *this;
@@ -36,14 +50,23 @@ void OpenGLWidget::ShaderBindError::raise() const {
 QException* OpenGLWidget::ShaderBindError::clone() const {
 	return new OpenGLWidget::ShaderBindError(*this);
 }
-OpenGLWidget::ShaderCompileError::ShaderCompileError():
-	OpenGLWidget::Exception("Cannot compile the shader") {
+OpenGLWidget::ShaderCompileError::ShaderCompileError(GLenum gl_error_code):
+	OpenGLWidget::Exception("Cannot compile the shader", gl_error_code) {
 }
 void OpenGLWidget::ShaderCompileError::raise() const {
 	throw *this;
 }
 QException* OpenGLWidget::ShaderCompileError::clone() const {
 	return new OpenGLWidget::ShaderCompileError(*this);
+}
+OpenGLWidget::TextureCreateError::TextureCreateError(GLenum gl_error_code):
+		OpenGLWidget::Exception("Cannot create texture", gl_error_code) {
+}
+void OpenGLWidget::TextureCreateError::raise() const {
+	throw *this;
+}
+QException* OpenGLWidget::TextureCreateError::clone() const {
+	return new OpenGLWidget::TextureCreateError(*this);
 }
 
 OpenGLWidget::OpenGLWidget(QWidget *parent, FITS* fits):
@@ -178,15 +201,15 @@ void OpenGLWidget::initializeGL() {
 	texture_->setMinificationFilter(QOpenGLTexture::Nearest);
 	texture_->setMagnificationFilter(QOpenGLTexture::Nearest);
 	texture_->setFormat(texture_format);
-	qDebug() << glGetError();
+	throwIfGLError<TextureCreateError>();
 	texture_->setSize(fits_->data_unit().width(), fits_->data_unit().height());
-	qDebug() << glGetError();
+	throwIfGLError<TextureCreateError>();
 	// We use this overloading to provide a possibility to use texture internal format unsupported by QT
 	texture_->allocateStorage(pixel_format, pixel_type);
-	qDebug() << glGetError();
+	throwIfGLError<TextureCreateError>();
 	pixel_transfer_options_->setSwapBytesEnabled(swap_bytes_enabled);
 	texture_->setData(pixel_format, pixel_type, fits_->data_unit().data(), pixel_transfer_options_.get());
-	qDebug() << glGetError();
+	throwIfGLError<TextureCreateError>();
 
 	vbo_.create();
 	vbo_.bind();
@@ -203,7 +226,7 @@ void OpenGLWidget::initializeGL() {
 			"	gl_Position = MVP * vec4(vertexCoord,1);\n"
 			"	UV = VertexUV;\n"
 			"}\n";
-	if (! vshader->compileSourceCode(vsrc)) throw ShaderCompileError();
+	if (! vshader->compileSourceCode(vsrc)) throw ShaderCompileError(glGetError());
 
 	QString fsrc =
 			"#version 110\n"
@@ -215,14 +238,14 @@ void OpenGLWidget::initializeGL() {
 			+ fragment_shader_source_main +
 			"}\n";
 	QOpenGLShader *fshader = new QOpenGLShader(QOpenGLShader::Fragment, this);
-	if (! fshader->compileSourceCode(fsrc)) throw ShaderCompileError();
+	if (! fshader->compileSourceCode(fsrc)) throw ShaderCompileError(glGetError());
 
-	if (! program_->addShader(vshader)) throw ShaderLoadError();
-	if (! program_->addShader(fshader)) throw ShaderLoadError();
+	if (! program_->addShader(vshader)) throw ShaderLoadError(glGetError());
+	if (! program_->addShader(fshader)) throw ShaderLoadError(glGetError());
 	program_->bindAttributeLocation("vertexCoord", program_vertex_coord_attribute);
 	program_->bindAttributeLocation("vertexUV",    program_vertex_uv_attribute);
-	if (! program_->link()) throw ShaderLoadError();
-	if (! program_->bind()) throw ShaderBindError();
+	if (! program_->link()) throw ShaderLoadError(glGetError());
+	if (! program_->bind()) throw ShaderBindError(glGetError());
 	program_->setUniformValue("bzero",  static_cast<GLfloat>(fits_->header_unit().bzero()) / normalizer);
 	program_->setUniformValue("bscale", static_cast<GLfloat>(fits_->header_unit().bscale()));
 	program_->enableAttributeArray(program_vertex_coord_attribute);
