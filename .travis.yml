@@ -1,0 +1,27 @@
+sudo: required
+
+language: cpp
+
+services:
+ - docker
+
+env:
+ - BASE_IMAGE_TAG=gcc7-qt59
+ - BASE_IMAGE_TAG=gcc7-qt58
+ - BASE_IMAGE_TAG=gcc7-qt57
+ - BASE_IMAGE_TAG=gcc7-qt56
+ - BASE_IMAGE_TAG=gcc6-qt59
+ - BASE_IMAGE_TAG=gcc6-qt58
+ - BASE_IMAGE_TAG=gcc6-qt57
+ - BASE_IMAGE_TAG=gcc6-qt56
+ - BASE_IMAGE_TAG=gcc4.8-qt59
+ - BASE_IMAGE_TAG=gcc4.8-qt58
+ - BASE_IMAGE_TAG=gcc4.8-qt57
+ - BASE_IMAGE_TAG=gcc4.8-qt56
+
+install:
+ - cat Dockerfile.in | m4 -DBASE_IMAGE_TAG=${BASE_IMAGE_TAG} > Dockerfile
+ - docker build . -t test
+
+script:
+ - docker run test

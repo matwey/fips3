@@ -1,0 +1,11 @@
+FROM matwey/opensuse-ci:BASE_IMAGE_TAG
+
+ENV CTEST_OUTPUT_ON_FAILURE 1
+ENV FIPS_BUILD_DIR /tmp/build
+
+WORKDIR ${FIPS_BUILD_DIR}
+
+COPY . /usr/src/fips3
+RUN cmake /usr/src/fips3 && make VERBOSE=1
+
+CMD ["make", "test"]
