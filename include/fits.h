@@ -151,19 +151,30 @@ public:
 		}
 	};
 
-	struct HeaderDataUnit {
-		std::unique_ptr<HeaderUnit>       header;
-		std::unique_ptr<AbstractDataUnit> data;
+	class HeaderDataUnit {
+	private:
+		std::unique_ptr<HeaderUnit>       header_;
+		std::unique_ptr<AbstractDataUnit> data_;
+	public:
+		HeaderDataUnit(AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end);
+
+		HeaderDataUnit(HeaderDataUnit&&) = default;
+		HeaderDataUnit& operator=(HeaderDataUnit&&) = default;
+
+		inline const HeaderUnit&       header() const { return *header_; }
+		inline const AbstractDataUnit& data()   const { return *data_; }
 	};
 private:
 	std::unique_ptr<AbstractFITSStorage> fits_storage_;
 	HeaderDataUnit primary_hdu_;
+
+	FITS(AbstractFITSStorage* fits_storage, AbstractFITSStorage::Page begin, const AbstractFITSStorage::Page& end);
 public:
 	FITS(AbstractFITSStorage* fits_storage);
 	FITS(QFileDevice* file_device);
 
-	inline const HeaderUnit&       header_unit() const { return *primary_hdu_.header; }
-	inline const AbstractDataUnit& data_unit()   const { return *primary_hdu_.data; }
+	inline const HeaderUnit&       header_unit() const { return primary_hdu_.header(); }
+	inline const AbstractDataUnit& data_unit()   const { return primary_hdu_.data(); }
 };
 
 template<class F> void FITS::AbstractDataUnit::bitpixToType(const QString& bitpix, F fun) {

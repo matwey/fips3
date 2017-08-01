@@ -19,39 +19,11 @@ struct DataUnitCreateHelper {
 
 }
 
-FITS::FITS(AbstractFITSStorage* fits_storage):
-	fits_storage_(fits_storage) {
-
-	AbstractFITSStorage::Page begin = fits_storage->begin();
-	AbstractFITSStorage::Page end = fits_storage->end();
-	primary_hdu_.header = std::unique_ptr<HeaderUnit>(new HeaderUnit(begin, end));
-	const HeaderUnit* header_unit = primary_hdu_.header.get();
-
-	bool ok = false;
-
-	auto bitpix = header_unit->header("BITPIX");
-
-	auto naxis = header_unit->header("NAXIS").toInt(&ok);
-	if (!ok || (naxis != 0 && naxis != 2)) {
-		throw FITS::WrongHeaderValue("NAXIS", header_unit->header("NAXIS"));
-	}
-
-	if (naxis) {
-		// width
-		auto naxis1 = header_unit->header("NAXIS1").toULongLong(&ok);
-		if (!ok) {
-			throw FITS::WrongHeaderValue("NAXIS1", header_unit->header("NAXIS1"));
-		}
-
-		// height
-		auto naxis2 = header_unit->header("NAXIS2").toULongLong(&ok);
-		if (!ok) {
-			throw FITS::WrongHeaderValue("NAXIS2", header_unit->header("NAXIS2"));
-		}
-
-		primary_hdu_.data = std::unique_ptr<AbstractDataUnit>(
-			AbstractDataUnit::createFromBitpix(bitpix, begin, end, naxis2, naxis1));
-	}
+FITS::FITS(AbstractFITSStorage* fits_storage, AbstractFITSStorage::Page begin, const AbstractFITSStorage::Page& end):
+	fits_storage_(fits_storage),
+	primary_hdu_(begin, end) {
+}
+FITS::FITS(AbstractFITSStorage* fits_storage): FITS(fits_storage, fits_storage->begin(), fits_storage->end()) {
 }
 FITS::FITS(QFileDevice* file_device): FITS(new MMapFITSStorage(file_device)) {
 }
@@ -134,3 +106,31 @@ FITS::ImageDataUnit::ImageDataUnit(AbstractFITSStorage::Page& begin, const Abstr
 	width_(width) {
 }
 FITS::ImageDataUnit::~ImageDataUnit() = default;
+
+FITS::HeaderDataUnit::HeaderDataUnit(AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end):
+	header_(new HeaderUnit(begin, end)) {
+	bool ok = false;
+
+	auto bitpix = header_->header("BITPIX");
+
+	auto naxis = header_->header("NAXIS").toInt(&ok);
+	if (!ok || (naxis != 0 && naxis != 2)) {
+		throw FITS::WrongHeaderValue("NAXIS", header_->header("NAXIS"));
+	}
+
+	if (naxis) {
+		// width
+		auto naxis1 = header_->header("NAXIS1").toULongLong(&ok);
+		if (!ok) {
+			throw FITS::WrongHeaderValue("NAXIS1", header_->header("NAXIS1"));
+		}
+
+		// height
+		auto naxis2 = header_->header("NAXIS2").toULongLong(&ok);
+		if (!ok) {
+			throw FITS::WrongHeaderValue("NAXIS2", header_->header("NAXIS2"));
+		}
+
+		data_.reset(AbstractDataUnit::createFromBitpix(bitpix, begin, end, naxis2, naxis1));
+	}
+}
