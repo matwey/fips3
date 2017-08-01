@@ -295,7 +295,6 @@ void OpenGLWidget::setViewrect(const QRectF &viewrect) {
 	correct_viewrect();
 	const QRect old_pixel_viewrect(pixel_viewrect_);
 	pixel_viewrect_ = viewrectToPixelViewrect(viewrect_);
-	qDebug() << viewrect_ << pixel_viewrect_;
 	if (pixel_viewrect_ != old_pixel_viewrect) {
 		update();
 		emit pixelViewrectChanged(pixel_viewrect_);
