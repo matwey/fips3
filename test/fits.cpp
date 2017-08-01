@@ -8,6 +8,9 @@ class TestFits: public QObject
 {
 	Q_OBJECT
 private slots:
+	void pageAdvance1();
+	void pageAdvanceInBytes1();
+	void pageAbstractFITSStorage1();
 	void parseHeaderUnit1();
 	void parseHeaderUnit2();
 	void parseHeaderUnit3();
@@ -18,6 +21,49 @@ private slots:
 	void visitDataUnit1();
 };
 
+void TestFits::pageAdvance1() {
+	uint8_t x;
+
+	AbstractFITSStorage::Page page(&x);
+	QCOMPARE(page.data(), &x);
+	page.advance(0);
+	QCOMPARE(page.data(), &x);
+	page.advance(1);
+	QCOMPARE(page.data(), &x + 2880);
+	page.advance(1);
+	QCOMPARE(page.data(), &x + 2*2880);
+}
+void TestFits::pageAdvanceInBytes1() {
+	uint8_t x;
+
+	AbstractFITSStorage::Page page(&x);
+	QCOMPARE(page.data(), &x);
+	page.advanceInBytes(0);
+	QCOMPARE(page.data(), &x);
+	page.advanceInBytes(1);
+	QCOMPARE(page.data(), &x + 2880);
+	page.advanceInBytes(2880);
+	QCOMPARE(page.data(), &x + 2*2880);
+}
+void TestFits::pageAbstractFITSStorage1() {
+	uint8_t x;
+
+	struct S: public AbstractFITSStorage {
+		inline S(quint8* data, qint64 size): AbstractFITSStorage(data, size) {}
+	};
+
+	S s1(&x, 0);
+	QCOMPARE(s1.cbegin().data(), s1.cend().data());
+
+	S s2(&x, 1);
+	QCOMPARE(s2.cbegin().data(), s2.cend().data());
+
+	S s3(&x, 2880);
+	QCOMPARE(s3.cbegin().data() + 2880, s3.cend().data());
+
+	S s4(&x, 2881);
+	QCOMPARE(s4.cbegin().data() + 2880, s4.cend().data());
+}
 void TestFits::parseHeaderUnit1() {
 	QFile* file = new QFile(DATA_ROOT "/header_unexpected_end.fits");
 	file->open(QIODevice::ReadOnly);

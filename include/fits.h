@@ -168,13 +168,20 @@ private:
 	std::unique_ptr<AbstractFITSStorage> fits_storage_;
 	HeaderDataUnit primary_hdu_;
 
+	std::list<HeaderDataUnit> extensions_;
+
 	FITS(AbstractFITSStorage* fits_storage, AbstractFITSStorage::Page begin, const AbstractFITSStorage::Page& end);
 public:
+	typedef std::list<HeaderDataUnit>::const_iterator const_iterator;
+
 	FITS(AbstractFITSStorage* fits_storage);
 	FITS(QFileDevice* file_device);
 
 	inline const HeaderUnit&       header_unit() const { return primary_hdu_.header(); }
 	inline const AbstractDataUnit& data_unit()   const { return primary_hdu_.data(); }
+
+	const_iterator begin() const { return extensions_.begin(); }
+	const_iterator end()   const { return extensions_.end(); }
 };
 
 template<class F> void FITS::AbstractDataUnit::bitpixToType(const QString& bitpix, F fun) {

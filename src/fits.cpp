@@ -22,6 +22,14 @@ struct DataUnitCreateHelper {
 FITS::FITS(AbstractFITSStorage* fits_storage, AbstractFITSStorage::Page begin, const AbstractFITSStorage::Page& end):
 	fits_storage_(fits_storage),
 	primary_hdu_(begin, end) {
+
+	const bool has_extension = (primary_hdu_.header().header("EXTEND","F") == "T");
+
+	if (has_extension) {
+		while (begin != end) {
+			extensions_.emplace_back(begin, end);
+		}
+	}
 }
 FITS::FITS(AbstractFITSStorage* fits_storage): FITS(fits_storage, fits_storage->begin(), fits_storage->end()) {
 }
@@ -133,4 +141,5 @@ FITS::HeaderDataUnit::HeaderDataUnit(AbstractFITSStorage::Page& begin, const Abs
 
 		data_.reset(AbstractDataUnit::createFromBitpix(bitpix, begin, end, naxis2, naxis1));
 	}
+
 }
