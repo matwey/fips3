@@ -69,17 +69,17 @@ QException* OpenGLWidget::TextureCreateError::clone() const {
 	return new OpenGLWidget::TextureCreateError(*this);
 }
 
-OpenGLWidget::OpenGLWidget(QWidget *parent, FITS* fits):
+OpenGLWidget::OpenGLWidget(QWidget *parent, const FITS::HeaderDataUnit& hdu):
 	QOpenGLWidget(parent),
-	fits_(fits),
+	hdu_(&hdu),
 	texture_deleter_(this),
-	texture_(new OpenGLTexture(this), texture_deleter_),
+	texture_(new OpenGLTexture(hdu_), texture_deleter_),
 	pixel_transfer_options_deleter_(this),
 	pixel_transfer_options_(new QOpenGLPixelTransferOptions, pixel_transfer_options_deleter_),
 	program_deleter_(this),
 	program_(new QOpenGLShaderProgram, program_deleter_),
 	viewrect_(0, 0, 1, 1),
-	pixel_viewrect_(QPoint(0, 0), fits_size()) {
+	pixel_viewrect_(QPoint(0, 0), image_size()) {
 }
 
 OpenGLWidget::~OpenGLWidget() {
@@ -146,13 +146,18 @@ void OpenGLWidget::initializeGL() {
 		}
 	};
 
+	GLfloat normalizer;
+	QOpenGLTexture::TextureFormat texture_format;
+	QOpenGLTexture::PixelFormat pixel_format;
+	QOpenGLTexture::PixelType pixel_type;
+	bool swap_bytes_enabled;
 	QString fragment_shader_source_main;
-	fits_->data_unit().apply(ShaderLoader{&fragment_shader_source_main});
+	hdu_->data().apply(ShaderLoader{&fragment_shader_source_main});
 
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glDisable(GL_DEPTH_TEST);
 
-	texture_->setFITS(fits_);
+	texture_->initialize();
 
 	vbo_.create();
 	vbo_.bind();
@@ -189,8 +194,8 @@ void OpenGLWidget::initializeGL() {
 	program_->bindAttributeLocation("vertexUV",    program_vertex_uv_attribute);
 	if (! program_->link()) throw ShaderLoadError(glGetError());
 	if (! program_->bind()) throw ShaderBindError(glGetError());
-	program_->setUniformValue("bzero",  static_cast<GLfloat>(fits_->header_unit().bzero()) / texture_->normalizer());
-	program_->setUniformValue("bscale", static_cast<GLfloat>(fits_->header_unit().bscale()));
+	program_->setUniformValue("bzero",  static_cast<GLfloat>(hdu_->header().bzero()) / texture_->normalizer);
+	program_->setUniformValue("bscale", static_cast<GLfloat>(hdu_->header().bscale()));
 	program_->enableAttributeArray(program_vertex_coord_attribute);
 	program_->enableAttributeArray(program_vertex_uv_attribute);
 	program_->setAttributeBuffer(program_vertex_coord_attribute, GL_FLOAT, 0,                   3, 3 * sizeof(GLfloat));
@@ -227,7 +232,7 @@ void OpenGLWidget::paintGL() {
 }
 
 QSize OpenGLWidget::sizeHint() const {
-	return fits_size();
+	return image_size();
 }
 
 void OpenGLWidget::setViewrect(const QRectF &viewrect) {
@@ -235,6 +240,7 @@ void OpenGLWidget::setViewrect(const QRectF &viewrect) {
 	correct_viewrect();
 	const QRect old_pixel_viewrect(pixel_viewrect_);
 	pixel_viewrect_ = viewrectToPixelViewrect(viewrect_);
+	qDebug() << viewrect_ << pixel_viewrect_;
 	if (pixel_viewrect_ != old_pixel_viewrect) {
 		update();
 		emit pixelViewrectChanged(pixel_viewrect_);
@@ -242,18 +248,18 @@ void OpenGLWidget::setViewrect(const QRectF &viewrect) {
 }
 
 QRect OpenGLWidget::viewrectToPixelViewrect(const QRectF& viewrect) const {
-	const int left =   qRound(viewrect.left()   * (fits_size().width()  - 1));
-	const int top  =   qRound(viewrect.top()    * (fits_size().height() - 1));
-	const int width =  qRound(viewrect.width()  * fits_size().width());
-	const int height = qRound(viewrect.height() * fits_size().height());
+	const int left =   qRound(viewrect.left()   * (image_size().width()  - 1));
+	const int top  =   qRound(viewrect.top()    * (image_size().height() - 1));
+	const int width =  qRound(viewrect.width()  * image_size().width());
+	const int height = qRound(viewrect.height() * image_size().height());
 	return {left, top, width, height};
 }
 
 void OpenGLWidget::setPixelViewrect(const QRect& pixel_viewrect) {
-	const auto left   = static_cast<double>(pixel_viewrect.left()  ) / (fits_size().width()  - 1);
-	const auto top    = static_cast<double>(pixel_viewrect.top()   ) / (fits_size().height() - 1);
-	const auto width  = static_cast<double>(pixel_viewrect.width() ) / fits_size().width();
-	const auto height = static_cast<double>(pixel_viewrect.height()) / fits_size().height();
+	const auto left   = static_cast<double>(pixel_viewrect.left()  ) / (image_size().width()  - 1);
+	const auto top    = static_cast<double>(pixel_viewrect.top()   ) / (image_size().height() - 1);
+	const auto width  = static_cast<double>(pixel_viewrect.width() ) / image_size().width();
+	const auto height = static_cast<double>(pixel_viewrect.height()) / image_size().height();
 	setViewrect({left, top, width, height});
 }
 

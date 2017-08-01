@@ -3,10 +3,10 @@
 
 #include <scrollzoomarea.h>
 
-ScrollZoomArea::ScrollZoomArea(QWidget *parent, FITS *fits):
+ScrollZoomArea::ScrollZoomArea(QWidget *parent, const FITS::HeaderDataUnit& hdu):
 	QAbstractScrollArea(parent) {
 
-	std::unique_ptr<OpenGLWidget> open_gl_widget{new OpenGLWidget(this, fits)};
+	std::unique_ptr<OpenGLWidget> open_gl_widget{new OpenGLWidget(this, hdu)};
 	/* setViewport promises to take ownership */
 	setViewport(open_gl_widget.release());
 
@@ -42,8 +42,8 @@ void ScrollZoomArea::translatePixelViewport(int x, int y) {
 void ScrollZoomArea::updateBars() {
 	horizontalScrollBar()->setPageStep(viewport()->pixelViewrect().width());
 	verticalScrollBar()  ->setPageStep(viewport()->pixelViewrect().height());
-	horizontalScrollBar()->setRange(0, viewport()->fits_size().width()  - viewport()->pixelViewrect().width()  - 1);
-	verticalScrollBar()  ->setRange(0, viewport()->fits_size().height() - viewport()->pixelViewrect().height() - 1);
+	horizontalScrollBar()->setRange(0, viewport()->image_size().width()  - viewport()->pixelViewrect().width()  - 1);
+	verticalScrollBar()  ->setRange(0, viewport()->image_size().height() - viewport()->pixelViewrect().height() - 1);
 	horizontalScrollBar()->setValue(viewport()->pixelViewrect().left());
 	verticalScrollBar()  ->setValue(viewport()->pixelViewrect().top());
 }

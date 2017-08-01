@@ -25,7 +25,7 @@ public:
 			data_ += pages * 2880;
 		}
 		inline void advanceInBytes(quint64 bytes) {
-			advance(bytes / 2880);
+			advance(bytes ? (bytes - 1) / 2880 + 1 : 0);
 		}
 
 		inline Page& operator++ () {
@@ -55,7 +55,7 @@ public:
 	inline qint64 size() const { return size_; }
 
 	inline Page cbegin() const { return Page(data_); }
-	inline Page cend()   const { return Page(data_ + (size_ / 2880 + 1 ) * 2880); }
+	inline Page cend()   const { return Page(data_ + size_ / 2880 * 2880); }
 	inline Page begin() const { return cbegin(); }
 	inline Page end()   const { return cend(); }
 };
