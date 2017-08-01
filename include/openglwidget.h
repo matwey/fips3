@@ -16,6 +16,7 @@
 #include <exception.h>
 
 #include <fits.h>
+#include <opengltexture.h>
 
 class OpenGLWidget: public QOpenGLWidget, protected QOpenGLFunctions {
 	Q_OBJECT
@@ -100,9 +101,9 @@ protected:
 	void resizeEvent(QResizeEvent* event) override;
 
 private:
-	std::unique_ptr<FITS> fits_;
-	OpenGLDeleter<QOpenGLTexture> texture_deleter_;
-	openGL_unique_ptr<QOpenGLTexture> texture_;
+	std::shared_ptr<FITS> fits_;
+	OpenGLDeleter<OpenGLTexture> texture_deleter_;
+	openGL_unique_ptr<OpenGLTexture> texture_;
 	OpenGLDeleter<QOpenGLPixelTransferOptions> pixel_transfer_options_deleter_;
 	openGL_unique_ptr<QOpenGLPixelTransferOptions> pixel_transfer_options_;
 	OpenGLDeleter<QOpenGLShaderProgram> program_deleter_;
