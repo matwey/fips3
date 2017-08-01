@@ -292,6 +292,7 @@ void OpenGLWidget::setViewrect(const QRectF &viewrect) {
 	correct_viewrect();
 	const QRect old_pixel_viewrect(pixel_viewrect_);
 	pixel_viewrect_ = viewrectToPixelViewrect(viewrect_);
+	qDebug() << viewrect_ << pixel_viewrect_;
 	if (pixel_viewrect_ != old_pixel_viewrect) {
 		update();
 		emit pixelViewrectChanged(pixel_viewrect_);
@@ -316,25 +317,26 @@ void OpenGLWidget::setPixelViewrect(const QRect& pixel_viewrect) {
 
 bool OpenGLWidget::correct_viewrect() {
 	auto viewrect = viewrect_;
-	if (viewrect_.left() < 0) {
-		viewrect_.moveLeft(0);
-	}
-	if (viewrect.top() < 0 ) {
-		viewrect.moveTop(0);
-	}
-	if (viewrect.right() > 1) {
-		viewrect.moveRight(1);
-	}
-	if (viewrect.bottom() > 1) {
-		viewrect.moveBottom(1);
-	}
 	if (viewrect.size().width() > 1) {
 		viewrect.moveCenter({0.5, viewrect.center().y()});
+	} else {
+		if (viewrect.left() < 0) {
+			viewrect.moveLeft(0);
+		}
+		if (viewrect.right() > 1) {
+			viewrect.moveRight(1);
+		}
 	}
 	if (viewrect.size().height() > 1) {
 		viewrect.moveCenter({viewrect.center().x(), 0.5});
+	} else {
+		if (viewrect.top() < 0 ) {
+			viewrect.moveTop(0);
+		}
+		if (viewrect.bottom() > 1) {
+			viewrect.moveBottom(1);
+		}
 	}
-
 	if ( viewrect != viewrect_ ){
 		viewrect_ = viewrect;
 		return true;
