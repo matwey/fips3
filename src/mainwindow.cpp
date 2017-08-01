@@ -37,7 +37,7 @@ MainWindow::MainWindow(const QString& fits_filename): QMainWindow() {
 
 	// Resize window to fit FITS image
 	// FIXME: reduce window size if FITS larger than Desktop and change scale_factor_
-	resize(fits->data_unit().size());
+	resize(fits->data_unit().imageDataUnit()->size());
 
 	// Create scroll area and put there open_gl_widget
 	std::unique_ptr<ScrollZoomArea> scroll_zoom_area{new ScrollZoomArea(this, fits.release())};

@@ -179,7 +179,7 @@ void OpenGLWidget::initializeGL() {
 	texture_->setMagnificationFilter(QOpenGLTexture::Nearest);
 	texture_->setFormat(texture_format);
 	qDebug() << glGetError();
-	texture_->setSize(fits_->data_unit().width(), fits_->data_unit().height());
+	texture_->setSize(fits_size().width(), fits_size().height());
 	qDebug() << glGetError();
 	// We use this overloading to provide a possibility to use texture internal format unsupported by QT
 	texture_->allocateStorage(pixel_format, pixel_type);

@@ -101,16 +101,12 @@ FITS::HeaderUnit::HeaderUnit(AbstractFITSStorage::Page& begin, const AbstractFIT
 	if (!foundEnd)
 		throw FITS::UnexpectedEnd();
 }
-FITS::AbstractDataUnit::AbstractDataUnit(AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end, quint32 size, quint64 height, quint64 width):
-	data_(begin.data()),
-	size_(size),
-	height_(height),
-	width_(width) {
+FITS::AbstractDataUnit::AbstractDataUnit(AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end, quint64 length):
+	data_(begin.data()) {
 
-	quint64 full_size = height * width * size;
-	if (begin.distanceInBytes(end) < full_size)
+	if (begin.distanceInBytes(end) < length)
 		throw FITS::UnexpectedEnd();
-	begin.advanceInBytes(full_size);
+	begin.advanceInBytes(length);
 }
 FITS::AbstractDataUnit::~AbstractDataUnit() = default;
 
@@ -122,3 +118,9 @@ FITS::AbstractDataUnit* FITS::AbstractDataUnit::createFromBitpix(const QString& 
 	bitpixToType(bitpix, c);
 	return data_unit;
 }
+FITS::ImageDataUnit::ImageDataUnit(AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end, quint32 element_size, quint64 height, quint64 width):
+	AbstractDataUnit(begin, end, element_size * height * width),
+	height_(height),
+	width_(width) {
+}
+FITS::ImageDataUnit::~ImageDataUnit() = default;

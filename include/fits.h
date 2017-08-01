@@ -75,14 +75,12 @@ public:
 	};
 
 	class AbstractDataUnit;
+	class ImageDataUnit;
 	template<class T> class DataUnit;
 
 	class AbstractDataUnit {
 	private:
 		const quint8* data_;
-		quint32 size_;
-		quint64 height_;
-		quint64 width_;
 
 	protected:
 		struct VisitorBase {
@@ -97,13 +95,10 @@ public:
 
 		virtual void do_apply(VisitorBase* visitor) const = 0;
 	public:
-		AbstractDataUnit(AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end, quint32 size, quint64 height, quint64 width);
+		AbstractDataUnit(AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end, quint64 length);
 		virtual ~AbstractDataUnit() = 0;
 
 		inline const quint8* data() const { return data_; }
-		inline quint64 height() const { return height_; }
-		inline quint64 width()  const { return width_; }
-		inline QSize size() const { return QSize(width_, height_); }
 
 		template<class F> void apply(F fun) const {
 			struct Visitor: public VisitorBase {
@@ -125,16 +120,32 @@ public:
 
 		template<class F> static void bitpixToType(const QString& bitpix, F fun);
 		static AbstractDataUnit* createFromBitpix(const QString& bitpix, AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end, quint64 height, quint64 width);
+
+		inline       ImageDataUnit* imageDataUnit()       { return dynamic_cast<ImageDataUnit*>(this); }
+		inline const ImageDataUnit* imageDataUnit() const { return dynamic_cast<const ImageDataUnit*>(this); }
 	};
 
-	template<class T> class DataUnit: public AbstractDataUnit {
+	class ImageDataUnit: public AbstractDataUnit {
+	private:
+		quint64 height_;
+		quint64 width_;
+	public:
+		ImageDataUnit(AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end, quint32 element_size, quint64 height, quint64 width);
+		virtual ~ImageDataUnit() = 0;
+
+		inline quint64 height() const { return height_; }
+		inline quint64 width()  const { return width_; }
+		inline QSize size() const { return QSize(width_, height_); }
+	};
+
+	template<class T> class DataUnit: public ImageDataUnit {
 	protected:
 		virtual void do_apply(VisitorBase* visitor) const override {
 			visitor->visit(*this);
 		}
 	public:
 		inline DataUnit(AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end, quint64 height, quint64 width):
-			AbstractDataUnit(begin, end, sizeof(T), height, width) {}
+			ImageDataUnit(begin, end, sizeof(T), height, width) {}
 		inline const T* data() const {
 			return static_cast<const T*>(AbstractDataUnit::data());
 		}

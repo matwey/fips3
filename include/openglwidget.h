@@ -73,7 +73,7 @@ public:
 	inline const QRectF& viewrect() const { return viewrect_; }
 	void setPixelViewrect(const QRect& pixel_viewrect);
 	inline const QRect& pixelViewrect() const { return pixel_viewrect_; }
-	inline QSize fits_size() const { return fits_->data_unit().size(); }
+	inline QSize fits_size() const { return fits_->data_unit().imageDataUnit()->size(); }
 	QRect viewrectToPixelViewrect (const QRectF& viewrect) const;
 
 protected:

@@ -68,8 +68,9 @@ void TestFits::parseDataUnitShape() {
 	QFile* file = new QFile(DATA_ROOT "/sombrero8.fits");
 	file->open(QIODevice::ReadOnly);
 	const FITS fits(file);
-	QTRY_COMPARE(fits.data_unit().height(), static_cast<quint64>(448));
-	QTRY_COMPARE(fits.data_unit().width (), static_cast<quint64>(800));
+	auto du = fits.data_unit().imageDataUnit();
+	QTRY_COMPARE(du->height(), static_cast<quint64>(448));
+	QTRY_COMPARE(du->width (), static_cast<quint64>(800));
 }
 void TestFits::visitDataUnit1() {
 	QFile* file = new QFile(DATA_ROOT "/header_end.fits");
