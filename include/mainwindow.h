@@ -24,7 +24,15 @@ public:
 
 	class FileOpenError: public Exception {
 	public:
-		FileOpenError(const QString& reason);
+		explicit FileOpenError(const QString& reason);
+
+		virtual void raise() const override;
+		virtual QException* clone() const override;
+	};
+
+	class NoImageInFITS: public Exception {
+	public:
+		NoImageInFITS();
 
 		virtual void raise() const override;
 		virtual QException* clone() const override;
@@ -32,6 +40,8 @@ public:
 private:
 	static constexpr double zoomIn_factor  = 1.25;
 	static constexpr double zoomOut_factor = 0.8;
+
+	std::unique_ptr<FITS> fits_;
 protected:
 	virtual void resizeEvent(QResizeEvent* event) override;
 public:

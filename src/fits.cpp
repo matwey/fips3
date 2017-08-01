@@ -19,29 +19,19 @@ struct DataUnitCreateHelper {
 
 }
 
-FITS::FITS(AbstractFITSStorage* fits_storage):
-	fits_storage_(fits_storage) {
+FITS::FITS(AbstractFITSStorage* fits_storage, AbstractFITSStorage::Page begin, const AbstractFITSStorage::Page& end):
+	fits_storage_(fits_storage),
+	primary_hdu_(begin, end) {
 
-	AbstractFITSStorage::Page begin = fits_storage->begin();
-	AbstractFITSStorage::Page end = fits_storage->end();
-	header_unit_ = std::unique_ptr<HeaderUnit>(new HeaderUnit(begin, end));
+	const bool has_extension = (primary_hdu_.header().header("EXTEND","F") == "T");
 
-	bool ok = false;
-
-	auto bitpix = header_unit_->header("BITPIX");
-
-	auto naxis = header_unit_->header("NAXIS").toInt(&ok);
-	if (!ok || naxis != 2) throw FITS::WrongHeaderValue("NAXIS", header_unit_->header("NAXIS"));
-
-	// width
-	auto naxis1 = header_unit_->header("NAXIS1").toULongLong(&ok);
-	if (!ok) throw FITS::WrongHeaderValue("NAXIS1", header_unit_->header("NAXIS1"));
-
-	// height
-	auto naxis2 = header_unit_->header("NAXIS2").toULongLong(&ok);
-	if (!ok) throw FITS::WrongHeaderValue("NAXIS2",header_unit_->header("NAXIS2"));
-
-	data_unit_ = std::unique_ptr<AbstractDataUnit>(AbstractDataUnit::createFromBitpix(bitpix, begin, end, naxis2, naxis1));
+	if (has_extension) {
+		while (begin != end) {
+			extensions_.emplace_back(begin, end);
+		}
+	}
+}
+FITS::FITS(AbstractFITSStorage* fits_storage): FITS(fits_storage, fits_storage->begin(), fits_storage->end()) {
 }
 FITS::FITS(QFileDevice* file_device): FITS(new MMapFITSStorage(file_device)) {
 }
@@ -101,16 +91,12 @@ FITS::HeaderUnit::HeaderUnit(AbstractFITSStorage::Page& begin, const AbstractFIT
 	if (!foundEnd)
 		throw FITS::UnexpectedEnd();
 }
-FITS::AbstractDataUnit::AbstractDataUnit(AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end, quint32 size, quint64 height, quint64 width):
-	data_(begin.data()),
-	size_(size),
-	height_(height),
-	width_(width) {
+FITS::AbstractDataUnit::AbstractDataUnit(AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end, quint64 length):
+	data_(begin.data()), length_(length) {
 
-	quint64 full_size = height * width * size;
-	if (begin.distanceInBytes(end) < full_size)
+	if (begin.distanceInBytes(end) < length)
 		throw FITS::UnexpectedEnd();
-	begin.advanceInBytes(full_size);
+	begin.advanceInBytes(length);
 }
 FITS::AbstractDataUnit::~AbstractDataUnit() = default;
 
@@ -121,4 +107,44 @@ FITS::AbstractDataUnit* FITS::AbstractDataUnit::createFromBitpix(const QString& 
 	DataUnitCreateHelper c {&data_unit, begin, end, height, width};
 	bitpixToType(bitpix, c);
 	return data_unit;
+}
+FITS::ImageDataUnit::ImageDataUnit(AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end, quint32 element_size, quint64 height, quint64 width):
+	AbstractDataUnit(begin, end, element_size * height * width),
+	height_(height),
+	width_(width) {
+}
+FITS::ImageDataUnit::~ImageDataUnit() = default;
+FITS::EmptyDataUnit::EmptyDataUnit(AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end):
+	AbstractDataUnit(begin, end, 0) {
+}
+FITS::EmptyDataUnit::~EmptyDataUnit() = default;
+
+FITS::HeaderDataUnit::HeaderDataUnit(AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end):
+	header_(new HeaderUnit(begin, end)) {
+	bool ok = false;
+
+	auto bitpix = header_->header("BITPIX");
+
+	auto naxis = header_->header("NAXIS").toInt(&ok);
+	if (!ok || (naxis != 0 && naxis != 2)) {
+		throw FITS::WrongHeaderValue("NAXIS", header_->header("NAXIS"));
+	}
+
+	if (naxis) {
+		// width
+		auto naxis1 = header_->header("NAXIS1").toULongLong(&ok);
+		if (!ok) {
+			throw FITS::WrongHeaderValue("NAXIS1", header_->header("NAXIS1"));
+		}
+
+		// height
+		auto naxis2 = header_->header("NAXIS2").toULongLong(&ok);
+		if (!ok) {
+			throw FITS::WrongHeaderValue("NAXIS2", header_->header("NAXIS2"));
+		}
+
+		data_.reset(AbstractDataUnit::createFromBitpix(bitpix, begin, end, naxis2, naxis1));
+	} else {
+		data_.reset(new EmptyDataUnit(begin, end));
+	}
 }

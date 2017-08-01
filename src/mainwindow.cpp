@@ -24,6 +24,15 @@ void MainWindow::FileOpenError::raise() const {
 QException* MainWindow::FileOpenError::clone() const {
 	return new MainWindow::FileOpenError(*this);
 }
+MainWindow::NoImageInFITS::NoImageInFITS():
+	MainWindow::Exception("The file has no image content") {
+}
+void MainWindow::NoImageInFITS::raise() const {
+	throw *this;
+}
+QException* MainWindow::NoImageInFITS::clone() const {
+	return new MainWindow::NoImageInFITS(*this);
+}
 
 MainWindow::MainWindow(const QString& fits_filename): QMainWindow() {
 	// Open FITS file
@@ -33,14 +42,26 @@ MainWindow::MainWindow(const QString& fits_filename): QMainWindow() {
 	}
 
 	// Read FITS from file
-	std::unique_ptr<FITS> fits{new FITS(file.release())};
+	fits_.reset(new FITS(file.release()));
+	const FITS::HeaderDataUnit* hdu = &fits_->primary_hdu();
+
+	for (auto it = fits_->begin();
+		it != fits_->end() && !hdu->data().imageDataUnit();
+		++it) {
+
+		hdu = &(*it);
+	}
+
+	if (!hdu->data().imageDataUnit()) {
+		throw NoImageInFITS();
+	}
 
 	// Resize window to fit FITS image
 	// FIXME: reduce window size if FITS larger than Desktop and change scale_factor_
-	resize(fits->data_unit().size());
+	resize(hdu->data().imageDataUnit()->size());
 
 	// Create scroll area and put there open_gl_widget
-	std::unique_ptr<ScrollZoomArea> scroll_zoom_area{new ScrollZoomArea(this, fits.release())};
+	std::unique_ptr<ScrollZoomArea> scroll_zoom_area{new ScrollZoomArea(this, *hdu)};
 	/* setCentralWidget promises to take ownership */
 	setCentralWidget(scroll_zoom_area.release());
 
