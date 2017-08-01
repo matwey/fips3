@@ -66,14 +66,14 @@ public:
 	template<class T> using openGL_unique_ptr = std::unique_ptr<T, OpenGLDeleter<T>>;
 
 public:
-	OpenGLWidget(QWidget *parent, FITS* fits);
+	OpenGLWidget(QWidget *parent, const FITS::HeaderDataUnit& hdu);
 	~OpenGLWidget() override;
 
 	void setViewrect(const QRectF &viewrect);
 	inline const QRectF& viewrect() const { return viewrect_; }
 	void setPixelViewrect(const QRect& pixel_viewrect);
 	inline const QRect& pixelViewrect() const { return pixel_viewrect_; }
-	inline QSize fits_size() const { return fits_->data_unit().imageDataUnit()->size(); }
+	inline QSize image_size() const { return hdu_->data().imageDataUnit()->size(); }
 	QRect viewrectToPixelViewrect (const QRectF& viewrect) const;
 
 protected:
@@ -83,7 +83,7 @@ protected:
 	QSize sizeHint() const override;
 
 private:
-	std::unique_ptr<FITS> fits_;
+	const FITS::HeaderDataUnit* hdu_;
 	OpenGLDeleter<QOpenGLTexture> texture_deleter_;
 	openGL_unique_ptr<QOpenGLTexture> texture_;
 	OpenGLDeleter<QOpenGLPixelTransferOptions> pixel_transfer_options_deleter_;

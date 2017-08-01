@@ -114,6 +114,10 @@ FITS::ImageDataUnit::ImageDataUnit(AbstractFITSStorage::Page& begin, const Abstr
 	width_(width) {
 }
 FITS::ImageDataUnit::~ImageDataUnit() = default;
+FITS::EmptyDataUnit::EmptyDataUnit(AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end):
+	AbstractDataUnit(begin, end, 0) {
+}
+FITS::EmptyDataUnit::~EmptyDataUnit() = default;
 
 FITS::HeaderDataUnit::HeaderDataUnit(AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end):
 	header_(new HeaderUnit(begin, end)) {
@@ -140,6 +144,7 @@ FITS::HeaderDataUnit::HeaderDataUnit(AbstractFITSStorage::Page& begin, const Abs
 		}
 
 		data_.reset(AbstractDataUnit::createFromBitpix(bitpix, begin, end, naxis2, naxis1));
+	} else {
+		data_.reset(new EmptyDataUnit(begin, end));
 	}
-
 }

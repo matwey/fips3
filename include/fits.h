@@ -76,6 +76,7 @@ public:
 
 	class AbstractDataUnit;
 	class ImageDataUnit;
+	class EmptyDataUnit;
 	template<class T> class DataUnit;
 
 	class AbstractDataUnit {
@@ -85,6 +86,7 @@ public:
 	protected:
 		struct VisitorBase {
 			virtual ~VisitorBase() = 0;
+			virtual void visit(const EmptyDataUnit&) = 0;
 			virtual void visit(const DataUnit<quint8>&) = 0;
 			virtual void visit(const DataUnit<qint16>&) = 0;
 			virtual void visit(const DataUnit<qint32>&) = 0;
@@ -106,6 +108,7 @@ public:
 
 				inline Visitor(F* fun): fun_(fun), VisitorBase() {}
 
+				virtual void visit(const EmptyDataUnit& x) override { (*fun_)(x); };
 				virtual void visit(const DataUnit<quint8>& x) override { (*fun_)(x); };
 				virtual void visit(const DataUnit<qint16>& x) override { (*fun_)(x); };
 				virtual void visit(const DataUnit<qint32>& x) override { (*fun_)(x); };
@@ -136,6 +139,16 @@ public:
 		inline quint64 height() const { return height_; }
 		inline quint64 width()  const { return width_; }
 		inline QSize size() const { return QSize(width_, height_); }
+	};
+
+	class EmptyDataUnit: public AbstractDataUnit {
+	protected:
+		virtual void do_apply(VisitorBase* visitor) const override {
+			visitor->visit(*this);
+		}
+	public:
+		EmptyDataUnit(AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end);
+		virtual ~EmptyDataUnit();
 	};
 
 	template<class T> class DataUnit: public ImageDataUnit {
@@ -177,6 +190,7 @@ public:
 	FITS(AbstractFITSStorage* fits_storage);
 	FITS(QFileDevice* file_device);
 
+	inline const HeaderDataUnit&   primary_hdu() const { return primary_hdu_; }
 	inline const HeaderUnit&       header_unit() const { return primary_hdu_.header(); }
 	inline const AbstractDataUnit& data_unit()   const { return primary_hdu_.data(); }
 

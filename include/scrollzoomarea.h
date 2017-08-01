@@ -17,7 +17,7 @@ struct ZoomParam {
 class ScrollZoomArea: public QAbstractScrollArea {
 	Q_OBJECT
 public:
-	ScrollZoomArea(QWidget *parent, FITS* fits);
+	ScrollZoomArea(QWidget *parent, const FITS::HeaderDataUnit& hdu);
 
 	void zoomViewport(double zoom_factor);
 	void zoomViewport(const ZoomParam& zoom);

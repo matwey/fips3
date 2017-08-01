@@ -123,6 +123,9 @@ void TestFits::visitDataUnit1() {
 	file->open(QIODevice::ReadOnly);
 	FITS fits(file);
 	struct test_fun {
+		void operator() (const FITS::EmptyDataUnit&) const {
+			QFAIL("Wrong overloading");
+		}
 		void operator() (const FITS::DataUnit<quint8>&) const {
 			QFAIL("Wrong overloading");
 		}

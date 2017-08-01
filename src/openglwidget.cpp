@@ -46,9 +46,9 @@ QException* OpenGLWidget::ShaderCompileError::clone() const {
 	return new OpenGLWidget::ShaderCompileError(*this);
 }
 
-OpenGLWidget::OpenGLWidget(QWidget *parent, FITS* fits):
+OpenGLWidget::OpenGLWidget(QWidget *parent, const FITS::HeaderDataUnit& hdu):
 	QOpenGLWidget(parent),
-	fits_(fits),
+	hdu_(&hdu),
 	texture_deleter_(this),
 	texture_(new QOpenGLTexture(QOpenGLTexture::Target2D), texture_deleter_),
 	pixel_transfer_options_deleter_(this),
@@ -56,7 +56,7 @@ OpenGLWidget::OpenGLWidget(QWidget *parent, FITS* fits):
 	program_deleter_(this),
 	program_(new QOpenGLShaderProgram, program_deleter_),
 	viewrect_(0, 0, 1, 1),
-	pixel_viewrect_(QPoint(0, 0), fits_size()) {
+	pixel_viewrect_(QPoint(0, 0), image_size()) {
 }
 
 OpenGLWidget::~OpenGLWidget() {
@@ -155,6 +155,9 @@ void OpenGLWidget::initializeGL() {
 		void operator() (const FITS::DataUnit<double>&) const {
 			qDebug() << "BITPIX==-64 is not implemented";
 		}
+		void operator() (const FITS::EmptyDataUnit&) const {
+			Q_ASSERT(0);
+		}
 	};
 
 	GLfloat normalizer;
@@ -163,7 +166,7 @@ void OpenGLWidget::initializeGL() {
 	QOpenGLTexture::PixelType pixel_type;
 	bool swap_bytes_enabled;
 	QString fragment_shader_source_main;
-	fits_->data_unit().apply(texture_loader{this,
+	hdu_->data().apply(texture_loader{this,
 											&normalizer,
 											&texture_format,
 											&pixel_format,
@@ -179,13 +182,13 @@ void OpenGLWidget::initializeGL() {
 	texture_->setMagnificationFilter(QOpenGLTexture::Nearest);
 	texture_->setFormat(texture_format);
 	qDebug() << glGetError();
-	texture_->setSize(fits_size().width(), fits_size().height());
+	texture_->setSize(image_size().width(), image_size().height());
 	qDebug() << glGetError();
 	// We use this overloading to provide a possibility to use texture internal format unsupported by QT
 	texture_->allocateStorage(pixel_format, pixel_type);
 	qDebug() << glGetError();
 	pixel_transfer_options_->setSwapBytesEnabled(swap_bytes_enabled);
-	texture_->setData(pixel_format, pixel_type, fits_->data_unit().data(), pixel_transfer_options_.get());
+	texture_->setData(pixel_format, pixel_type, hdu_->data().data(), pixel_transfer_options_.get());
 	qDebug() << glGetError();
 
 	vbo_.create();
@@ -223,8 +226,8 @@ void OpenGLWidget::initializeGL() {
 	program_->bindAttributeLocation("vertexUV",    program_vertex_uv_attribute);
 	if (! program_->link()) throw ShaderLoadError();
 	if (! program_->bind()) throw ShaderBindError();
-	program_->setUniformValue("bzero",  static_cast<GLfloat>(fits_->header_unit().bzero()) / normalizer);
-	program_->setUniformValue("bscale", static_cast<GLfloat>(fits_->header_unit().bscale()));
+	program_->setUniformValue("bzero",  static_cast<GLfloat>(hdu_->header().bzero()) / normalizer);
+	program_->setUniformValue("bscale", static_cast<GLfloat>(hdu_->header().bscale()));
 	program_->enableAttributeArray(program_vertex_coord_attribute);
 	program_->enableAttributeArray(program_vertex_uv_attribute);
 	program_->setAttributeBuffer(program_vertex_coord_attribute, GL_FLOAT, 0,                   3, 3 * sizeof(GLfloat));
@@ -248,7 +251,7 @@ void OpenGLWidget::paintGL() {
 }
 
 QSize OpenGLWidget::sizeHint() const {
-	return fits_size();
+	return image_size();
 }
 
 void OpenGLWidget::setViewrect(const QRectF &viewrect) {
@@ -259,20 +262,20 @@ void OpenGLWidget::setViewrect(const QRectF &viewrect) {
 }
 
 QRect OpenGLWidget::viewrectToPixelViewrect(const QRectF& viewrect) const {
-	const int left =   qRound(viewrect.left()   * (fits_size().width()  - 1));
-	const int top  =   qRound(viewrect.top()    * (fits_size().height() - 1));
-	const int width =  qRound(viewrect.width()  * fits_size().width());
-	const int height = qRound(viewrect.height() * fits_size().height());
+	const int left =   qRound(viewrect.left()   * (image_size().width()  - 1));
+	const int top  =   qRound(viewrect.top()    * (image_size().height() - 1));
+	const int width =  qRound(viewrect.width()  * image_size().width());
+	const int height = qRound(viewrect.height() * image_size().height());
 	return {left, top, width, height};
 }
 
 void OpenGLWidget::setPixelViewrect(const QRect& pixel_viewrect) {
 	pixel_viewrect_ = pixel_viewrect;
 
-	const auto left   = static_cast<double>(pixel_viewrect.left()  ) / (fits_size().width()  - 1);
-	const auto top    = static_cast<double>(pixel_viewrect.top()   ) / (fits_size().height() - 1);
-	const auto width  = static_cast<double>(pixel_viewrect.width() ) / fits_size().width();
-	const auto height = static_cast<double>(pixel_viewrect.height()) / fits_size().height();
+	const auto left   = static_cast<double>(pixel_viewrect.left()  ) / (image_size().width()  - 1);
+	const auto top    = static_cast<double>(pixel_viewrect.top()   ) / (image_size().height() - 1);
+	const auto width  = static_cast<double>(pixel_viewrect.width() ) / image_size().width();
+	const auto height = static_cast<double>(pixel_viewrect.height()) / image_size().height();
 	viewrect_ = {left, top, width, height};
 	if (correct_viewrect()){
 		pixel_viewrect_ = viewrectToPixelViewrect(viewrect_);
