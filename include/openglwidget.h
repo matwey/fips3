@@ -11,24 +11,27 @@
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLWidget>
 #include <QMatrix4x4>
+#include <QResizeEvent>
 
 #include <exception.h>
 
 #include <fits.h>
 
 class OpenGLWidget: public QOpenGLWidget, protected QOpenGLFunctions {
+	Q_OBJECT
 public:
 	class Exception: public ::Exception {
 	public:
-		explicit Exception(const QString& what);
+		Exception(const QString &reason, GLenum gl_error_code);
 
 		virtual void raise() const override;
 		virtual QException* clone() const override;
+		static QString glErrorString(GLenum gl_error_code);
 	};
 
 	class ShaderLoadError: public Exception {
 	public:
-		ShaderLoadError();
+		ShaderLoadError(GLenum gl_error_code);
 
 		virtual void raise() const override;
 		virtual QException* clone() const override;
@@ -36,7 +39,7 @@ public:
 
 	class ShaderBindError: public Exception {
 	public:
-		ShaderBindError();
+		ShaderBindError(GLenum gl_error_code);
 
 		virtual void raise() const override;
 		virtual QException* clone() const override;
@@ -44,7 +47,15 @@ public:
 
 	class ShaderCompileError: public Exception {
 	public:
-		ShaderCompileError();
+		ShaderCompileError(GLenum gl_error_code);
+
+		virtual void raise() const override;
+		virtual QException* clone() const override;
+	};
+
+	class TextureCreateError: public Exception {
+	public:
+		TextureCreateError(GLenum gl_error_code);
 
 		virtual void raise() const override;
 		virtual QException* clone() const override;
@@ -76,11 +87,17 @@ public:
 	inline QSize fits_size() const { return fits_->data_unit().size(); }
 	QRect viewrectToPixelViewrect (const QRectF& viewrect) const;
 
+signals:
+	void pixelViewrectChanged(const QRect& pixel_viewrect);
+
+private slots:
+
+
 protected:
 	void initializeGL() override;
-	void resizeGL(int w, int h) override;
 	void paintGL() override;
 	QSize sizeHint() const override;
+	void resizeEvent(QResizeEvent* event) override;
 
 private:
 	std::unique_ptr<FITS> fits_;
@@ -111,6 +128,13 @@ private:
 
 	// Returns true if viewrect has been corrected
 	bool correct_viewrect();
+
+	template<class T> void throwIfGLError() throw(T) {
+		const auto gl_error_code = glGetError();
+		if (gl_error_code) {
+			throw T(gl_error_code);
+		}
+	}
 };
 
 

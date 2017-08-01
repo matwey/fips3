@@ -3,8 +3,8 @@
 
 #include <openglwidget.h>
 
-OpenGLWidget::Exception::Exception(const QString& what):
-	::Exception(what) {
+OpenGLWidget::Exception::Exception(const QString &what, GLenum gl_error_code):
+	::Exception(what + ": " + glErrorString(gl_error_code)) {
 }
 void OpenGLWidget::Exception::raise() const {
 	throw *this;
@@ -12,14 +12,28 @@ void OpenGLWidget::Exception::raise() const {
 QException* OpenGLWidget::Exception::clone() const {
 	return new OpenGLWidget::Exception(*this);
 }
-/*
- * FIXME: here obtain opengl error code and conver to string description
- * An example:
- *
- * ShaderLoadError(int error_code): OpenGLWidget::Exception(QString(glCodeToString(error_code))) {
- */
-OpenGLWidget::ShaderLoadError::ShaderLoadError():
-	OpenGLWidget::Exception("Cannot load the shader") {
+// From OpenGL ES 2.0 documentation:
+// https://www.khronos.org/registry/OpenGL-Refpages/es2.0/xhtml/glGetError.xml
+QString OpenGLWidget::Exception::glErrorString(GLenum gl_error_code) {
+	switch (gl_error_code) {
+		case GL_NO_ERROR:
+			return "No error has been recorded. The value of this symbolic constant is guaranteed to be 0.";
+		case GL_INVALID_ENUM:
+			return "An unacceptable value is specified for an enumerated argument. The offending command is ignored and has no other side effect than to set the error flag.";
+		case GL_INVALID_VALUE:
+			return "A numeric argument is out of range. The offending command is ignored and has no other side effect than to set the error flag.";
+		case GL_INVALID_OPERATION:
+			return "The specified operation is not allowed in the current state. The offending command is ignored and has no other side effect than to set the error flag.";
+		case GL_INVALID_FRAMEBUFFER_OPERATION:
+			return "The command is trying to render to or read from the framebuffer while the currently bound framebuffer is not framebuffer complete (i.e. the return value from glCheckFramebufferStatus is not GL_FRAMEBUFFER_COMPLETE). The offending command is ignored and has no other side effect than to set the error flag.";
+		case GL_OUT_OF_MEMORY:
+			return "There is not enough memory left to execute the command. The state of the GL is undefined, except for the state of the error flags, after this error is recorded.";
+		default:
+			return "Unknown error";
+	}
+}
+OpenGLWidget::ShaderLoadError::ShaderLoadError(GLenum gl_error_code):
+	OpenGLWidget::Exception("Cannot load the shader", gl_error_code) {
 }
 void OpenGLWidget::ShaderLoadError::raise() const {
 	throw *this;
@@ -27,8 +41,8 @@ void OpenGLWidget::ShaderLoadError::raise() const {
 QException* OpenGLWidget::ShaderLoadError::clone() const {
 	return new OpenGLWidget::ShaderLoadError(*this);
 }
-OpenGLWidget::ShaderBindError::ShaderBindError():
-	OpenGLWidget::Exception("Cannot bind the shader") {
+OpenGLWidget::ShaderBindError::ShaderBindError(GLenum gl_error_code):
+	OpenGLWidget::Exception("Cannot bind the shader", gl_error_code) {
 }
 void OpenGLWidget::ShaderBindError::raise() const {
 	throw *this;
@@ -36,14 +50,23 @@ void OpenGLWidget::ShaderBindError::raise() const {
 QException* OpenGLWidget::ShaderBindError::clone() const {
 	return new OpenGLWidget::ShaderBindError(*this);
 }
-OpenGLWidget::ShaderCompileError::ShaderCompileError():
-	OpenGLWidget::Exception("Cannot compile the shader") {
+OpenGLWidget::ShaderCompileError::ShaderCompileError(GLenum gl_error_code):
+	OpenGLWidget::Exception("Cannot compile the shader", gl_error_code) {
 }
 void OpenGLWidget::ShaderCompileError::raise() const {
 	throw *this;
 }
 QException* OpenGLWidget::ShaderCompileError::clone() const {
 	return new OpenGLWidget::ShaderCompileError(*this);
+}
+OpenGLWidget::TextureCreateError::TextureCreateError(GLenum gl_error_code):
+		OpenGLWidget::Exception("Cannot create texture", gl_error_code) {
+}
+void OpenGLWidget::TextureCreateError::raise() const {
+	throw *this;
+}
+QException* OpenGLWidget::TextureCreateError::clone() const {
+	return new OpenGLWidget::TextureCreateError(*this);
 }
 
 OpenGLWidget::OpenGLWidget(QWidget *parent, FITS* fits):
@@ -178,15 +201,15 @@ void OpenGLWidget::initializeGL() {
 	texture_->setMinificationFilter(QOpenGLTexture::Nearest);
 	texture_->setMagnificationFilter(QOpenGLTexture::Nearest);
 	texture_->setFormat(texture_format);
-	qDebug() << glGetError();
+	throwIfGLError<TextureCreateError>();
 	texture_->setSize(fits_->data_unit().width(), fits_->data_unit().height());
-	qDebug() << glGetError();
+	throwIfGLError<TextureCreateError>();
 	// We use this overloading to provide a possibility to use texture internal format unsupported by QT
 	texture_->allocateStorage(pixel_format, pixel_type);
-	qDebug() << glGetError();
+	throwIfGLError<TextureCreateError>();
 	pixel_transfer_options_->setSwapBytesEnabled(swap_bytes_enabled);
 	texture_->setData(pixel_format, pixel_type, fits_->data_unit().data(), pixel_transfer_options_.get());
-	qDebug() << glGetError();
+	throwIfGLError<TextureCreateError>();
 
 	vbo_.create();
 	vbo_.bind();
@@ -203,7 +226,7 @@ void OpenGLWidget::initializeGL() {
 			"	gl_Position = MVP * vec4(vertexCoord,1);\n"
 			"	UV = VertexUV;\n"
 			"}\n";
-	if (! vshader->compileSourceCode(vsrc)) throw ShaderCompileError();
+	if (! vshader->compileSourceCode(vsrc)) throw ShaderCompileError(glGetError());
 
 	QString fsrc =
 			"#version 110\n"
@@ -215,14 +238,14 @@ void OpenGLWidget::initializeGL() {
 			+ fragment_shader_source_main +
 			"}\n";
 	QOpenGLShader *fshader = new QOpenGLShader(QOpenGLShader::Fragment, this);
-	if (! fshader->compileSourceCode(fsrc)) throw ShaderCompileError();
+	if (! fshader->compileSourceCode(fsrc)) throw ShaderCompileError(glGetError());
 
-	if (! program_->addShader(vshader)) throw ShaderLoadError();
-	if (! program_->addShader(fshader)) throw ShaderLoadError();
+	if (! program_->addShader(vshader)) throw ShaderLoadError(glGetError());
+	if (! program_->addShader(fshader)) throw ShaderLoadError(glGetError());
 	program_->bindAttributeLocation("vertexCoord", program_vertex_coord_attribute);
 	program_->bindAttributeLocation("vertexUV",    program_vertex_uv_attribute);
-	if (! program_->link()) throw ShaderLoadError();
-	if (! program_->bind()) throw ShaderBindError();
+	if (! program_->link()) throw ShaderLoadError(glGetError());
+	if (! program_->bind()) throw ShaderBindError(glGetError());
 	program_->setUniformValue("bzero",  static_cast<GLfloat>(fits_->header_unit().bzero()) / normalizer);
 	program_->setUniformValue("bscale", static_cast<GLfloat>(fits_->header_unit().bscale()));
 	program_->enableAttributeArray(program_vertex_coord_attribute);
@@ -231,7 +254,20 @@ void OpenGLWidget::initializeGL() {
 	program_->setAttributeBuffer(program_vertex_uv_attribute,    GL_FLOAT, 0 * sizeof(GLfloat), 2, 3 * sizeof(GLfloat));
 }
 
-void OpenGLWidget::resizeGL(int w, int h) {
+void OpenGLWidget::resizeEvent(QResizeEvent* event) {
+	QOpenGLWidget::resizeEvent(event);
+
+	const auto new_widget_size = event->size();
+	auto old_widget_size = event->oldSize();
+	// event->oldSize() for the first call of resizeEvent equals -1,-1
+	if (old_widget_size.width() < 0 || old_widget_size.height() < 0) {
+		old_widget_size = new_widget_size;
+	}
+	const auto new_viewrect_width  = viewrect_.width()  * (static_cast<double>(new_widget_size.width())  - 1.0) / (static_cast<double>(old_widget_size.width())  - 1.0);
+	const auto new_viewrect_height = viewrect_.height() * (new_widget_size.height() - 1.0) / (old_widget_size.height() - 1.0);
+	QRectF new_viewrect(viewrect_);
+	new_viewrect.setSize({new_viewrect_width, new_viewrect_height});
+	setViewrect(new_viewrect);
 }
 
 void OpenGLWidget::paintGL() {
@@ -254,8 +290,13 @@ QSize OpenGLWidget::sizeHint() const {
 void OpenGLWidget::setViewrect(const QRectF &viewrect) {
 	viewrect_ = viewrect;
 	correct_viewrect();
+	const QRect old_pixel_viewrect(pixel_viewrect_);
 	pixel_viewrect_ = viewrectToPixelViewrect(viewrect_);
-	update();
+	qDebug() << viewrect_ << pixel_viewrect_;
+	if (pixel_viewrect_ != old_pixel_viewrect) {
+		update();
+		emit pixelViewrectChanged(pixel_viewrect_);
+	}
 }
 
 QRect OpenGLWidget::viewrectToPixelViewrect(const QRectF& viewrect) const {
@@ -267,42 +308,35 @@ QRect OpenGLWidget::viewrectToPixelViewrect(const QRectF& viewrect) const {
 }
 
 void OpenGLWidget::setPixelViewrect(const QRect& pixel_viewrect) {
-	pixel_viewrect_ = pixel_viewrect;
-
 	const auto left   = static_cast<double>(pixel_viewrect.left()  ) / (fits_size().width()  - 1);
 	const auto top    = static_cast<double>(pixel_viewrect.top()   ) / (fits_size().height() - 1);
 	const auto width  = static_cast<double>(pixel_viewrect.width() ) / fits_size().width();
 	const auto height = static_cast<double>(pixel_viewrect.height()) / fits_size().height();
-	viewrect_ = {left, top, width, height};
-	if (correct_viewrect()){
-		pixel_viewrect_ = viewrectToPixelViewrect(viewrect_);
-	}
-
-	update();
+	setViewrect({left, top, width, height});
 }
 
 bool OpenGLWidget::correct_viewrect() {
 	auto viewrect = viewrect_;
-	if (viewrect_.left() < 0) {
-		viewrect_.moveLeft(0);
-
-	}
-	if (viewrect.top() < 0 ) {
-		viewrect.moveTop(0);
-	}
-	if (viewrect.right() > 1) {
-		viewrect.moveRight(1);
-	}
-	if (viewrect.bottom() > 1) {
-		viewrect.moveBottom(1);
-	}
 	if (viewrect.size().width() > 1) {
 		viewrect.moveCenter({0.5, viewrect.center().y()});
+	} else {
+		if (viewrect.left() < 0) {
+			viewrect.moveLeft(0);
+		}
+		if (viewrect.right() > 1) {
+			viewrect.moveRight(1);
+		}
 	}
 	if (viewrect.size().height() > 1) {
 		viewrect.moveCenter({viewrect.center().x(), 0.5});
+	} else {
+		if (viewrect.top() < 0 ) {
+			viewrect.moveTop(0);
+		}
+		if (viewrect.bottom() > 1) {
+			viewrect.moveBottom(1);
+		}
 	}
-
 	if ( viewrect != viewrect_ ){
 		viewrect_ = viewrect;
 		return true;
