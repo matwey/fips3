@@ -4,12 +4,12 @@
 
 #include <opengltexture.h>
 
-OpenGLTexture::OpenGLTexture(QOpenGLWidget* open_gl_widget):
+OpenGLTexture::OpenGLTexture(const FITS::HeaderDataUnit* hdu):
 		QOpenGLTexture(QOpenGLTexture::Target2D),
-		open_gl_widget_(open_gl_widget) {
+		hdu_(hdu) {
 }
 
-void OpenGLTexture::setFITS(std::shared_ptr<FITS> fits) {
+void OpenGLTexture::initialize() {
 	struct Loader {
 		GLfloat* normalizer;
 		QOpenGLTexture::TextureFormat* texture_format;
@@ -65,10 +65,12 @@ void OpenGLTexture::setFITS(std::shared_ptr<FITS> fits) {
 		void operator() (const FITS::DataUnit<double>&) const {
 			qDebug() << "BITPIX==-64 is not implemented";
 		}
+		void operator() (const FITS::EmptyDataUnit&) const {
+			Q_ASSERT(0);
+		}
 	};
 
-	fits_ = fits;
-	fits_->data_unit().apply(Loader{
+	hdu_->data().apply(Loader{
 			&normalizer_,
 			&texture_format_,
 			&pixel_format_,
@@ -80,13 +82,13 @@ void OpenGLTexture::setFITS(std::shared_ptr<FITS> fits) {
 	setMagnificationFilter(QOpenGLTexture::Nearest);
 	setFormat(texture_format_);
 //	throwIfGLError<TextureCreateError>();
-	setSize(fits_->data_unit().width(), fits_->data_unit().height());
+	setSize(hdu_->data().imageDataUnit()->width(), hdu_->data().imageDataUnit()->height());
 //	throwIfGLError<TextureCreateError>();
 	// We use this overloading to provide a possibility to use texture internal format unsupported by QT
 	allocateStorage(pixel_format_, pixel_type_);
 //	throwIfGLError<TextureCreateError>();
 	QOpenGLPixelTransferOptions pixel_transfer_options;
 	pixel_transfer_options.setSwapBytesEnabled(swap_bytes_enabled_);
-	this->setData(pixel_format_, pixel_type_, fits_->data_unit().data(), &pixel_transfer_options);
+	this->setData(pixel_format_, pixel_type_, hdu_->data().data(), &pixel_transfer_options);
 //	throwIfGLError<TextureCreateError>();
 }

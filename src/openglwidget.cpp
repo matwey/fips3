@@ -16,8 +16,8 @@ QException* OpenGLWidget::Exception::clone() const {
 // https://www.khronos.org/registry/OpenGL-Refpages/es2.0/xhtml/glGetError.xml
 QString OpenGLWidget::Exception::glErrorString(GLenum gl_error_code) {
 	switch (gl_error_code) {
-		case GL_NO_ERROR:
-			return "No error has been recorded. The value of this symbolic constant is guaranteed to be 0.";
+//		case GL_NO_ERROR:
+//			return "No error has been recorded. The value of this symbolic constant is guaranteed to be 0.";
 		case GL_INVALID_ENUM:
 			return "An unacceptable value is specified for an enumerated argument. The offending command is ignored and has no other side effect than to set the error flag.";
 		case GL_INVALID_VALUE:
@@ -144,13 +144,11 @@ void OpenGLWidget::initializeGL() {
 		void operator() (const FITS::DataUnit<double>&) const {
 			qDebug() << "BITPIX==-64 is not implemented";
 		}
+		void operator() (const FITS::EmptyDataUnit&) const {
+			Q_ASSERT(0);
+		}
 	};
 
-	GLfloat normalizer;
-	QOpenGLTexture::TextureFormat texture_format;
-	QOpenGLTexture::PixelFormat pixel_format;
-	QOpenGLTexture::PixelType pixel_type;
-	bool swap_bytes_enabled;
 	QString fragment_shader_source_main;
 	hdu_->data().apply(ShaderLoader{&fragment_shader_source_main});
 
@@ -194,7 +192,7 @@ void OpenGLWidget::initializeGL() {
 	program_->bindAttributeLocation("vertexUV",    program_vertex_uv_attribute);
 	if (! program_->link()) throw ShaderLoadError(glGetError());
 	if (! program_->bind()) throw ShaderBindError(glGetError());
-	program_->setUniformValue("bzero",  static_cast<GLfloat>(hdu_->header().bzero()) / texture_->normalizer);
+	program_->setUniformValue("bzero",  static_cast<GLfloat>(hdu_->header().bzero()) / texture_->normalizer());
 	program_->setUniformValue("bscale", static_cast<GLfloat>(hdu_->header().bscale()));
 	program_->enableAttributeArray(program_vertex_coord_attribute);
 	program_->enableAttributeArray(program_vertex_uv_attribute);
@@ -240,7 +238,6 @@ void OpenGLWidget::setViewrect(const QRectF &viewrect) {
 	correct_viewrect();
 	const QRect old_pixel_viewrect(pixel_viewrect_);
 	pixel_viewrect_ = viewrectToPixelViewrect(viewrect_);
-	qDebug() << viewrect_ << pixel_viewrect_;
 	if (pixel_viewrect_ != old_pixel_viewrect) {
 		update();
 		emit pixelViewrectChanged(pixel_viewrect_);
