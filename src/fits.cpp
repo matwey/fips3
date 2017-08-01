@@ -24,24 +24,34 @@ FITS::FITS(AbstractFITSStorage* fits_storage):
 
 	AbstractFITSStorage::Page begin = fits_storage->begin();
 	AbstractFITSStorage::Page end = fits_storage->end();
-	header_unit_ = std::unique_ptr<HeaderUnit>(new HeaderUnit(begin, end));
+	primary_hdu_.header = std::unique_ptr<HeaderUnit>(new HeaderUnit(begin, end));
+	const HeaderUnit* header_unit = primary_hdu_.header.get();
 
 	bool ok = false;
 
-	auto bitpix = header_unit_->header("BITPIX");
+	auto bitpix = header_unit->header("BITPIX");
 
-	auto naxis = header_unit_->header("NAXIS").toInt(&ok);
-	if (!ok || naxis != 2) throw FITS::WrongHeaderValue("NAXIS", header_unit_->header("NAXIS"));
+	auto naxis = header_unit->header("NAXIS").toInt(&ok);
+	if (!ok || (naxis != 0 && naxis != 2)) {
+		throw FITS::WrongHeaderValue("NAXIS", header_unit->header("NAXIS"));
+	}
 
-	// width
-	auto naxis1 = header_unit_->header("NAXIS1").toULongLong(&ok);
-	if (!ok) throw FITS::WrongHeaderValue("NAXIS1", header_unit_->header("NAXIS1"));
+	if (naxis) {
+		// width
+		auto naxis1 = header_unit->header("NAXIS1").toULongLong(&ok);
+		if (!ok) {
+			throw FITS::WrongHeaderValue("NAXIS1", header_unit->header("NAXIS1"));
+		}
 
-	// height
-	auto naxis2 = header_unit_->header("NAXIS2").toULongLong(&ok);
-	if (!ok) throw FITS::WrongHeaderValue("NAXIS2",header_unit_->header("NAXIS2"));
+		// height
+		auto naxis2 = header_unit->header("NAXIS2").toULongLong(&ok);
+		if (!ok) {
+			throw FITS::WrongHeaderValue("NAXIS2", header_unit->header("NAXIS2"));
+		}
 
-	data_unit_ = std::unique_ptr<AbstractDataUnit>(AbstractDataUnit::createFromBitpix(bitpix, begin, end, naxis2, naxis1));
+		primary_hdu_.data = std::unique_ptr<AbstractDataUnit>(
+			AbstractDataUnit::createFromBitpix(bitpix, begin, end, naxis2, naxis1));
+	}
 }
 FITS::FITS(QFileDevice* file_device): FITS(new MMapFITSStorage(file_device)) {
 }
@@ -102,7 +112,7 @@ FITS::HeaderUnit::HeaderUnit(AbstractFITSStorage::Page& begin, const AbstractFIT
 		throw FITS::UnexpectedEnd();
 }
 FITS::AbstractDataUnit::AbstractDataUnit(AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end, quint64 length):
-	data_(begin.data()) {
+	data_(begin.data()), length_(length) {
 
 	if (begin.distanceInBytes(end) < length)
 		throw FITS::UnexpectedEnd();

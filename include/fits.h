@@ -81,7 +81,7 @@ public:
 	class AbstractDataUnit {
 	private:
 		const quint8* data_;
-
+		quint64 length_;
 	protected:
 		struct VisitorBase {
 			virtual ~VisitorBase() = 0;
@@ -150,16 +150,20 @@ public:
 			return static_cast<const T*>(AbstractDataUnit::data());
 		}
 	};
+
+	struct HeaderDataUnit {
+		std::unique_ptr<HeaderUnit>       header;
+		std::unique_ptr<AbstractDataUnit> data;
+	};
 private:
 	std::unique_ptr<AbstractFITSStorage> fits_storage_;
-	std::unique_ptr<HeaderUnit> header_unit_;
-	std::unique_ptr<AbstractDataUnit> data_unit_;
+	HeaderDataUnit primary_hdu_;
 public:
 	FITS(AbstractFITSStorage* fits_storage);
 	FITS(QFileDevice* file_device);
 
-	inline const HeaderUnit& header_unit() const { return *header_unit_; }
-	inline const AbstractDataUnit& data_unit() const { return *data_unit_; } 
+	inline const HeaderUnit&       header_unit() const { return *primary_hdu_.header; }
+	inline const AbstractDataUnit& data_unit()   const { return *primary_hdu_.data; }
 };
 
 template<class F> void FITS::AbstractDataUnit::bitpixToType(const QString& bitpix, F fun) {
