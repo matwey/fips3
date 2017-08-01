@@ -49,5 +49,12 @@ void ScrollZoomArea::updateBars() {
 }
 
 bool ScrollZoomArea::viewportEvent(QEvent* event) {
-	return false;
+	switch (event->type()) {
+	/* The following two guys are the special beasts. */
+	case QEvent::Resize:
+	case QEvent::Paint:
+		return false;
+	default:
+		return QAbstractScrollArea::viewportEvent(event);
+	}
 }
