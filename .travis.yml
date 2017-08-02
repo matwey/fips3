@@ -28,6 +28,8 @@ matrix:
       - make VERBOSE=1
     script:
       - make test
+    services:
+    env:
 
 env:
  - BASE_IMAGE_TAG=gcc7-qt59
