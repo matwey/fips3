@@ -5,6 +5,14 @@ language: cpp
 services:
  - docker
 
+os:
+  - linux
+  - osx
+
+matrix:
+  exclude:
+    os: osx
+
 env:
  - BASE_IMAGE_TAG=gcc7-qt59
  - BASE_IMAGE_TAG=gcc7-qt58
