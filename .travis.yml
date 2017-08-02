@@ -17,7 +17,6 @@ matrix:
     language: cpp
     osx_image: xcode8
     before_install:
-      - brew update
       - brew install qt
       - brew link --force qt
       - ln -s $(brew --prefix qt)/mkspecs $(brew --prefix)/mkspecs
