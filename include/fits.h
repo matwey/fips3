@@ -101,6 +101,7 @@ public:
 		virtual ~AbstractDataUnit() = 0;
 
 		inline const quint8* data() const { return data_; }
+		inline quint64 length() const { return length_; }
 
 		template<class F> void apply(F fun) const {
 			struct Visitor: public VisitorBase {
@@ -160,8 +161,9 @@ public:
 		inline DataUnit(AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end, quint64 height, quint64 width):
 			ImageDataUnit(begin, end, sizeof(T), height, width) {}
 		inline const T* data() const {
-			return static_cast<const T*>(AbstractDataUnit::data());
+			return reinterpret_cast<const T*>(AbstractDataUnit::data());
 		}
+		inline quint64 length() const { return AbstractDataUnit::length() / sizeof(T); }
 	};
 
 	class HeaderDataUnit {

@@ -192,8 +192,8 @@ void OpenGLWidget::initializeGL() {
 	program_->bindAttributeLocation("vertexUV",    program_vertex_uv_attribute);
 	if (! program_->link()) throw ShaderLoadError(glGetError());
 	if (! program_->bind()) throw ShaderBindError(glGetError());
-	program_->setUniformValue("bzero",  static_cast<GLfloat>(hdu_->header().bzero()) / texture_->normalizer());
-	program_->setUniformValue("bscale", static_cast<GLfloat>(hdu_->header().bscale()));
+	program_->setUniformValue("bzero",  static_cast<GLfloat>((hdu_->header().bzero() + texture_->hdu_minimum()) / (texture_->hdu_maximum() - texture_->hdu_minimum())));
+	program_->setUniformValue("bscale", static_cast<GLfloat>(hdu_->header().bscale() / (texture_->hdu_maximum() - texture_->hdu_minimum())));
 	program_->enableAttributeArray(program_vertex_coord_attribute);
 	program_->enableAttributeArray(program_vertex_uv_attribute);
 	program_->setAttributeBuffer(program_vertex_coord_attribute, GL_FLOAT, 0,                   3, 3 * sizeof(GLfloat));
