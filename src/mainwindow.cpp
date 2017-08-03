@@ -88,6 +88,7 @@ MainWindow::MainWindow(const QString& fits_filename): QMainWindow() {
 	setMenuBar(menu_bar.release());
 
 	levels_dock_.reset(new QDockWidget(tr("Levels"), this));
+	levels_dock_->setStyleSheet("QDockWidget{titlebar-close-icon: none; titlebar-normal-icon: none;}");
 	levels_dock_->setAllowedAreas(Qt::TopDockWidgetArea | Qt::BottomDockWidgetArea);
 	std::unique_ptr<LevelsWidget> levels_widget{new LevelsWidget(levels_dock_.get())};
 	levels_dock_->setWidget(levels_widget.release());
