@@ -1,7 +1,8 @@
 #include <memory>
 
 #include <QFile>
-#include <QVBoxLayout>
+#include <QFileInfo>
+#include <QListWidget>
 
 #include <mainwindow.h>
 
@@ -60,6 +61,12 @@ MainWindow::MainWindow(const QString& fits_filename): QMainWindow() {
 	// FIXME: reduce window size if FITS larger than Desktop and change scale_factor_
 	resize(hdu->data().imageDataUnit()->size());
 
+	#ifdef Q_OS_MAC
+		setWindowTitle(QFileInfo(fits_filename).fileName());
+	#else
+		setWindowTitle(QFileInfo(fits_filename).fileName() + " — FIPS");
+	#endif
+
 	// Create scroll area and put there open_gl_widget
 	std::unique_ptr<ScrollZoomArea> scroll_zoom_area{new ScrollZoomArea(this, *hdu)};
 	/* setCentralWidget promises to take ownership */
@@ -79,6 +86,14 @@ MainWindow::MainWindow(const QString& fits_filename): QMainWindow() {
 
 	/* setMenuBar promises to take ownership */
 	setMenuBar(menu_bar.release());
+
+	levels_dock_.reset(new QDockWidget(tr("Levels"), this));
+	levels_dock_->setAllowedAreas(Qt::TopDockWidgetArea | Qt::BottomDockWidgetArea);
+	std::unique_ptr<LevelsWidget> levels_widget{new LevelsWidget(levels_dock_.get())};
+	levels_dock_->setWidget(levels_widget.get());
+	addDockWidget(Qt::TopDockWidgetArea, levels_dock_.get());
+	view_menu->addAction(levels_dock_->toggleViewAction());
+	levels_dock_->toggleViewAction()->setShortcut(tr("Ctrl+L"));
 }
 
 void MainWindow::zoomIn() {
