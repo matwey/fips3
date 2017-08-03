@@ -207,13 +207,17 @@ void OpenGLWidget::resizeEvent(QResizeEvent* event) {
 	auto old_widget_size = event->oldSize();
 	// event->oldSize() for the first call of resizeEvent equals -1,-1
 	if (old_widget_size.width() < 0 || old_widget_size.height() < 0) {
-		old_widget_size = new_widget_size;
+		const auto ratio = (image_size().height() - 1.0) * (new_widget_size.width() - 1.0) / (image_size().width() - 1.0) / (new_widget_size.height() - 1.0);
+		QSizeF new_size(ratio, 1);
+		QRectF new_viewrect(QPointF(0, 0), new_size);
+		setViewrect(new_viewrect);
+	} else {
+		const auto new_viewrect_width = viewrect_.width() * (static_cast<double>(new_widget_size.width()) - 1.0) / (static_cast<double>(old_widget_size.width()) - 1.0);
+		const auto new_viewrect_height = viewrect_.height() * (new_widget_size.height() - 1.0) / (old_widget_size.height() - 1.0);
+		QRectF new_viewrect(viewrect_);
+		new_viewrect.setSize({new_viewrect_width, new_viewrect_height});
+		setViewrect(new_viewrect);
 	}
-	const auto new_viewrect_width  = viewrect_.width()  * (static_cast<double>(new_widget_size.width())  - 1.0) / (static_cast<double>(old_widget_size.width())  - 1.0);
-	const auto new_viewrect_height = viewrect_.height() * (new_widget_size.height() - 1.0) / (old_widget_size.height() - 1.0);
-	QRectF new_viewrect(viewrect_);
-	new_viewrect.setSize({new_viewrect_width, new_viewrect_height});
-	setViewrect(new_viewrect);
 }
 
 void OpenGLWidget::paintGL() {
