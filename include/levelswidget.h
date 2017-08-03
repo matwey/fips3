@@ -7,6 +7,8 @@
 #include <QSlider>
 #include <QWidget>
 
+#include <memory>
+
 class LevelsWidget: public QWidget {
 public:
 	explicit LevelsWidget(QWidget* parent);
