@@ -20,9 +20,10 @@ public:
 	explicit OpenGLTexture(const FITS::HeaderDataUnit* hdu);
 
 	void initialize();
-	inline GLfloat normalizer() { return normalizer_; };
-	inline double hdu_minimum() { return minimum_; };
-	inline double hdu_maximum() { return maximum_; };
+	inline GLfloat normalizer() const { return normalizer_; }
+	inline double hdu_minimum() const { return minimum_; }
+	inline double hdu_maximum() const { return maximum_; }
+	inline std::pair<double, double> hdu_minmax() const { return std::make_pair(minimum_, maximum_); }
 };
 
 #endif //FIPS_OPENGLTEXTURE_H

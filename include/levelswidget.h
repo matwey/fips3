@@ -40,6 +40,8 @@ protected:
 public:
 	DoubleSlider(Qt::Orientation orientation, QWidget* parent=Q_NULLPTR, double minimum=0, double maximum=1);
 
+	void setRange(double min, double max);
+
 signals:
 	void valueChanged(double value);
 
@@ -51,8 +53,17 @@ private slots:
 };
 
 class LevelsWidget: public QWidget {
+	Q_OBJECT
+private:
+	std::unique_ptr<DoubleSlider> min_slider_, max_slider_;
+	std::unique_ptr<QDoubleSpinBox> min_spinbox_, max_spinbox_;
+
 public:
-	explicit LevelsWidget(QWidget* parent=Q_NULLPTR, double minimum=0, double maximum=1);
+	explicit LevelsWidget(QWidget* parent);
+
+public slots:
+	void setRange(double minimum, double maximum);
+	inline void setRange(std::pair<double, double> minmax) { setRange(minmax.first, minmax.second); }
 };
 
 

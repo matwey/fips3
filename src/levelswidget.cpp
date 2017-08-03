@@ -36,6 +36,12 @@ void DoubleSlider::setValue(double value) {
 	}
 }
 
+void DoubleSlider::setRange(double minimum, double maximum) {
+	double_minimum_ = minimum;
+	double_maximum_ = maximum;
+	setValue(double_value_);
+}
+
 void DoubleSlider::notifyValueChanged(int value) {
 	const auto new_double_value = static_cast<double>(value - QSlider::minimum()) / (QSlider::maximum() - QSlider::minimum())
 				* (double_maximum_ - double_minimum_)
@@ -43,23 +49,33 @@ void DoubleSlider::notifyValueChanged(int value) {
 	setValue(new_double_value);
 }
 
-LevelsWidget::LevelsWidget(QWidget* parent, double minimum, double maximum): QWidget(parent) {
-	std::unique_ptr<DoubleSlider> min_slider{new DoubleSlider(Qt::Horizontal, this, minimum, maximum)};
-	std::unique_ptr<QDoubleSpinBox> min_spinbox{new QDoubleSpinBox(this)};
-	min_spinbox->setRange(minimum, maximum);
-	connect(min_spinbox.get(), SIGNAL(valueChanged(double)), min_slider.get(), SLOT(setValue(double)));
-	connect(min_slider.get(), SIGNAL(valueChanged(double)), min_spinbox.get(), SLOT(setValue(double)));
 
-	std::unique_ptr<DoubleSlider> max_slider{new DoubleSlider(Qt::Horizontal, this, minimum, maximum)};
-	std::unique_ptr<QDoubleSpinBox> max_spinbox{new QDoubleSpinBox(this)};
-	max_spinbox->setRange(minimum, maximum);
-	connect(max_spinbox.get(), SIGNAL(valueChanged(double)), max_slider.get(), SLOT(setValue(double)));
-	connect(max_slider.get(), SIGNAL(valueChanged(double)), max_spinbox.get(), SLOT(setValue(double)));
+LevelsWidget::LevelsWidget(QWidget* parent):
+			QWidget(parent),
+			min_slider_(new DoubleSlider(Qt::Horizontal, this)),
+			max_slider_(new DoubleSlider(Qt::Horizontal, this)),
+			min_spinbox_(new QDoubleSpinBox(this)),
+			max_spinbox_(new QDoubleSpinBox(this)) {
+	connect(min_spinbox_.get(), SIGNAL(valueChanged(double)), min_slider_.get(), SLOT(setValue(double)));
+	connect(min_slider_.get(), SIGNAL(valueChanged(double)), min_spinbox_.get(), SLOT(setValue(double)));
+
+	connect(max_spinbox_.get(), SIGNAL(valueChanged(double)), max_slider_.get(), SLOT(setValue(double)));
+	connect(max_slider_.get(), SIGNAL(valueChanged(double)), max_spinbox_.get(), SLOT(setValue(double)));
 
 	std::unique_ptr<QGridLayout> grid_layout{new QGridLayout(this)};
-	grid_layout->addWidget(min_slider .release(), 0, 0);
-	grid_layout->addWidget(min_spinbox.release(), 0, 1);
-	grid_layout->addWidget(max_slider .release(), 1, 0);
-	grid_layout->addWidget(max_spinbox.release(), 1, 1);
+	grid_layout->addWidget(min_slider_ .get(), 0, 0);
+	grid_layout->addWidget(min_spinbox_.get(), 0, 1);
+	grid_layout->addWidget(max_slider_ .get(), 1, 0);
+	grid_layout->addWidget(max_spinbox_.get(), 1, 1);
 	setLayout(grid_layout.release());
+}
+
+void LevelsWidget::setRange(double minimum, double maximum) {
+	min_slider_->setRange(minimum, maximum);
+	max_slider_->setRange(minimum, maximum);
+	min_spinbox_->setRange(minimum, maximum);
+	max_spinbox_->setRange(minimum, maximum);
+
+	min_slider_->setValue(minimum);
+	max_slider_->setValue(maximum);
 }

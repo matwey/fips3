@@ -161,6 +161,7 @@ void OpenGLWidget::initializeGL() {
 	glDisable(GL_DEPTH_TEST);
 
 	texture_->initialize();
+	emit textureInitialized(hdu_minmax());
 
 	vbo_.create();
 	vbo_.bind();

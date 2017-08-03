@@ -91,6 +91,10 @@ MainWindow::MainWindow(const QString& fits_filename): QMainWindow() {
 	levels_dock_->setStyleSheet("QDockWidget{titlebar-close-icon: none; titlebar-normal-icon: none;}");
 	levels_dock_->setAllowedAreas(Qt::TopDockWidgetArea | Qt::BottomDockWidgetArea);
 	std::unique_ptr<LevelsWidget> levels_widget{new LevelsWidget(levels_dock_.get())};
+	connect(
+			scrollZoomArea()->viewport(), SIGNAL(textureInitialized(std::pair<double, double>)),
+			levels_widget.get(), SLOT(setRange(std::pair<double, double>))
+	);
 	levels_dock_->setWidget(levels_widget.release());
 	addDockWidget(Qt::TopDockWidgetArea, levels_dock_.get());
 	view_menu->addAction(levels_dock_->toggleViewAction());
