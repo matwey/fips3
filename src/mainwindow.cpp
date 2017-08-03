@@ -90,7 +90,7 @@ MainWindow::MainWindow(const QString& fits_filename): QMainWindow() {
 	levels_dock_.reset(new QDockWidget(tr("Levels"), this));
 	levels_dock_->setAllowedAreas(Qt::TopDockWidgetArea | Qt::BottomDockWidgetArea);
 	std::unique_ptr<LevelsWidget> levels_widget{new LevelsWidget(levels_dock_.get())};
-	levels_dock_->setWidget(levels_widget.get());
+	levels_dock_->setWidget(levels_widget.release());
 	addDockWidget(Qt::TopDockWidgetArea, levels_dock_.get());
 	view_menu->addAction(levels_dock_->toggleViewAction());
 	levels_dock_->toggleViewAction()->setShortcut(tr("Ctrl+L"));
