@@ -52,7 +52,7 @@ private slots:
 
 class LevelsWidget: public QWidget {
 public:
-	explicit LevelsWidget(QWidget* parent);
+	explicit LevelsWidget(QWidget* parent=Q_NULLPTR, double minimum=0, double maximum=1);
 };
 
 

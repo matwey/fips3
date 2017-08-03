@@ -43,14 +43,16 @@ void DoubleSlider::notifyValueChanged(int value) {
 	setValue(new_double_value);
 }
 
-LevelsWidget::LevelsWidget(QWidget* parent): QWidget(parent) {
-	std::unique_ptr<DoubleSlider> min_slider{new DoubleSlider(Qt::Horizontal, this)};
+LevelsWidget::LevelsWidget(QWidget* parent, double minimum, double maximum): QWidget(parent) {
+	std::unique_ptr<DoubleSlider> min_slider{new DoubleSlider(Qt::Horizontal, this, minimum, maximum)};
 	std::unique_ptr<QDoubleSpinBox> min_spinbox{new QDoubleSpinBox(this)};
+	min_spinbox->setRange(minimum, maximum);
 	connect(min_spinbox.get(), SIGNAL(valueChanged(double)), min_slider.get(), SLOT(setValue(double)));
 	connect(min_slider.get(), SIGNAL(valueChanged(double)), min_spinbox.get(), SLOT(setValue(double)));
 
-	std::unique_ptr<DoubleSlider> max_slider{new DoubleSlider(Qt::Horizontal, this)};
+	std::unique_ptr<DoubleSlider> max_slider{new DoubleSlider(Qt::Horizontal, this, minimum, maximum)};
 	std::unique_ptr<QDoubleSpinBox> max_spinbox{new QDoubleSpinBox(this)};
+	max_spinbox->setRange(minimum, maximum);
 	connect(max_spinbox.get(), SIGNAL(valueChanged(double)), max_slider.get(), SLOT(setValue(double)));
 	connect(max_slider.get(), SIGNAL(valueChanged(double)), max_spinbox.get(), SLOT(setValue(double)));
 
