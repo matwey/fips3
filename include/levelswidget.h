@@ -4,6 +4,7 @@
 #include <QDebug>
 #include <QDoubleSpinBox>
 #include <QGridLayout>
+#include <QLabel>
 #include <QResizeEvent>
 #include <QSlider>
 #include <QStyle>

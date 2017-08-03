@@ -88,8 +88,10 @@ MainWindow::MainWindow(const QString& fits_filename): QMainWindow() {
 	setMenuBar(menu_bar.release());
 
 	levels_dock_.reset(new QDockWidget(tr("Levels"), this));
-	levels_dock_->setStyleSheet("QDockWidget{titlebar-close-icon: none; titlebar-normal-icon: none;}");
-	levels_dock_->setAllowedAreas(Qt::TopDockWidgetArea | Qt::BottomDockWidgetArea);
+	levels_dock_->setTitleBarWidget(new QWidget);
+	levels_dock_->setAllowedAreas(Qt::TopDockWidgetArea);
+	view_menu->addAction(levels_dock_->toggleViewAction());
+	levels_dock_->toggleViewAction()->setShortcut(tr("Ctrl+L"));
 	std::unique_ptr<LevelsWidget> levels_widget{new LevelsWidget(levels_dock_.get())};
 	connect(
 			scrollZoomArea()->viewport(), SIGNAL(textureInitialized(std::pair<double, double>)),
@@ -97,8 +99,6 @@ MainWindow::MainWindow(const QString& fits_filename): QMainWindow() {
 	);
 	levels_dock_->setWidget(levels_widget.release());
 	addDockWidget(Qt::TopDockWidgetArea, levels_dock_.get());
-	view_menu->addAction(levels_dock_->toggleViewAction());
-	levels_dock_->toggleViewAction()->setShortcut(tr("Ctrl+L"));
 }
 
 void MainWindow::zoomIn() {

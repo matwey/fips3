@@ -62,12 +62,14 @@ LevelsWidget::LevelsWidget(QWidget* parent):
 	connect(max_spinbox_.get(), SIGNAL(valueChanged(double)), max_slider_.get(), SLOT(setValue(double)));
 	connect(max_slider_.get(), SIGNAL(valueChanged(double)), max_spinbox_.get(), SLOT(setValue(double)));
 
-	std::unique_ptr<QGridLayout> grid_layout{new QGridLayout(this)};
-	grid_layout->addWidget(min_slider_ .get(), 0, 0);
-	grid_layout->addWidget(min_spinbox_.get(), 0, 1);
-	grid_layout->addWidget(max_slider_ .get(), 1, 0);
-	grid_layout->addWidget(max_spinbox_.get(), 1, 1);
-	setLayout(grid_layout.release());
+	std::unique_ptr<QGridLayout> widget_layout{new QGridLayout(this)};
+	widget_layout->addWidget(new QLabel(tr("Min"), this), 0, 0);
+	widget_layout->addWidget(min_slider_ .get(), 0, 1);
+	widget_layout->addWidget(min_spinbox_.get(), 0, 2);
+	widget_layout->addWidget(new QLabel(tr("Max"), this), 1, 0);
+	widget_layout->addWidget(max_slider_ .get(), 1, 1);
+	widget_layout->addWidget(max_spinbox_.get(), 1, 2);
+	setLayout(widget_layout.release());
 }
 
 void LevelsWidget::setRange(double minimum, double maximum) {
