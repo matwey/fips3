@@ -56,11 +56,13 @@ LevelsWidget::LevelsWidget(QWidget* parent):
 			max_slider_(new DoubleSlider(Qt::Horizontal, this)),
 			min_spinbox_(new QDoubleSpinBox(this)),
 			max_spinbox_(new QDoubleSpinBox(this)) {
-	connect(min_spinbox_.get(), SIGNAL(valueChanged(double)), min_slider_.get(), SLOT(setValue(double)));
 	connect(min_slider_.get(), SIGNAL(valueChanged(double)), min_spinbox_.get(), SLOT(setValue(double)));
+	connect(min_spinbox_.get(), SIGNAL(valueChanged(double)), min_slider_.get(), SLOT(setValue(double)));
+	connect(min_spinbox_.get(), SIGNAL(valueChanged(double)), this, SLOT(notifyMinValueChanged(double)));
 
-	connect(max_spinbox_.get(), SIGNAL(valueChanged(double)), max_slider_.get(), SLOT(setValue(double)));
 	connect(max_slider_.get(), SIGNAL(valueChanged(double)), max_spinbox_.get(), SLOT(setValue(double)));
+	connect(max_spinbox_.get(), SIGNAL(valueChanged(double)), max_slider_.get(), SLOT(setValue(double)));
+	connect(max_spinbox_.get(), SIGNAL(valueChanged(double)), this, SLOT(notifyMaxValueChanged(double)));
 
 	std::unique_ptr<QGridLayout> widget_layout{new QGridLayout(this)};
 	widget_layout->addWidget(new QLabel(tr("Min"), this), 0, 0);
@@ -78,6 +80,15 @@ void LevelsWidget::setRange(double minimum, double maximum) {
 	min_spinbox_->setRange(minimum, maximum);
 	max_spinbox_->setRange(minimum, maximum);
 
+	setValues(minimum, maximum);
+}
+
+void LevelsWidget::setValues(double minimum, double maximum) {
 	min_slider_->setValue(minimum);
 	max_slider_->setValue(maximum);
+}
+
+void LevelsWidget::notifyTextureInitialized(const OpenGLTexture *texture) {
+	setRange(texture->instrumental_minmax());
+	setValues(texture->hdu_minmax());
 }

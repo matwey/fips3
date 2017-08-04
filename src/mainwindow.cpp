@@ -88,17 +88,20 @@ MainWindow::MainWindow(const QString& fits_filename): QMainWindow() {
 	setMenuBar(menu_bar.release());
 
 	levels_dock_.reset(new QDockWidget(tr("Levels"), this));
-	levels_dock_->setTitleBarWidget(new QWidget);
-	levels_dock_->setAllowedAreas(Qt::TopDockWidgetArea);
+	levels_dock_->setAllowedAreas(Qt::AllDockWidgetAreas);
 	view_menu->addAction(levels_dock_->toggleViewAction());
 	levels_dock_->toggleViewAction()->setShortcut(tr("Ctrl+L"));
 	std::unique_ptr<LevelsWidget> levels_widget{new LevelsWidget(levels_dock_.get())};
 	connect(
-			scrollZoomArea()->viewport(), SIGNAL(textureInitialized(std::pair<double, double>)),
-			levels_widget.get(), SLOT(setRange(std::pair<double, double>))
+			scrollZoomArea()->viewport(), SIGNAL(textureInitialized(const OpenGLTexture*)),
+			levels_widget.get(), SLOT(notifyTextureInitialized(const OpenGLTexture*))
+	);
+	connect(
+			levels_widget.get(), SIGNAL(valuesChanged(std::pair<double, double>)),
+			scrollZoomArea()->viewport(), SLOT(changeLevels(std::pair<double, double>))
 	);
 	levels_dock_->setWidget(levels_widget.release());
-	addDockWidget(Qt::TopDockWidgetArea, levels_dock_.get());
+	addDockWidget(Qt::RightDockWidgetArea, levels_dock_.get());
 }
 
 void MainWindow::zoomIn() {

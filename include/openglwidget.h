@@ -13,8 +13,9 @@
 #include <QMatrix4x4>
 #include <QResizeEvent>
 
-#include <exception.h>
+#include <cmath>
 
+#include <exception.h>
 #include <fits.h>
 #include <opengltexture.h>
 
@@ -77,6 +78,22 @@ public:
 
 	template<class T> using openGL_unique_ptr = std::unique_ptr<T, OpenGLDeleter<T>>;
 
+	class ShaderUniforms {
+	private:
+		GLfloat a_[4];
+		GLfloat c_[4], z_[4];
+	public:
+		const quint8 channels, channel_size;
+		const double bzero, bscale;
+
+		ShaderUniforms(quint8 channels, quint8 channel_size, FITS::HeaderUnit fits_header);
+
+		void setMinMax(double minimum, double maximum);
+		inline void setMinMax(std::pair<double, double> minmax) { setMinMax(minmax.first, minmax.second); }
+		inline const GLfloat* get_c() const { return c_; }
+		inline const GLfloat* get_z() const { return z_; }
+	};
+
 public:
 	OpenGLWidget(QWidget *parent, const FITS::HeaderDataUnit& hdu);
 	~OpenGLWidget() override;
@@ -91,10 +108,10 @@ public:
 
 signals:
 	void pixelViewrectChanged(const QRect& pixel_viewrect);
-	void textureInitialized(std::pair<double, double> hdu_minmax);
+	void textureInitialized(const OpenGLTexture* texture);
 
-private slots:
-
+public slots:
+	void changeLevels(std::pair<double, double> minmax);
 
 protected:
 	void initializeGL() override;
@@ -138,6 +155,8 @@ private:
 			throw T(gl_error_code);
 		}
 	}
+
+	std::unique_ptr<ShaderUniforms> shader_uniforms_;
 };
 
 

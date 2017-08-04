@@ -74,6 +74,28 @@ QException* OpenGLWidget::TextureCreateError::clone() const {
 	return new OpenGLWidget::TextureCreateError(*this);
 }
 
+OpenGLWidget::ShaderUniforms::ShaderUniforms(quint8 channels, quint8 channel_size, FITS::HeaderUnit fits_header):
+		channels(channels),
+		channel_size(channel_size),
+		bzero(fits_header.bzero()),
+		bscale(fits_header.bscale()) {
+	for (quint8 i = 0; i < channels; ++i) {
+		a_[i] = static_cast<GLfloat >(std::pow(2, 8 * channel_size * i) * (std::pow(2, 8 * channel_size) - 1));
+	}
+}
+void OpenGLWidget::ShaderUniforms::setMinMax(double minimum, double maximum) {
+	const auto alpha = 1 / (maximum - minimum);
+	const auto beta = - minimum * alpha;
+	auto minus_d = - beta - alpha * bzero;
+	for (quint8 i = 0; i < channels; ++i) {
+		c_[i] = static_cast<GLfloat>(alpha * bscale * a_[i]);
+		const auto alpha_a = alpha * a_[i];
+		const auto minus_d_mod_alpha_a = std::fmod(minus_d, alpha_a);
+		z_[i] = static_cast<GLfloat >(minus_d_mod_alpha_a / alpha_a);
+		minus_d -= minus_d_mod_alpha_a;
+	}
+}
+
 OpenGLWidget::OpenGLWidget(QWidget *parent, const FITS::HeaderDataUnit& hdu):
 	QOpenGLWidget(parent),
 	hdu_(&hdu),
@@ -84,7 +106,8 @@ OpenGLWidget::OpenGLWidget(QWidget *parent, const FITS::HeaderDataUnit& hdu):
 	program_deleter_(this),
 	program_(new QOpenGLShaderProgram, program_deleter_),
 	viewrect_(0, 0, 1, 1),
-	pixel_viewrect_(QPoint(0, 0), image_size()) {
+	pixel_viewrect_(QPoint(0, 0), image_size()),
+	shader_uniforms_(new ShaderUniforms(1, 1, hdu_->header())) {
 }
 
 OpenGLWidget::~OpenGLWidget() {
@@ -103,9 +126,12 @@ void OpenGLWidget::initializeGL() {
 
 		void operator() (const FITS::DataUnit<quint8>&) const {
 			*fragment_shader_source_main_ =
-					"	float fits_value = texture2D(texture, UV).a;\n"
-					"	float physical_value = bscale * fits_value + bzero;\n"
-					"	gl_FragColor = vec4(vec3(physical_value), 1);\n";
+					"uniform float c;\n"
+					"uniform float z;\n"
+					"void main() {\n"
+					"	float value = c * (texture2D(texture, UV).a - z);\n"
+					"	gl_FragColor = vec4(vec3(value), 1);\n"
+					"}\n";
 		}
 		void operator() (const FITS::DataUnit<qint16>&) const {
 			*fragment_shader_source_main_ =
@@ -161,7 +187,9 @@ void OpenGLWidget::initializeGL() {
 	glDisable(GL_DEPTH_TEST);
 
 	texture_->initialize();
-	emit textureInitialized(hdu_minmax());
+	emit textureInitialized(texture_.get());
+	shader_uniforms_.reset(new ShaderUniforms(texture_->channels(), texture_->channel_size(), hdu_->header()));
+	shader_uniforms_->setMinMax(texture_->hdu_minmax());
 
 	vbo_.create();
 	vbo_.bind();
@@ -174,7 +202,7 @@ void OpenGLWidget::initializeGL() {
 			"attribute vec3 vertexCoord;\n"
 			"varying vec2 UV;\n"
 			"uniform mat4 MVP;\n"
-			"void main(){\n"
+			"void main() {\n"
 			"	gl_Position = MVP * vec4(vertexCoord,1);\n"
 			"	UV = VertexUV;\n"
 			"}\n";
@@ -184,11 +212,7 @@ void OpenGLWidget::initializeGL() {
 			"#version 110\n"
 			"varying vec2 UV;\n"
 			"uniform sampler2D texture;\n"
-			"uniform float bzero;\n"
-			"uniform float bscale;\n"
-			"void main(){\n"
-			+ fragment_shader_source_main +
-			"}\n";
+			+ fragment_shader_source_main;
 	QOpenGLShader *fshader = new QOpenGLShader(QOpenGLShader::Fragment, this);
 	if (! fshader->compileSourceCode(fsrc)) throw ShaderCompileError(glGetError());
 
@@ -198,8 +222,6 @@ void OpenGLWidget::initializeGL() {
 	program_->bindAttributeLocation("vertexUV",    program_vertex_uv_attribute);
 	if (! program_->link()) throw ShaderLoadError(glGetError());
 	if (! program_->bind()) throw ShaderBindError(glGetError());
-	program_->setUniformValue("bzero",  static_cast<GLfloat>((hdu_->header().bzero() + texture_->hdu_minimum()) / (texture_->hdu_maximum() - texture_->hdu_minimum())));
-	program_->setUniformValue("bscale", static_cast<GLfloat>(hdu_->header().bscale() / (texture_->hdu_maximum() - texture_->hdu_minimum()) * texture_->normalizer()));
 	program_->enableAttributeArray(program_vertex_coord_attribute);
 	program_->enableAttributeArray(program_vertex_uv_attribute);
 	program_->setAttributeBuffer(program_vertex_coord_attribute, GL_FLOAT, 0,                   3, 3 * sizeof(GLfloat));
@@ -226,6 +248,11 @@ void OpenGLWidget::resizeEvent(QResizeEvent* event) {
 	}
 }
 
+void OpenGLWidget::changeLevels(std::pair<double, double> minmax) {
+	shader_uniforms_->setMinMax(minmax);
+	update();
+}
+
 void OpenGLWidget::paintGL() {
 	glClear(GL_COLOR_BUFFER_BIT);
 
@@ -233,6 +260,9 @@ void OpenGLWidget::paintGL() {
 	// QT and OpenGL have different coordinate systems, we should change y-axes direction
 	mvp.ortho(viewrect_.left(), viewrect_.right(), 1 - viewrect_.bottom(), 1 - viewrect_.top(), -1.0f, 1.0f);
 	program_->setUniformValue("MVP", mvp);
+
+	program_->setUniformValueArray("c", shader_uniforms_->get_c(), shader_uniforms_->channels, 1);
+	program_->setUniformValueArray("z", shader_uniforms_->get_z(), shader_uniforms_->channels, 1);
 
 	texture_->bind();
 

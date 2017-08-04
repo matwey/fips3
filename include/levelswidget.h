@@ -12,6 +12,8 @@
 
 #include <memory>
 
+#include <opengltexture.h>
+
 class DoubleSlider: public QSlider {
 	Q_OBJECT
 
@@ -53,6 +55,7 @@ private slots:
 	void notifyValueChanged(int value);
 };
 
+
 class LevelsWidget: public QWidget {
 	Q_OBJECT
 private:
@@ -62,9 +65,20 @@ private:
 public:
 	explicit LevelsWidget(QWidget* parent);
 
+signals:
+	void valuesChanged(std::pair<double, double> minmax);
+
 public slots:
 	void setRange(double minimum, double maximum);
 	inline void setRange(std::pair<double, double> minmax) { setRange(minmax.first, minmax.second); }
+	void setValues(double minimum, double maximum);
+	inline void setValues(std::pair<double, double> minmax) { setValues(minmax.first, minmax.second); }
+	void notifyTextureInitialized(const OpenGLTexture* texture);
+
+private slots:
+	inline void notifyValuesChanged(std::pair<double, double> minmax) { emit valuesChanged(minmax); }
+	inline void notifyMinValueChanged(double min) { notifyValuesChanged(std::make_pair(min, max_spinbox_->value())); }
+	inline void notifyMaxValueChanged(double max) { notifyValuesChanged(std::make_pair(min_spinbox_->value(), max)); }
 };
 
 
