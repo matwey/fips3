@@ -131,7 +131,7 @@ void OpenGLTexture::initialize() {
 				*pixel_type = QOpenGLTexture::Float32;
 				*swap_bytes_enabled = true;
 				*channels = 1;
-				*channel_size = 4;
+				*channel_size = 0;  // special value for float channel
 
 				const auto minmax = swaped_minmax_element(data.data(), data.data() + data.length());
 				*minimum = minmax.first  * hdu_->header().bscale() + hdu_->header().bzero();

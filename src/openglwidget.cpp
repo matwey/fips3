@@ -79,20 +79,32 @@ OpenGLWidget::ShaderUniforms::ShaderUniforms(quint8 channels, quint8 channel_siz
 		channel_size(channel_size),
 		bzero(fits_header.bzero()),
 		bscale(fits_header.bscale()) {
-	for (quint8 i = 0; i < channels; ++i) {
-		a_[i] = static_cast<GLfloat >(std::pow(2, 8 * channel_size * i) * (std::pow(2, 8 * channel_size) - 1));
+	if (channel_size > 0) {
+		for (quint8 i = 0; i < channels; ++i) {
+			a_[i] = static_cast<GLfloat >(std::pow(2, 8 * channel_size * i) * (std::pow(2, 8 * channel_size) - 1));
+		}
+	} else {
+		a_[0] = 1;
 	}
 }
 void OpenGLWidget::ShaderUniforms::setMinMax(double minimum, double maximum) {
 	const auto alpha = 1 / (maximum - minimum);
 	const auto beta = - minimum * alpha;
 	auto minus_d = - beta - alpha * bzero;
-	for (quint8 i = 0; i < channels; ++i) {
-		c_[i] = static_cast<GLfloat>(alpha * bscale * a_[i]);
-		const auto alpha_a = alpha * a_[i];
-		const auto minus_d_mod_alpha_a = std::fmod(minus_d, alpha_a);
-		z_[i] = static_cast<GLfloat >(minus_d_mod_alpha_a / alpha_a);
-		minus_d -= minus_d_mod_alpha_a;
+	double alpha_a;
+	if (channel_size > 0) {
+		double minus_d_mod_alpha_a;
+		for (quint8 i = 0; i < channels; ++i) {
+			alpha_a = alpha * a_[i];
+			c_[i] = static_cast<GLfloat>(bscale * alpha_a);
+			minus_d_mod_alpha_a = std::fmod(minus_d, alpha_a);
+			z_[i] = static_cast<GLfloat >(minus_d_mod_alpha_a / alpha_a);
+			minus_d -= minus_d_mod_alpha_a;
+		}
+	} else {
+		alpha_a = alpha * a_[0];
+		c_[0] = static_cast<GLfloat>(bscale * alpha_a);
+		z_[0] = static_cast<GLfloat>(minus_d / (alpha_a));
 	}
 }
 
@@ -167,9 +179,12 @@ void OpenGLWidget::initializeGL() {
 				qDebug() << "BITPIX==-32 is not implemented for this hardware";
 			} else {
 				*fragment_shader_source_main_ =
-						"	float fits_value = texture2D(texture, UV).a;\n"
-						"	float physical_value = bscale * fits_value + bzero;\n"
-						"	gl_FragColor = vec4(vec3(physical_value), 1);\n";
+						"uniform float c;\n"
+						"uniform float z;\n"
+						"void main() {\n"
+						"	float value = c * (texture2D(texture, UV).a - z);\n"
+						"	gl_FragColor = vec4(vec3(value), 1);\n"
+						"}\n";
 			}
 		}
 		void operator() (const FITS::DataUnit<double>&) const {

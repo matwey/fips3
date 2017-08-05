@@ -11,8 +11,8 @@
 class OpenGLTexture: public QOpenGLTexture {
 private:
 	const FITS::HeaderDataUnit* hdu_;
-	quint8 channels_;
-	quint8 channel_size_;
+	quint8 channels_;  // Number of color channels
+	quint8 channel_size_;  // Bytes per channel for integral texture, 0 for float one
 	double minimum_, maximum_;
 	double instrumental_minimum_, instrumental_maximum_;
 	QOpenGLTexture::TextureFormat texture_format_;
