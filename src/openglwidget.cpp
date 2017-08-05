@@ -104,7 +104,7 @@ void OpenGLWidget::ShaderUniforms::setMinMax(double minimum, double maximum) {
 	} else {
 		alpha_a = alpha * a_[0];
 		c_[0] = static_cast<GLfloat>(bscale * alpha_a);
-		z_[0] = static_cast<GLfloat>(minus_d / (alpha_a));
+		z_[0] = static_cast<GLfloat>(minus_d / alpha_a);
 	}
 }
 

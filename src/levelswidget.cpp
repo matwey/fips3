@@ -71,6 +71,7 @@ LevelsWidget::LevelsWidget(QWidget* parent):
 	widget_layout->addWidget(new QLabel(tr("Max"), this), 1, 0);
 	widget_layout->addWidget(max_slider_ .get(), 1, 1);
 	widget_layout->addWidget(max_spinbox_.get(), 1, 2);
+	widget_layout->setRowStretch(2, 1);
 	setLayout(widget_layout.release());
 }
 
