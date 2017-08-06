@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Fips
+Version=@PROJECT_VERSION@
+Comment=OpenGL-backed FITS image viewer
+TryExec=fips
+Exec=fips %f
+Icon=fips
+MimeType=image/fits;application/fits;
+Categories=Science;Astronomy;
+Terminal=false
