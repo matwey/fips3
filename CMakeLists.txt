@@ -11,6 +11,14 @@ find_package(Qt5Test REQUIRED)
 
 include_directories ("${PROJECT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}")
 
+find_path(XDG_PREFIX
+	NAMES applications icons
+	HINTS ENV XDG_DATA_DIRS
+	PATHS /usr/share /usr/local/share
+	NO_DEFAULT_PATH)
+set(XDG_DESKTOP_DIR "${XDG_PREFIX}/applications")
+set(XDG_ICONS_DIR "${XDG_PREFIX}/icons")
+
 file(GLOB_RECURSE SOURCES src/*.cpp include/*.h)
 add_executable(fips ${SOURCES})
 target_link_libraries(fips Qt5::Widgets)
