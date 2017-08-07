@@ -89,22 +89,18 @@ OpenGLWidget::ShaderUniforms::ShaderUniforms(quint8 channels, quint8 channel_siz
 }
 void OpenGLWidget::ShaderUniforms::setMinMax(double minimum, double maximum) {
 	const auto alpha = 1 / (maximum - minimum);
-	const auto beta = - minimum * alpha;
-	auto minus_d = - beta - alpha * bzero;
-	double alpha_a;
+	auto minus_d = minimum - bzero;
 	if (channel_size > 0) {
 		double minus_d_mod_alpha_a;
 		for (quint8 i = 0; i < channels; ++i) {
-			alpha_a = alpha * a_[i];
-			c_[i] = static_cast<GLfloat>(bscale * alpha_a);
-			minus_d_mod_alpha_a = std::fmod(minus_d, alpha_a);
-			z_[i] = static_cast<GLfloat >(minus_d_mod_alpha_a / alpha_a);
-			minus_d -= minus_d_mod_alpha_a;
+			c_[i] = static_cast<GLfloat>(bscale * alpha * a_[i]);
+			const auto base = 1<<(8 * (i+1) * channel_size);
+			z_[i] = static_cast<GLfloat>(std::fmod(minus_d, base) / 255);
+			minus_d = std::floor(minus_d / base);
 		}
 	} else {
-		alpha_a = alpha * a_[0];
-		c_[0] = static_cast<GLfloat>(bscale * alpha_a);
-		z_[0] = static_cast<GLfloat>(minus_d / alpha_a);
+		c_[0] = static_cast<GLfloat>(bscale * alpha * a_[0]);
+		z_[0] = static_cast<GLfloat>(minus_d / a_[0]);
 	}
 }
 
