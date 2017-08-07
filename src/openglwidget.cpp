@@ -74,36 +74,6 @@ QException* OpenGLWidget::TextureCreateError::clone() const {
 	return new OpenGLWidget::TextureCreateError(*this);
 }
 
-OpenGLWidget::ShaderUniforms::ShaderUniforms(quint8 channels, quint8 channel_size, FITS::HeaderUnit fits_header):
-		channels(channels),
-		channel_size(channel_size),
-		bzero(fits_header.bzero()),
-		bscale(fits_header.bscale()) {
-	if (channel_size > 0) {
-		for (quint8 i = 0; i < channels; ++i) {
-			a_[i] = static_cast<GLfloat >(std::pow(2, 8 * channel_size * i) * (std::pow(2, 8 * channel_size) - 1));
-		}
-	} else {
-		a_[0] = 1;
-	}
-}
-void OpenGLWidget::ShaderUniforms::setMinMax(double minimum, double maximum) {
-	const auto alpha = 1 / (maximum - minimum);
-	auto minus_d = minimum - bzero;
-	if (channel_size > 0) {
-		double minus_d_mod_alpha_a;
-		for (quint8 i = 0; i < channels; ++i) {
-			c_[i] = static_cast<GLfloat>(bscale * alpha * a_[i]);
-			const auto base = 1<<(8 * (i+1) * channel_size);
-			z_[i] = static_cast<GLfloat>(std::fmod(minus_d, base) / 255);
-			minus_d = std::floor(minus_d / base);
-		}
-	} else {
-		c_[0] = static_cast<GLfloat>(bscale * alpha * a_[0]);
-		z_[0] = static_cast<GLfloat>(minus_d / a_[0]);
-	}
-}
-
 OpenGLWidget::OpenGLWidget(QWidget *parent, const FITS::HeaderDataUnit& hdu):
 	QOpenGLWidget(parent),
 	hdu_(&hdu),
@@ -115,7 +85,7 @@ OpenGLWidget::OpenGLWidget(QWidget *parent, const FITS::HeaderDataUnit& hdu):
 	program_(new QOpenGLShaderProgram, program_deleter_),
 	viewrect_(0, 0, 1, 1),
 	pixel_viewrect_(QPoint(0, 0), image_size()),
-	shader_uniforms_(new ShaderUniforms(1, 1, hdu_->header())) {
+	shader_uniforms_(new OpenGLShaderUniforms(0, 1, hdu_->header().bzero(), hdu_->header().bscale())) {
 }
 
 OpenGLWidget::~OpenGLWidget() {
@@ -199,7 +169,7 @@ void OpenGLWidget::initializeGL() {
 
 	texture_->initialize();
 	emit textureInitialized(texture_.get());
-	shader_uniforms_.reset(new ShaderUniforms(texture_->channels(), texture_->channel_size(), hdu_->header()));
+	shader_uniforms_.reset(new OpenGLShaderUniforms(texture_->channels(), texture_->channel_size(), hdu_->header().bzero(), hdu_->header().bscale()));
 	shader_uniforms_->setMinMax(texture_->hdu_minmax());
 
 	vbo_.create();

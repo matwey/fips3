@@ -17,6 +17,7 @@
 
 #include <exception.h>
 #include <fits.h>
+#include <openglshaderunifroms.h>
 #include <opengltexture.h>
 
 class OpenGLWidget: public QOpenGLWidget, protected QOpenGLFunctions {
@@ -77,22 +78,6 @@ public:
 	};
 
 	template<class T> using openGL_unique_ptr = std::unique_ptr<T, OpenGLDeleter<T>>;
-
-	class ShaderUniforms {
-	private:
-		GLfloat a_[4];
-		GLfloat c_[4], z_[4];
-	public:
-		const quint8 channels, channel_size;
-		const double bzero, bscale;
-
-		ShaderUniforms(quint8 channels, quint8 channel_size, FITS::HeaderUnit fits_header);
-
-		void setMinMax(double minimum, double maximum);
-		inline void setMinMax(std::pair<double, double> minmax) { setMinMax(minmax.first, minmax.second); }
-		inline const GLfloat* get_c() const { return c_; }
-		inline const GLfloat* get_z() const { return z_; }
-	};
 
 public:
 	OpenGLWidget(QWidget *parent, const FITS::HeaderDataUnit& hdu);
@@ -156,7 +141,7 @@ private:
 		}
 	}
 
-	std::unique_ptr<ShaderUniforms> shader_uniforms_;
+	std::unique_ptr<OpenGLShaderUniforms> shader_uniforms_;
 };
 
 
