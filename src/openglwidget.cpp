@@ -113,30 +113,36 @@ void OpenGLWidget::initializeGL() {
 		}
 		void operator() (const FITS::DataUnit<qint16>&) const {
 			*fragment_shader_source_main_ =
-					"	vec4 raw_color = texture2D(texture, UV);\n"
-					"	float raw_fits_value = (raw_color.a + raw_color.r * 256.0) / 257.0;\n"
-					"	bool sign_mask = raw_fits_value > 0.5;\n"
-					"   float fits_value = raw_fits_value - float(sign_mask);\n"
-					"	float physical_value = bscale * fits_value + bzero;\n"
-					"	gl_FragColor = vec4(vec3(physical_value), 1);\n";
+					"uniform vec2 c;\n"
+					"uniform vec2 z;\n"
+					"void main() {\n"
+					"	vec2 raw_value = texture2D(texture, UV).ga;\n"
+					"   raw_value.x -= float(raw_value.x > 0.5);\n"
+					"	float value = dot(c, raw_value - z);\n"
+					"	gl_FragColor = vec4(vec3(value), 1);\n"
+					"}\n";
 		}
 		void operator() (const FITS::DataUnit<qint32>&) const {
 			*fragment_shader_source_main_ =
-					"	vec4 raw_color = texture2D(texture, UV);\n"
-					"	float raw_fits_value = (raw_color.a + raw_color.b * 256.0 + raw_color.g * 65536.0 + raw_color.r * 4294967296.0) / 4295033089.0;\n"
-					"	bool sign_mask = raw_fits_value > 0.5;\n"
-					"   float fits_value = raw_fits_value - float(sign_mask);\n"
-					"	float physical_value = bscale * fits_value + bzero;\n"
-					"	gl_FragColor = vec4(vec3(physical_value), 1);\n";
+					"uniform vec4 c;\n"
+					"uniform vec4 z;\n"
+					"void main() {\n"
+					"	vec4 raw_value = texture2D(texture, UV);\n"
+					"   raw_value.x -= float(raw_value.x > 0.5);\n"
+					"	float value = dot(c, raw_value - z);\n"
+					"	gl_FragColor = vec4(vec3(value), 1);\n"
+					"}\n";
 		}
 		void operator() (const FITS::DataUnit<qint64>&) const {
 			*fragment_shader_source_main_ =
-					"	vec4 raw_color = texture2D(texture, UV);\n"
-					"	float raw_fits_value = (raw_color.a + raw_color.b * 65536.0 + raw_color.g * 4294967296.0 + raw_color.r * 18446744073709551616.0) / 18446744078004584449.0;\n"
-					"	bool sign_mask = raw_fits_value > 0.5;\n"
-					"   float fits_value = raw_fits_value - float(sign_mask);\n"
-					"	float physical_value = bscale * fits_value + bzero;\n"
-					"	gl_FragColor = vec4(vec3(physical_value), 1);\n";
+					"uniform vec4 c;\n"
+					"uniform vec4 z;\n"
+					"void main() {\n"
+					"	vec4 raw_value = texture2D(texture, UV);\n"
+					"   raw_value.x -= float(raw_value.x > 0.5);\n"
+					"	float value = dot(c, raw_value - z);\n"
+					"	gl_FragColor = vec4(vec3(value), 1);\n"
+					"}\n";
 		}
 		void operator() (const FITS::DataUnit<float>&) const {
 			// TODO: Check GL_ARB_color_buffer_float, GL_OES_texture_float.
@@ -242,8 +248,8 @@ void OpenGLWidget::paintGL() {
 	mvp.ortho(viewrect_.left(), viewrect_.right(), 1 - viewrect_.bottom(), 1 - viewrect_.top(), -1.0f, 1.0f);
 	program_->setUniformValue("MVP", mvp);
 
-	program_->setUniformValueArray("c", shader_uniforms_->get_c(), shader_uniforms_->channels, 1);
-	program_->setUniformValueArray("z", shader_uniforms_->get_z(), shader_uniforms_->channels, 1);
+	program_->setUniformValueArray("c", shader_uniforms_->get_c(), 1, shader_uniforms_->channels);
+	program_->setUniformValueArray("z", shader_uniforms_->get_z(), 1, shader_uniforms_->channels);
 
 	texture_->bind();
 

@@ -13,6 +13,7 @@ private:
 public:
 	const quint8 channels, channel_size;
 	const double bzero, bscale;
+	const double base;
 
 	OpenGLShaderUniforms(quint8 channels, quint8 channel_size, double bzero, double bscale);
 
