@@ -108,7 +108,7 @@ void OpenGLWidget::initializeGL() {
 					"uniform float z;\n"
 					"void main() {\n"
 					"	float value = c * (texture2D(texture, UV).a - z);\n"
-					"	gl_FragColor = vec4(vec3(value), 1);\n"
+					"	gl_FragColor = vec4(col(value), 1);\n"
 					"}\n";
 		}
 		void operator() (const FITS::DataUnit<qint16>&) const {
@@ -117,9 +117,9 @@ void OpenGLWidget::initializeGL() {
 					"uniform vec2 z;\n"
 					"void main() {\n"
 					"	vec2 raw_value = texture2D(texture, UV).ga;\n"
-					"   raw_value.x -= float(raw_value.x > 0.5) * 256.0 / 255.0;\n"
+					"   raw_value.x -= float(raw_value.x > 0.5) * 1.003921568627451;  // 256.0 / 255.0\n"
 					"	float value = dot(c, raw_value - z);\n"
-					"	gl_FragColor = vec4(vec3(value), 1);\n"
+					"	gl_FragColor = vec4(col(value), 1);\n"
 					"}\n";
 		}
 		void operator() (const FITS::DataUnit<qint32>&) const {
@@ -128,7 +128,7 @@ void OpenGLWidget::initializeGL() {
 					"uniform vec4 z;\n"
 					"void main() {\n"
 					"	vec4 raw_value = texture2D(texture, UV);\n"
-					"   raw_value.x -= float(raw_value.x > 0.5) * 256.0 / 255.0;\n"
+					"   raw_value.x -= float(raw_value.x > 0.5) * 1.003921568627451;  // 256.0 / 255.0\n"
 					"	float value = dot(c, raw_value - z);\n"
 					"	gl_FragColor = vec4(vec3(value), 1);\n"
 					"}\n";
@@ -139,7 +139,7 @@ void OpenGLWidget::initializeGL() {
 					"uniform vec4 z;\n"
 					"void main() {\n"
 					"	vec4 raw_value = texture2D(texture, UV);\n"
-					"   raw_value.x -= float(raw_value.x > 0.5) * 65536.0 / 65535/0;\n"
+					"   raw_value.x -= float(raw_value.x > 0.5) * 1.0000152590218967;  // 65536.0 / 65535.0\n"
 					"	float value = dot(c, raw_value - z);\n"
 					"	gl_FragColor = vec4(vec3(value), 1);\n"
 					"}\n";
@@ -199,6 +199,11 @@ void OpenGLWidget::initializeGL() {
 			"#version 110\n"
 			"varying vec2 UV;\n"
 			"uniform sampler2D texture;\n"
+			"vec3 col(in float x){\n"
+			"	vec3 color = clamp(vec3(2.0-3.0*x, 3.0*x, -2.0+3.0*x), 0.0, 1.0);\n"
+			"	float brightness = 3.0 * x;\n"
+			"	return clamp(brightness * color, 0.0, 1.0);\n"
+			"}\n"
 			+ fragment_shader_source_main;
 	QOpenGLShader *fshader = new QOpenGLShader(QOpenGLShader::Fragment, this);
 	if (! fshader->compileSourceCode(fsrc)) throw ShaderCompileError(glGetError());
