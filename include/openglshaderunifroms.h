@@ -2,10 +2,10 @@
 #define _OPENGLSHADERUNIFROMS_H
 
 #include <QtGlobal>
+#include <QtGui/qopengl.h>
 #include <QDebug>
 
 #include <cmath>
-#include <OpenGL/OpenGL.h>
 
 class OpenGLShaderUniforms {
 private:
