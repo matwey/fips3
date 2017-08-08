@@ -130,7 +130,7 @@ void OpenGLWidget::initializeGL() {
 					"	vec4 raw_value = texture2D(texture, UV);\n"
 					"   raw_value.x -= float(raw_value.x > 0.5) * 1.003921568627451;  // 256.0 / 255.0\n"
 					"	float value = dot(c, raw_value - z);\n"
-					"	gl_FragColor = vec4(vec3(value), 1);\n"
+					"	gl_FragColor = vec4(col(value), 1);\n"
 					"}\n";
 		}
 		void operator() (const FITS::DataUnit<qint64>&) const {
@@ -141,7 +141,7 @@ void OpenGLWidget::initializeGL() {
 					"	vec4 raw_value = texture2D(texture, UV);\n"
 					"   raw_value.x -= float(raw_value.x > 0.5) * 1.0000152590218967;  // 65536.0 / 65535.0\n"
 					"	float value = dot(c, raw_value - z);\n"
-					"	gl_FragColor = vec4(vec3(value), 1);\n"
+					"	gl_FragColor = vec4(col(value), 1);\n"
 					"}\n";
 		}
 		void operator() (const FITS::DataUnit<float>&) const {
@@ -155,7 +155,7 @@ void OpenGLWidget::initializeGL() {
 						"uniform float z;\n"
 						"void main() {\n"
 						"	float value = c * (texture2D(texture, UV).a - z);\n"
-						"	gl_FragColor = vec4(vec3(value), 1);\n"
+						"	gl_FragColor = vec4(col(value), 1);\n"
 						"}\n";
 			}
 		}
