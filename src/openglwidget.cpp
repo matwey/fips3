@@ -85,7 +85,7 @@ OpenGLWidget::OpenGLWidget(QWidget *parent, const FITS::HeaderDataUnit& hdu):
 	program_(new QOpenGLShaderProgram, program_deleter_),
 	viewrect_(0, 0, 1, 1),
 	pixel_viewrect_(QPoint(0, 0), image_size()),
-	shader_uniforms_(new OpenGLShaderUniforms(0, 1, hdu_->header().bzero(), hdu_->header().bscale())) {
+	shader_uniforms_(new OpenGLShaderUniforms(1, 1, hdu_->header().bzero(), hdu_->header().bscale())) {
 }
 
 OpenGLWidget::~OpenGLWidget() {
@@ -117,7 +117,7 @@ void OpenGLWidget::initializeGL() {
 					"uniform vec2 z;\n"
 					"void main() {\n"
 					"	vec2 raw_value = texture2D(texture, UV).ga;\n"
-					"   raw_value.x -= float(raw_value.x > 0.5);\n"
+					"   raw_value.x -= float(raw_value.x > 0.5) * 256.0 / 255.0;\n"
 					"	float value = dot(c, raw_value - z);\n"
 					"	gl_FragColor = vec4(vec3(value), 1);\n"
 					"}\n";
@@ -128,7 +128,7 @@ void OpenGLWidget::initializeGL() {
 					"uniform vec4 z;\n"
 					"void main() {\n"
 					"	vec4 raw_value = texture2D(texture, UV);\n"
-					"   raw_value.x -= float(raw_value.x > 0.5);\n"
+					"   raw_value.x -= float(raw_value.x > 0.5) * 256.0 / 255.0;\n"
 					"	float value = dot(c, raw_value - z);\n"
 					"	gl_FragColor = vec4(vec3(value), 1);\n"
 					"}\n";
@@ -139,7 +139,7 @@ void OpenGLWidget::initializeGL() {
 					"uniform vec4 z;\n"
 					"void main() {\n"
 					"	vec4 raw_value = texture2D(texture, UV);\n"
-					"   raw_value.x -= float(raw_value.x > 0.5);\n"
+					"   raw_value.x -= float(raw_value.x > 0.5) * 65536.0 / 65535/0;\n"
 					"	float value = dot(c, raw_value - z);\n"
 					"	gl_FragColor = vec4(vec3(value), 1);\n"
 					"}\n";

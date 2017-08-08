@@ -2,6 +2,7 @@
 #define _OPENGLSHADERUNIFROMS_H
 
 #include <QtGlobal>
+#include <QDebug>
 
 #include <cmath>
 #include <OpenGL/OpenGL.h>

@@ -5,18 +5,8 @@ DoubleSlider::DoubleSlider(Qt::Orientation orientation, QWidget *parent, double 
 		double_minimum_(minimum),
 		double_maximum_(maximum),
 		double_value_(double_minimum_) {
+	QSlider::setRange(0, qslider_range);
 	connect(this, SIGNAL(valueChanged(int)), this, SLOT(notifyValueChanged(int)));
-}
-
-void DoubleSlider::resizeEvent(QResizeEvent *event) {
-	int length;
-	if (orientation() == Qt::Horizontal) {
-		length = event->size().width();
-	} else {
-		length = event->size().height();
-	}
-	QSlider::setRange(0, length-1);
-	setValue(double_value_);
 }
 
 void DoubleSlider::setValue(double value) {
@@ -26,7 +16,7 @@ void DoubleSlider::setValue(double value) {
 		value = double_maximum_;
 	}
 
-	const int new_int_value = qRound((double_value_ - double_minimum_) / (double_maximum_ - double_minimum_)
+	const int new_int_value = qRound((value - double_minimum_) / (double_maximum_ - double_minimum_)
 			* (QSlider::maximum() - QSlider::minimum()));
 	QSlider::setValue(new_int_value);
 
@@ -85,8 +75,8 @@ void LevelsWidget::setRange(double minimum, double maximum) {
 }
 
 void LevelsWidget::setValues(double minimum, double maximum) {
-	min_slider_->setValue(minimum);
-	max_slider_->setValue(maximum);
+	min_spinbox_->setValue(minimum);
+	max_spinbox_->setValue(maximum);
 }
 
 void LevelsWidget::notifyTextureInitialized(const OpenGLTexture *texture) {

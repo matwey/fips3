@@ -20,6 +20,7 @@ class DoubleSlider: public QSlider {
 private:
 	double double_minimum_, double_maximum_;
 	double double_value_;
+	static constexpr int qslider_range = 10000;
 
 	// Protect public methods from parent class
 	int minimum() const;
@@ -36,9 +37,6 @@ private:
 	void setSliderPosition(int);
 	void setValue(int);
 	int value() const;
-
-protected:
-	void resizeEvent(QResizeEvent* event) override;
 
 public:
 	DoubleSlider(Qt::Orientation orientation, QWidget* parent=Q_NULLPTR, double minimum=0, double maximum=1);
