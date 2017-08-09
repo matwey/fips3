@@ -87,11 +87,11 @@ MainWindow::MainWindow(const QString& fits_filename): QMainWindow() {
 	/* setMenuBar promises to take ownership */
 	setMenuBar(menu_bar.release());
 
-	levels_dock_.reset(new QDockWidget(tr("Levels"), this));
-	levels_dock_->setAllowedAreas(Qt::AllDockWidgetAreas);
-	view_menu->addAction(levels_dock_->toggleViewAction());
-	levels_dock_->toggleViewAction()->setShortcut(tr("Ctrl+L"));
-	std::unique_ptr<LevelsWidget> levels_widget{new LevelsWidget(levels_dock_.get())};
+	std::unique_ptr<QDockWidget> levels_dock{new QDockWidget(tr("Levels"), this)};
+	levels_dock->setAllowedAreas(Qt::AllDockWidgetAreas);
+	view_menu->addAction(levels_dock->toggleViewAction());
+	levels_dock->toggleViewAction()->setShortcut(tr("Ctrl+L"));
+	std::unique_ptr<LevelsWidget> levels_widget{new LevelsWidget(levels_dock.get())};
 	connect(
 			scrollZoomArea()->viewport(), SIGNAL(textureInitialized(const OpenGLTexture*)),
 			levels_widget.get(), SLOT(notifyTextureInitialized(const OpenGLTexture*))
@@ -100,8 +100,10 @@ MainWindow::MainWindow(const QString& fits_filename): QMainWindow() {
 			levels_widget.get(), SIGNAL(valuesChanged(const std::pair<double, double>&)),
 			scrollZoomArea()->viewport(), SLOT(changeLevels(const std::pair<double, double>&))
 	);
-	levels_dock_->setWidget(levels_widget.release());
-	addDockWidget(Qt::RightDockWidgetArea, levels_dock_.get());
+	levels_dock->setWidget(levels_widget.release());
+	addDockWidget(Qt::RightDockWidgetArea, levels_dock.release());
+	levels_dock->setWidget(levels_widget.release());
+	addDockWidget(Qt::RightDockWidgetArea, levels_dock.release());
 
 	palette_dock_.reset(new QDockWidget(tr("Palette"), this));
 	palette_dock_->setAllowedAreas(Qt::AllDockWidgetAreas);

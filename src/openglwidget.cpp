@@ -85,7 +85,7 @@ OpenGLWidget::OpenGLWidget(QWidget *parent, const FITS::HeaderDataUnit& hdu):
 	program_(new QOpenGLShaderProgram, program_deleter_),
 	viewrect_(0, 0, 1, 1),
 	pixel_viewrect_(QPoint(0, 0), image_size()),
-	shader_uniforms_(new OpenGLShaderUniforms(1, 1, hdu_->header().bzero(), hdu_->header().bscale())),
+	shader_uniforms_(new OpenGLShaderUniforms(1, 1, 0, 1)),
 	palette_(PaletteWidget::GrayPalette) {
 }
 
@@ -271,8 +271,8 @@ void OpenGLWidget::paintGL() {
 
 	program_->setUniformValue("palette", static_cast<GLint>(palette_));
 
-	program_->setUniformValueArray("c", shader_uniforms_->get_c(), 1, shader_uniforms_->channels);
-	program_->setUniformValueArray("z", shader_uniforms_->get_z(), 1, shader_uniforms_->channels);
+	program_->setUniformValueArray("c", shader_uniforms_->get_c().data(), 1, shader_uniforms_->channels);
+	program_->setUniformValueArray("z", shader_uniforms_->get_z().data(), 1, shader_uniforms_->channels);
 
 	texture_->bind();
 

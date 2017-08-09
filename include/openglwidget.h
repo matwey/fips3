@@ -89,7 +89,6 @@ public:
 	void setPixelViewrect(const QRect& pixel_viewrect);
 	inline const QRect& pixelViewrect() const { return pixel_viewrect_; }
 	inline QSize image_size() const { return hdu_->data().imageDataUnit()->size(); }
-	inline std::pair<double, double> hdu_minmax() const { return texture_->hdu_minmax(); }
 	QRect viewrectToPixelViewrect (const QRectF& viewrect) const;
 
 signals:
