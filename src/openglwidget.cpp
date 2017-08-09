@@ -85,7 +85,7 @@ OpenGLWidget::OpenGLWidget(QWidget *parent, const FITS::HeaderDataUnit& hdu):
 	program_(new QOpenGLShaderProgram, program_deleter_),
 	viewrect_(0, 0, 1, 1),
 	pixel_viewrect_(QPoint(0, 0), image_size()),
-	shader_uniforms_(new OpenGLShaderUniforms(1, 1, hdu_->header().bzero(), hdu_->header().bscale())) {
+	shader_uniforms_(new OpenGLShaderUniforms(1, 1, 0, 1)) {
 }
 
 OpenGLWidget::~OpenGLWidget() {
@@ -139,7 +139,7 @@ void OpenGLWidget::initializeGL() {
 					"uniform vec4 z;\n"
 					"void main() {\n"
 					"	vec4 raw_value = texture2D(texture, UV);\n"
-					"   raw_value.x -= float(raw_value.x > 0.5) * 65536.0 / 65535/0;\n"
+					"   raw_value.x -= float(raw_value.x > 0.5) * 65536.0 / 65535.0;\n"
 					"	float value = dot(c, raw_value - z);\n"
 					"	gl_FragColor = vec4(vec3(value), 1);\n"
 					"}\n";
@@ -235,7 +235,7 @@ void OpenGLWidget::resizeEvent(QResizeEvent* event) {
 	}
 }
 
-void OpenGLWidget::changeLevels(std::pair<double, double> minmax) {
+void OpenGLWidget::changeLevels(const std::pair<double, double>& minmax) {
 	shader_uniforms_->setMinMax(minmax);
 	update();
 }
@@ -248,8 +248,8 @@ void OpenGLWidget::paintGL() {
 	mvp.ortho(viewrect_.left(), viewrect_.right(), 1 - viewrect_.bottom(), 1 - viewrect_.top(), -1.0f, 1.0f);
 	program_->setUniformValue("MVP", mvp);
 
-	program_->setUniformValueArray("c", shader_uniforms_->get_c(), 1, shader_uniforms_->channels);
-	program_->setUniformValueArray("z", shader_uniforms_->get_z(), 1, shader_uniforms_->channels);
+	program_->setUniformValueArray("c", shader_uniforms_->get_c().data(), 1, shader_uniforms_->channels);
+	program_->setUniformValueArray("z", shader_uniforms_->get_z().data(), 1, shader_uniforms_->channels);
 
 	texture_->bind();
 

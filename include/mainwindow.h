@@ -44,7 +44,6 @@ private:
 	static constexpr double zoomOut_factor = 0.8;
 
 	std::unique_ptr<FITS> fits_;
-	std::unique_ptr<QDockWidget> levels_dock_;
 protected:
 	virtual void resizeEvent(QResizeEvent* event) override;
 public:

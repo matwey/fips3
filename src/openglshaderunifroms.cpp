@@ -6,7 +6,7 @@ OpenGLShaderUniforms::OpenGLShaderUniforms(quint8 channels, quint8 channel_size,
 		bzero(bzero),
 		bscale(bscale),
 		base(1 << (8 * channel_size)) {
-	Q_ASSERT(channels > 0);
+	Q_ASSERT(channels > 0 && channels <= 4);
 	if (channel_size > 0) {
 		for (quint8 i = 0; i < channels; ++i) {
 			const auto j = channels - i - 1;
@@ -23,8 +23,7 @@ void OpenGLShaderUniforms::setMinMax(double minimum, double maximum) {
 	auto minus_d = minimum - bzero;
 	if (channel_size > 0) {
 		for (quint8 i = 0; i < channels; ++i) {
-			const auto j = channels - i - 1;
-			c_[j] = static_cast<GLfloat>(bscale * alpha * a_[j]);
+			c_[i] = static_cast<GLfloat>(bscale * alpha * a_[i]);
 		}
 		for (quint8 i = 0; i < channels - 1; ++i) {
 			const auto j = channels - i - 1;
@@ -37,10 +36,4 @@ void OpenGLShaderUniforms::setMinMax(double minimum, double maximum) {
 		c_[0] = static_cast<GLfloat>(bscale * alpha * a_[0]);
 		z_[0] = static_cast<GLfloat>(minus_d / a_[0]);
 	}
-	/*
-	for (quint8 j = 0; j < channels; ++j) {
-		qDebug() << j << c_[j] << z_[j];
-	}
-	qDebug() << "###############";
-	*/
 }

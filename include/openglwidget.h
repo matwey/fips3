@@ -88,7 +88,6 @@ public:
 	void setPixelViewrect(const QRect& pixel_viewrect);
 	inline const QRect& pixelViewrect() const { return pixel_viewrect_; }
 	inline QSize image_size() const { return hdu_->data().imageDataUnit()->size(); }
-	inline std::pair<double, double> hdu_minmax() const { return texture_->hdu_minmax(); }
 	QRect viewrectToPixelViewrect (const QRectF& viewrect) const;
 
 signals:
@@ -96,7 +95,7 @@ signals:
 	void textureInitialized(const OpenGLTexture* texture);
 
 public slots:
-	void changeLevels(std::pair<double, double> minmax);
+	void changeLevels(const std::pair<double, double>& minmax);
 
 protected:
 	void initializeGL() override;
