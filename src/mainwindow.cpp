@@ -102,20 +102,18 @@ MainWindow::MainWindow(const QString& fits_filename): QMainWindow() {
 	);
 	levels_dock->setWidget(levels_widget.release());
 	addDockWidget(Qt::RightDockWidgetArea, levels_dock.release());
-	levels_dock->setWidget(levels_widget.release());
-	addDockWidget(Qt::RightDockWidgetArea, levels_dock.release());
 
-	palette_dock_.reset(new QDockWidget(tr("Palette"), this));
-	palette_dock_->setAllowedAreas(Qt::AllDockWidgetAreas);
-	view_menu->addAction(palette_dock_->toggleViewAction());
-	palette_dock_->toggleViewAction()->setShortcut(tr("Ctrl+E"));
-	std::unique_ptr<PaletteWidget> palette_widget{new PaletteWidget(palette_dock_.get())};
+	std::unique_ptr<QDockWidget> palette_dock{new QDockWidget(tr("Palette"), this)};
+	palette_dock->setAllowedAreas(Qt::AllDockWidgetAreas);
+	view_menu->addAction(palette_dock->toggleViewAction());
+	palette_dock->toggleViewAction()->setShortcut(tr("Ctrl+E"));
+	std::unique_ptr<PaletteWidget> palette_widget{new PaletteWidget(palette_dock.get())};
 	connect(
 			palette_widget->buttonGroup(), SIGNAL(buttonClicked(int)),
 			scrollZoomArea()->viewport(), SLOT(changePalette(int))
 	);
-	palette_dock_->setWidget(palette_widget.release());
-	addDockWidget(Qt::RightDockWidgetArea, palette_dock_.get());
+	palette_dock->setWidget(palette_widget.release());
+	addDockWidget(Qt::RightDockWidgetArea, palette_dock.release());
 }
 
 void MainWindow::zoomIn() {
