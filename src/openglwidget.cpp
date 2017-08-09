@@ -19,15 +19,20 @@ QString OpenGLWidget::Exception::glErrorString(GLenum gl_error_code) {
 //		case GL_NO_ERROR:
 //			return "No error has been recorded. The value of this symbolic constant is guaranteed to be 0.";
 		case GL_INVALID_ENUM:
-			return "An unacceptable value is specified for an enumerated argument. The offending command is ignored and has no other side effect than to set the error flag.";
+			return "An unacceptable value is specified for an enumerated argument. "
+					"The offending command is ignored and has no other side effect than to set the error flag.";
 		case GL_INVALID_VALUE:
-			return "A numeric argument is out of range. The offending command is ignored and has no other side effect than to set the error flag.";
+			return "A numeric argument is out of range. "
+					"The offending command is ignored and has no other side effect than to set the error flag.";
 		case GL_INVALID_OPERATION:
-			return "The specified operation is not allowed in the current state. The offending command is ignored and has no other side effect than to set the error flag.";
+			return "The specified operation is not allowed in the current state. "
+					"The offending command is ignored and has no other side effect than to set the error flag.";
 		case GL_INVALID_FRAMEBUFFER_OPERATION:
-			return "The command is trying to render to or read from the framebuffer while the currently bound framebuffer is not framebuffer complete (i.e. the return value from glCheckFramebufferStatus is not GL_FRAMEBUFFER_COMPLETE). The offending command is ignored and has no other side effect than to set the error flag.";
+			return "The command is trying to render to or read from the framebuffer while the currently bound framebuffer is not framebuffer complete (i.e. the return value from glCheckFramebufferStatus is not GL_FRAMEBUFFER_COMPLETE). "
+					"The offending command is ignored and has no other side effect than to set the error flag.";
 		case GL_OUT_OF_MEMORY:
-			return "There is not enough memory left to execute the command. The state of the GL is undefined, except for the state of the error flags, after this error is recorded.";
+			return "There is not enough memory left to execute the command. "
+					"The state of the GL is undefined, except for the state of the error flags, after this error is recorded.";
 		default:
 			return "Unknown error";
 	}
@@ -79,7 +84,8 @@ OpenGLWidget::OpenGLWidget(QWidget *parent, const FITS::HeaderDataUnit& hdu):
 	program_deleter_(this),
 	program_(new QOpenGLShaderProgram, program_deleter_),
 	viewrect_(0, 0, 1, 1),
-	pixel_viewrect_(QPoint(0, 0), image_size()) {
+	pixel_viewrect_(QPoint(0, 0), image_size()),
+	shader_uniforms_(new OpenGLShaderUniforms(1, 1, 0, 1)) {
 }
 
 OpenGLWidget::~OpenGLWidget() {
@@ -98,36 +104,45 @@ void OpenGLWidget::initializeGL() {
 
 		void operator() (const FITS::DataUnit<quint8>&) const {
 			*fragment_shader_source_main_ =
-					"	float fits_value = texture2D(texture, UV).a;\n"
-					"	float physical_value = bscale * fits_value + bzero;\n"
-					"	gl_FragColor = vec4(vec3(physical_value), 1);\n";
+					"uniform float c;\n"
+					"uniform float z;\n"
+					"void main() {\n"
+					"	float value = c * (texture2D(texture, UV).a - z);\n"
+					"	gl_FragColor = vec4(vec3(value), 1);\n"
+					"}\n";
 		}
 		void operator() (const FITS::DataUnit<qint16>&) const {
 			*fragment_shader_source_main_ =
-					"	vec4 raw_color = texture2D(texture, UV);\n"
-					"	float raw_fits_value = (raw_color.a + raw_color.r * 256.0) / 257.0;\n"
-					"	bool sign_mask = raw_fits_value > 0.5;\n"
-					"   float fits_value = raw_fits_value - float(sign_mask);\n"
-					"	float physical_value = bscale * fits_value + bzero;\n"
-					"	gl_FragColor = vec4(vec3(physical_value), 1);\n";
+					"uniform vec2 c;\n"
+					"uniform vec2 z;\n"
+					"void main() {\n"
+					"	vec2 raw_value = texture2D(texture, UV).ga;\n"
+					"   raw_value.x -= float(raw_value.x > 0.5) * 256.0 / 255.0;\n"
+					"	float value = dot(c, raw_value - z);\n"
+					"	gl_FragColor = vec4(vec3(value), 1);\n"
+					"}\n";
 		}
 		void operator() (const FITS::DataUnit<qint32>&) const {
 			*fragment_shader_source_main_ =
-					"	vec4 raw_color = texture2D(texture, UV);\n"
-					"	float raw_fits_value = (raw_color.a + raw_color.b * 256.0 + raw_color.g * 65536.0 + raw_color.r * 4294967296.0) / 4295033089.0;\n"
-					"	bool sign_mask = raw_fits_value > 0.5;\n"
-					"   float fits_value = raw_fits_value - float(sign_mask);\n"
-					"	float physical_value = bscale * fits_value + bzero;\n"
-					"	gl_FragColor = vec4(vec3(physical_value), 1);\n";
+					"uniform vec4 c;\n"
+					"uniform vec4 z;\n"
+					"void main() {\n"
+					"	vec4 raw_value = texture2D(texture, UV);\n"
+					"   raw_value.x -= float(raw_value.x > 0.5) * 256.0 / 255.0;\n"
+					"	float value = dot(c, raw_value - z);\n"
+					"	gl_FragColor = vec4(vec3(value), 1);\n"
+					"}\n";
 		}
 		void operator() (const FITS::DataUnit<qint64>&) const {
 			*fragment_shader_source_main_ =
-					"	vec4 raw_color = texture2D(texture, UV);\n"
-					"	float raw_fits_value = (raw_color.a + raw_color.b * 65536.0 + raw_color.g * 4294967296.0 + raw_color.r * 18446744073709551616.0) / 18446744078004584449.0;\n"
-					"	bool sign_mask = raw_fits_value > 0.5;\n"
-					"   float fits_value = raw_fits_value - float(sign_mask);\n"
-					"	float physical_value = bscale * fits_value + bzero;\n"
-					"	gl_FragColor = vec4(vec3(physical_value), 1);\n";
+					"uniform vec4 c;\n"
+					"uniform vec4 z;\n"
+					"void main() {\n"
+					"	vec4 raw_value = texture2D(texture, UV);\n"
+					"   raw_value.x -= float(raw_value.x > 0.5) * 65536.0 / 65535.0;\n"
+					"	float value = dot(c, raw_value - z);\n"
+					"	gl_FragColor = vec4(vec3(value), 1);\n"
+					"}\n";
 		}
 		void operator() (const FITS::DataUnit<float>&) const {
 			// TODO: Check GL_ARB_color_buffer_float, GL_OES_texture_float.
@@ -136,9 +151,12 @@ void OpenGLWidget::initializeGL() {
 				qDebug() << "BITPIX==-32 is not implemented for this hardware";
 			} else {
 				*fragment_shader_source_main_ =
-						"	float fits_value = texture2D(texture, UV).a;\n"
-						"	float physical_value = bscale * fits_value + bzero;\n"
-						"	gl_FragColor = vec4(vec3(physical_value), 1);\n";
+						"uniform float c;\n"
+						"uniform float z;\n"
+						"void main() {\n"
+						"	float value = c * (texture2D(texture, UV).a - z);\n"
+						"	gl_FragColor = vec4(vec3(value), 1);\n"
+						"}\n";
 			}
 		}
 		void operator() (const FITS::DataUnit<double>&) const {
@@ -156,6 +174,9 @@ void OpenGLWidget::initializeGL() {
 	glDisable(GL_DEPTH_TEST);
 
 	texture_->initialize();
+	emit textureInitialized(texture_.get());
+	shader_uniforms_.reset(new OpenGLShaderUniforms(texture_->channels(), texture_->channel_size(), hdu_->header().bzero(), hdu_->header().bscale()));
+	shader_uniforms_->setMinMax(texture_->hdu_minmax());
 
 	vbo_.create();
 	vbo_.bind();
@@ -168,7 +189,7 @@ void OpenGLWidget::initializeGL() {
 			"attribute vec3 vertexCoord;\n"
 			"varying vec2 UV;\n"
 			"uniform mat4 MVP;\n"
-			"void main(){\n"
+			"void main() {\n"
 			"	gl_Position = MVP * vec4(vertexCoord,1);\n"
 			"	UV = VertexUV;\n"
 			"}\n";
@@ -178,11 +199,7 @@ void OpenGLWidget::initializeGL() {
 			"#version 110\n"
 			"varying vec2 UV;\n"
 			"uniform sampler2D texture;\n"
-			"uniform float bzero;\n"
-			"uniform float bscale;\n"
-			"void main(){\n"
-			+ fragment_shader_source_main +
-			"}\n";
+			+ fragment_shader_source_main;
 	QOpenGLShader *fshader = new QOpenGLShader(QOpenGLShader::Fragment, this);
 	if (! fshader->compileSourceCode(fsrc)) throw ShaderCompileError(glGetError());
 
@@ -192,8 +209,6 @@ void OpenGLWidget::initializeGL() {
 	program_->bindAttributeLocation("vertexUV",    program_vertex_uv_attribute);
 	if (! program_->link()) throw ShaderLoadError(glGetError());
 	if (! program_->bind()) throw ShaderBindError(glGetError());
-	program_->setUniformValue("bzero",  static_cast<GLfloat>((hdu_->header().bzero() + texture_->hdu_minimum()) / (texture_->hdu_maximum() - texture_->hdu_minimum())));
-	program_->setUniformValue("bscale", static_cast<GLfloat>(hdu_->header().bscale() / (texture_->hdu_maximum() - texture_->hdu_minimum()) * texture_->normalizer()));
 	program_->enableAttributeArray(program_vertex_coord_attribute);
 	program_->enableAttributeArray(program_vertex_uv_attribute);
 	program_->setAttributeBuffer(program_vertex_coord_attribute, GL_FLOAT, 0,                   3, 3 * sizeof(GLfloat));
@@ -207,13 +222,22 @@ void OpenGLWidget::resizeEvent(QResizeEvent* event) {
 	auto old_widget_size = event->oldSize();
 	// event->oldSize() for the first call of resizeEvent equals -1,-1
 	if (old_widget_size.width() < 0 || old_widget_size.height() < 0) {
-		old_widget_size = new_widget_size;
+		const auto ratio = (image_size().height() - 1.0) * (new_widget_size.width() - 1.0) / (image_size().width() - 1.0) / (new_widget_size.height() - 1.0);
+		QSizeF new_size(ratio, 1);
+		QRectF new_viewrect(QPointF(0, 0), new_size);
+		setViewrect(new_viewrect);
+	} else {
+		const auto new_viewrect_width = viewrect_.width() * (static_cast<double>(new_widget_size.width()) - 1.0) / (static_cast<double>(old_widget_size.width()) - 1.0);
+		const auto new_viewrect_height = viewrect_.height() * (new_widget_size.height() - 1.0) / (old_widget_size.height() - 1.0);
+		QRectF new_viewrect(viewrect_);
+		new_viewrect.setSize({new_viewrect_width, new_viewrect_height});
+		setViewrect(new_viewrect);
 	}
-	const auto new_viewrect_width  = viewrect_.width()  * (static_cast<double>(new_widget_size.width())  - 1.0) / (static_cast<double>(old_widget_size.width())  - 1.0);
-	const auto new_viewrect_height = viewrect_.height() * (new_widget_size.height() - 1.0) / (old_widget_size.height() - 1.0);
-	QRectF new_viewrect(viewrect_);
-	new_viewrect.setSize({new_viewrect_width, new_viewrect_height});
-	setViewrect(new_viewrect);
+}
+
+void OpenGLWidget::changeLevels(const std::pair<double, double>& minmax) {
+	shader_uniforms_->setMinMax(minmax);
+	update();
 }
 
 void OpenGLWidget::paintGL() {
@@ -223,6 +247,9 @@ void OpenGLWidget::paintGL() {
 	// QT and OpenGL have different coordinate systems, we should change y-axes direction
 	mvp.ortho(viewrect_.left(), viewrect_.right(), 1 - viewrect_.bottom(), 1 - viewrect_.top(), -1.0f, 1.0f);
 	program_->setUniformValue("MVP", mvp);
+
+	program_->setUniformValueArray("c", shader_uniforms_->get_c().data(), 1, shader_uniforms_->channels);
+	program_->setUniformValueArray("z", shader_uniforms_->get_z().data(), 1, shader_uniforms_->channels);
 
 	texture_->bind();
 

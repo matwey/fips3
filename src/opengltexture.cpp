@@ -47,58 +47,75 @@ OpenGLTexture::OpenGLTexture(const FITS::HeaderDataUnit* hdu):
 void OpenGLTexture::initialize() {
 	struct Loader {
 		const FITS::HeaderDataUnit* hdu_;
-		GLfloat* normalizer;
 		QOpenGLTexture::TextureFormat* texture_format;
 		QOpenGLTexture::PixelFormat* pixel_format;
 		QOpenGLTexture::PixelType *pixel_type;
+		quint8* channels;
+		quint8* channel_size;
 		bool* swap_bytes_enabled;
-		double *minimum;
-		double *maximum;
+		std::pair<double, double>* minmax;
+		std::pair<double, double>* instrumental_minmax;
 
 		void operator() (const FITS::DataUnit<quint8>& data) const {
-			*normalizer = static_cast<GLfloat>(std::numeric_limits<quint8>::max());
 			*texture_format = QOpenGLTexture::AlphaFormat;
 			*pixel_format = QOpenGLTexture::Alpha;
 			*pixel_type = QOpenGLTexture::UInt8;
 			*swap_bytes_enabled = false;
+			*channels = 1;
+			*channel_size = 1;
 
-			const auto minmax = swaped_minmax_element(data.data(), data.data() + data.length());
-			*minimum = minmax.first  * hdu_->header().bscale() + hdu_->header().bzero();
-			*maximum = minmax.second * hdu_->header().bscale() + hdu_->header().bzero();
+			*minmax = swaped_minmax_element(data.data(), data.data() + data.length());
+			minmax->first = minmax->first  * hdu_->header().bscale() + hdu_->header().bzero();
+			minmax->second = minmax->second * hdu_->header().bscale() + hdu_->header().bzero();
+
+			instrumental_minmax->first  = hdu_->header().bzero();
+			instrumental_minmax->second = static_cast<double>(std::numeric_limits<quint8>::max()) * hdu_->header().bscale() + hdu_->header().bzero();
 		}
 
 		void operator() (const FITS::DataUnit<qint16>& data) const {
-			*normalizer = static_cast<GLfloat>(std::numeric_limits<qint16>::max()) - static_cast<GLfloat>(std::numeric_limits<qint16>::min());
 			*texture_format = QOpenGLTexture::LuminanceAlphaFormat;
 			*pixel_format = QOpenGLTexture::LuminanceAlpha;
 			*pixel_type = QOpenGLTexture::UInt8;
 			*swap_bytes_enabled = false;
+			*channels = 2;
+			*channel_size = 1;
 
-			const auto minmax = swaped_minmax_element(data.data(), data.data() + data.length());
-			*minimum = minmax.first  * hdu_->header().bscale() + hdu_->header().bzero();
-			*maximum = minmax.second * hdu_->header().bscale() + hdu_->header().bzero();
+			*minmax = swaped_minmax_element(data.data(), data.data() + data.length());
+			minmax->first = minmax->first  * hdu_->header().bscale() + hdu_->header().bzero();
+			minmax->second = minmax->second * hdu_->header().bscale() + hdu_->header().bzero();
+
+			instrumental_minmax->first  = static_cast<double>(std::numeric_limits<qint16>::min()) * hdu_->header().bscale() + hdu_->header().bzero();
+			instrumental_minmax->second = static_cast<double>(std::numeric_limits<qint16>::max()) * hdu_->header().bscale() + hdu_->header().bzero();
 		}
 		void operator() (const FITS::DataUnit<qint32>& data) const {
-			*normalizer = static_cast<GLfloat>(std::numeric_limits<qint32>::max()) - static_cast<GLfloat>(std::numeric_limits<qint32>::min());
 			*texture_format = QOpenGLTexture::RGBAFormat;
 			*pixel_format = QOpenGLTexture::RGBA;
 			*pixel_type = QOpenGLTexture::UInt8;
 			*swap_bytes_enabled = false;
+			*channels = 4;
+			*channel_size = 1;
 
-			const auto minmax = swaped_minmax_element(data.data(), data.data() + data.length());
-			*minimum = minmax.first  * hdu_->header().bscale() + hdu_->header().bzero();
-			*maximum = minmax.second * hdu_->header().bscale() + hdu_->header().bzero();
+			*minmax = swaped_minmax_element(data.data(), data.data() + data.length());
+			minmax->first = minmax->first  * hdu_->header().bscale() + hdu_->header().bzero();
+			minmax->second = minmax->second * hdu_->header().bscale() + hdu_->header().bzero();
+
+			instrumental_minmax->first  = static_cast<double>(std::numeric_limits<qint32>::min()) * hdu_->header().bscale() + hdu_->header().bzero();
+			instrumental_minmax->second = static_cast<double>(std::numeric_limits<qint32>::max()) * hdu_->header().bscale() + hdu_->header().bzero();
 		}
 		void operator() (const FITS::DataUnit<qint64>& data) const {
-			*normalizer = static_cast<GLfloat>(std::numeric_limits<qint64>::max()) - static_cast<GLfloat>(std::numeric_limits<qint64>::min());
 			*texture_format = QOpenGLTexture::RGBA16_UNorm;
 			*pixel_format = QOpenGLTexture::RGBA;
 			*pixel_type = QOpenGLTexture::UInt16;
 			*swap_bytes_enabled = true;
+			*channels = 4;
+			*channel_size = 2;
 
-			const auto minmax = swaped_minmax_element(data.data(), data.data() + data.length());
-			*minimum = minmax.first  * hdu_->header().bscale() + hdu_->header().bzero();
-			*maximum = minmax.second * hdu_->header().bscale() + hdu_->header().bzero();
+			*minmax = swaped_minmax_element(data.data(), data.data() + data.length());
+			minmax->first = minmax->first  * hdu_->header().bscale() + hdu_->header().bzero();
+			minmax->second = minmax->second * hdu_->header().bscale() + hdu_->header().bzero();
+
+			instrumental_minmax->first  = static_cast<double>(std::numeric_limits<qint64>::min()) * hdu_->header().bscale() + hdu_->header().bzero();
+			instrumental_minmax->second = static_cast<double>(std::numeric_limits<qint64>::max()) * hdu_->header().bscale() + hdu_->header().bzero();
 		}
 		void operator() (const FITS::DataUnit<float>& data) const {
 			// TODO: Check GL_ARB_color_buffer_float, GL_OES_texture_float.
@@ -108,16 +125,20 @@ void OpenGLTexture::initialize() {
 			} else {
 				// Constant from GL_ARB_texture_float extension documentation:
 				// https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_texture_float.txt
-				*normalizer = 1.0f;
 				static const quint64 alpha32f_arb = 0x8816;
 				*texture_format = static_cast<QOpenGLTexture::TextureFormat>(alpha32f_arb);
 				*pixel_format = QOpenGLTexture::Alpha;
 				*pixel_type = QOpenGLTexture::Float32;
 				*swap_bytes_enabled = true;
+				*channels = 1;
+				*channel_size = 0;  // special value for float channel
 
-				const auto minmax = swaped_minmax_element(data.data(), data.data() + data.length());
-				*minimum = minmax.first  * hdu_->header().bscale() + hdu_->header().bzero();
-				*maximum = minmax.second * hdu_->header().bscale() + hdu_->header().bzero();
+				*minmax = swaped_minmax_element(data.data(), data.data() + data.length());
+				minmax->first = minmax->first  * hdu_->header().bscale() + hdu_->header().bzero();
+				minmax->second = minmax->second * hdu_->header().bscale() + hdu_->header().bzero();
+
+				instrumental_minmax->first  = minmax->first;
+				instrumental_minmax->second = minmax->second;
 			}
 		}
 		void operator() (const FITS::DataUnit<double>&) const {
@@ -130,13 +151,13 @@ void OpenGLTexture::initialize() {
 
 	hdu_->data().apply(Loader{
 			hdu_,
-			&normalizer_,
 			&texture_format_,
 			&pixel_format_,
 			&pixel_type_,
+			&channels_, &channel_size_,
 			&swap_bytes_enabled_,
-			&minimum_,
-			&maximum_
+			&minmax_,
+			&instrumental_minmax_
 	});
 
 	setMinificationFilter(QOpenGLTexture::Nearest);

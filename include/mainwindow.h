@@ -1,6 +1,7 @@
 #ifndef _MAINWINDOW_H_
 #define _MAINWINDOW_H_
 
+#include <QDockWidget>
 #include <QMainWindow>
 #include <QMenuBar>
 #include <QString>
@@ -8,6 +9,7 @@
 #include <memory>
 
 #include <exception.h>
+#include <levelswidget.h>
 #include <scrollzoomarea.h>
 
 class MainWindow:

@@ -1,7 +1,8 @@
 #include <memory>
 
 #include <QFile>
-#include <QVBoxLayout>
+#include <QFileInfo>
+#include <QListWidget>
 
 #include <mainwindow.h>
 
@@ -60,6 +61,12 @@ MainWindow::MainWindow(const QString& fits_filename): QMainWindow() {
 	// FIXME: reduce window size if FITS larger than Desktop and change scale_factor_
 	resize(hdu->data().imageDataUnit()->size());
 
+	#ifdef Q_OS_MAC
+		setWindowTitle(QFileInfo(fits_filename).fileName());
+	#else
+		setWindowTitle(QFileInfo(fits_filename).fileName() + " — FIPS");
+	#endif
+
 	// Create scroll area and put there open_gl_widget
 	std::unique_ptr<ScrollZoomArea> scroll_zoom_area{new ScrollZoomArea(this, *hdu)};
 	/* setCentralWidget promises to take ownership */
@@ -79,6 +86,22 @@ MainWindow::MainWindow(const QString& fits_filename): QMainWindow() {
 
 	/* setMenuBar promises to take ownership */
 	setMenuBar(menu_bar.release());
+
+	std::unique_ptr<QDockWidget> levels_dock{new QDockWidget(tr("Levels"), this)};
+	levels_dock->setAllowedAreas(Qt::AllDockWidgetAreas);
+	view_menu->addAction(levels_dock->toggleViewAction());
+	levels_dock->toggleViewAction()->setShortcut(tr("Ctrl+L"));
+	std::unique_ptr<LevelsWidget> levels_widget{new LevelsWidget(levels_dock.get())};
+	connect(
+			scrollZoomArea()->viewport(), SIGNAL(textureInitialized(const OpenGLTexture*)),
+			levels_widget.get(), SLOT(notifyTextureInitialized(const OpenGLTexture*))
+	);
+	connect(
+			levels_widget.get(), SIGNAL(valuesChanged(const std::pair<double, double>&)),
+			scrollZoomArea()->viewport(), SLOT(changeLevels(const std::pair<double, double>&))
+	);
+	levels_dock->setWidget(levels_widget.release());
+	addDockWidget(Qt::RightDockWidgetArea, levels_dock.release());
 }
 
 void MainWindow::zoomIn() {

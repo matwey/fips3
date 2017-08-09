@@ -28,3 +28,7 @@ set_target_properties(test_fits PROPERTIES COMPILE_FLAGS -DPROJECT_ROOT='"${PROJ
 # otherwise it will be a QCoreApplication.
 target_link_libraries(test_fits Qt5::Test)
 add_test(test_fits test_fits)
+
+add_executable(test_openglshaderuniforms test/openglshaderuniforms.cpp src/openglshaderunifroms.cpp)
+target_link_libraries(test_openglshaderuniforms Qt5::Test)
+add_test(test_openglshaderuniforms test_openglshaderuniforms)

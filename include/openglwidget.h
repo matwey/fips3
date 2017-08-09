@@ -13,9 +13,11 @@
 #include <QMatrix4x4>
 #include <QResizeEvent>
 
-#include <exception.h>
+#include <cmath>
 
+#include <exception.h>
 #include <fits.h>
+#include <openglshaderunifroms.h>
 #include <opengltexture.h>
 
 class OpenGLWidget: public QOpenGLWidget, protected QOpenGLFunctions {
@@ -90,9 +92,10 @@ public:
 
 signals:
 	void pixelViewrectChanged(const QRect& pixel_viewrect);
+	void textureInitialized(const OpenGLTexture* texture);
 
-private slots:
-
+public slots:
+	void changeLevels(const std::pair<double, double>& minmax);
 
 protected:
 	void initializeGL() override;
@@ -136,6 +139,8 @@ private:
 			throw T(gl_error_code);
 		}
 	}
+
+	std::unique_ptr<OpenGLShaderUniforms> shader_uniforms_;
 };
 
 
