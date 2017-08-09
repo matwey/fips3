@@ -13,9 +13,9 @@
 class PaletteWidget: public QWidget {
 public:
 	enum PaletteType {
-		GrayPalette,
-		HalfHSLCirclePalette,
-		PurpleBluePalette
+		GrayPalette = 0,
+		HalfHSLCirclePalette = 1,
+		PurpleBluePalette = 2
 	};
 
 private:
