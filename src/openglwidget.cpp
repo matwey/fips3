@@ -85,7 +85,8 @@ OpenGLWidget::OpenGLWidget(QWidget *parent, const FITS::HeaderDataUnit& hdu):
 	program_(new QOpenGLShaderProgram, program_deleter_),
 	viewrect_(0, 0, 1, 1),
 	pixel_viewrect_(QPoint(0, 0), image_size()),
-	shader_uniforms_(new OpenGLShaderUniforms(1, 1, hdu_->header().bzero(), hdu_->header().bscale())) {
+	shader_uniforms_(new OpenGLShaderUniforms(1, 1, hdu_->header().bzero(), hdu_->header().bscale())),
+	palette_(PaletteWidget::GrayPalette) {
 }
 
 OpenGLWidget::~OpenGLWidget() {
@@ -193,7 +194,7 @@ void OpenGLWidget::initializeGL() {
 			"vec3 col_gray(in float x){\n"
 			"	return clamp(vec3(x), 0.0, 1.0);\n"
 			"}\n"
-			"vec3 col_1_half_hsl_circle(in float x){\n"
+			"vec3 col_half_hsl_circle(in float x){\n"
 			"	vec3 color = clamp(vec3(2.0-3.0*x, 3.0*x, -2.0+3.0*x), 0.0, 1.0);\n"
 			"	float brightness = 3.0 * x;\n"
 			"	return clamp(brightness * color, 0.0, 1.0);\n"
@@ -207,7 +208,7 @@ void OpenGLWidget::initializeGL() {
 			"		return;\n"
 			"	}\n"
 			"	if (palette == 1){"
-			"		gl_FragColor = vec4(col_1_half_hsl_circle(value), 1);\n"
+			"		gl_FragColor = vec4(col_half_hsl_circle(value), 1);\n"
 			"		return;\n"
 			"	}\n"
 			"	if (palette == 2){"
@@ -250,8 +251,13 @@ void OpenGLWidget::resizeEvent(QResizeEvent* event) {
 	}
 }
 
-void OpenGLWidget::changeLevels(std::pair<double, double> minmax) {
+void OpenGLWidget::changeLevels(const std::pair<double, double>& minmax) {
 	shader_uniforms_->setMinMax(minmax);
+	update();
+}
+
+void OpenGLWidget::changePalette(int palette) {
+	palette_ = palette;
 	update();
 }
 
@@ -263,7 +269,7 @@ void OpenGLWidget::paintGL() {
 	mvp.ortho(viewrect_.left(), viewrect_.right(), 1 - viewrect_.bottom(), 1 - viewrect_.top(), -1.0f, 1.0f);
 	program_->setUniformValue("MVP", mvp);
 
-	program_->setUniformValue("palette", static_cast<GLint>(0));
+	program_->setUniformValue("palette", static_cast<GLint>(palette_));
 
 	program_->setUniformValueArray("c", shader_uniforms_->get_c(), 1, shader_uniforms_->channels);
 	program_->setUniformValueArray("z", shader_uniforms_->get_z(), 1, shader_uniforms_->channels);

@@ -19,6 +19,7 @@
 #include <fits.h>
 #include <openglshaderunifroms.h>
 #include <opengltexture.h>
+#include <palettewidget.h>
 
 class OpenGLWidget: public QOpenGLWidget, protected QOpenGLFunctions {
 	Q_OBJECT
@@ -96,7 +97,8 @@ signals:
 	void textureInitialized(const OpenGLTexture* texture);
 
 public slots:
-	void changeLevels(std::pair<double, double> minmax);
+	void changeLevels(const std::pair<double, double>& minmax);
+	void changePalette(int palette);
 
 protected:
 	void initializeGL() override;
@@ -142,6 +144,8 @@ private:
 	}
 
 	std::unique_ptr<OpenGLShaderUniforms> shader_uniforms_;
+
+	int palette_;
 };
 
 

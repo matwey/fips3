@@ -64,7 +64,7 @@ public:
 	explicit LevelsWidget(QWidget* parent);
 
 signals:
-	void valuesChanged(std::pair<double, double> minmax);
+	void valuesChanged(const std::pair<double, double>& minmax);
 
 public slots:
 	void setRange(double minimum, double maximum);

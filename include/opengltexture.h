@@ -32,4 +32,4 @@ public:
 	inline std::pair<double, double> instrumental_minmax() const { return std::make_pair(instrumental_minimum_, instrumental_maximum_); };
 };
 
-#endif //FIPS_OPENGLTEXTURE_H
+#endif //_OPENGLTEXTURE_H

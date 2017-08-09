@@ -10,6 +10,7 @@
 
 #include <exception.h>
 #include <levelswidget.h>
+#include <palettewidget.h>
 #include <scrollzoomarea.h>
 
 class MainWindow:
@@ -45,6 +46,7 @@ private:
 
 	std::unique_ptr<FITS> fits_;
 	std::unique_ptr<QDockWidget> levels_dock_;
+	std::unique_ptr<QDockWidget> palette_dock_;
 protected:
 	virtual void resizeEvent(QResizeEvent* event) override;
 public:
