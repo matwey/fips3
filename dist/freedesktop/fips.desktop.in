@@ -1,7 +1,6 @@
 [Desktop Entry]
 Type=Application
 Name=Fips
-Version=@PROJECT_VERSION@
 Comment=OpenGL-backed FITS image viewer
 TryExec=fips
 Exec=fips %f
