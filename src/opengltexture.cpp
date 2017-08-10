@@ -1,6 +1,7 @@
 #include <QDebug>
 #include <QOpenGLContext>
 #include <QOpenGLPixelTransferOptions>
+#include <QtGlobal>
 
 #include <opengltexture.h>
 
@@ -33,9 +34,17 @@ namespace{
 		auto elements = std::minmax_element(
 				begin,
 				end,
+#if Q_BYTE_ORDER == Q_LITTLE_ENDIAN
 				[](T x, T y) { return bswap(x) < bswap(y); }
+#else
+				[](T x, T y) { return x < y; }
+#endif
 		);
+#if Q_BYTE_ORDER == Q_LITTLE_ENDIAN
 		return std::make_pair(bswap(*elements.first), bswap(*elements.second));
+#else
+		return elements;
+#endif
 	}
 }
 
