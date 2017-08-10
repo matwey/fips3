@@ -81,11 +81,8 @@ MainWindow::MainWindow(const QString& fits_filename): QMainWindow() {
 	zoomIn_action->setShortcut(QKeySequence::ZoomIn);
 	auto zoomOut_action = view_menu->addAction(tr("Zoom &Out"), this, SLOT(zoomOut(void)));
 	zoomOut_action->setShortcut(QKeySequence::ZoomOut);
-
-#if 0 // Not implemented
-	auto fitToWindow_action = view_menu->addAction(tr("&Fit to Window"), this, SLOT(zoomOut(void)));
-	fitToWindow_action->setShortcut(tr("Ctrl+F"));
-#endif
+	fit_to_window_action_.reset(view_menu->addAction(tr("&Fit to Window"), this, SLOT(fitToWindow(void))));
+	fit_to_window_action_->setShortcut(tr("Ctrl+F"));
 
 	/* setMenuBar promises to take ownership */
 	setMenuBar(menu_bar.release());
@@ -125,6 +122,10 @@ void MainWindow::zoomIn() {
 
 void MainWindow::zoomOut() {
 	scrollZoomArea()->zoomViewport(zoomOut_factor);
+}
+
+void MainWindow::fitToWindow() {
+	scrollZoomArea()->fitToViewport();
 }
 
 void MainWindow::resizeEvent(QResizeEvent *event) {

@@ -1,6 +1,7 @@
 #ifndef _MAINWINDOW_H_
 #define _MAINWINDOW_H_
 
+#include <QAction>
 #include <QDockWidget>
 #include <QMainWindow>
 #include <QMenuBar>
@@ -45,6 +46,7 @@ private:
 	static constexpr double zoomOut_factor = 0.8;
 
 	std::unique_ptr<FITS> fits_;
+	std::unique_ptr<QAction> fit_to_window_action_;
 protected:
 	virtual void resizeEvent(QResizeEvent* event) override;
 public:
@@ -56,6 +58,7 @@ public:
 public slots:
 	void zoomIn();
 	void zoomOut();
+	void fitToWindow();
 };
 
 #endif // _MAINWINDOW_H_
