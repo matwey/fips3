@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 2.8.11)
-project(fips)
+cmake_policy(SET CMP0048 NEW)
+project(fips LANGUAGES C CXX VERSION 3.1.0)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
@@ -11,10 +12,24 @@ find_package(Qt5Test REQUIRED)
 
 include_directories ("${PROJECT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}")
 
+find_path(XDG_PREFIX
+	NAMES applications icons
+	HINTS ENV XDG_DATA_DIRS
+	PATHS /usr/share /usr/local/share
+	NO_DEFAULT_PATH)
+set(XDG_DESKTOP_DIR "${XDG_PREFIX}/applications")
+set(XDG_ICONS_DIR "${XDG_PREFIX}/icons")
+
+configure_file("dist/freedesktop/fips.desktop.in" "fips.desktop" @ONLY)
+
 file(GLOB_RECURSE SOURCES src/*.cpp include/*.h)
 add_executable(fips ${SOURCES})
 target_link_libraries(fips Qt5::Widgets)
 install(TARGETS fips DESTINATION bin)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/fips.desktop" DESTINATION ${XDG_DESKTOP_DIR})
+install(FILES "${PROJECT_SOURCE_DIR}/dist/freedesktop/scalable/fips.svg" DESTINATION "${XDG_ICONS_DIR}/hicolor/scalable/apps")
+install(FILES "${PROJECT_SOURCE_DIR}/dist/freedesktop/128x128/fips.png" DESTINATION "${XDG_ICONS_DIR}/hicolor/128x128/apps")
+install(FILES "${PROJECT_SOURCE_DIR}/dist/freedesktop/256x256/fips.png" DESTINATION "${XDG_ICONS_DIR}/hicolor/256x256/apps")
 
 enable_testing()
 add_executable(test_fits test/fits.cpp src/fits.cpp src/exception.cpp src/abstractfitsstorage.cpp src/mmapfitsstorage.cpp)
