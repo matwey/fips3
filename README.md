@@ -1,6 +1,9 @@
-![LOGO](/dist/freedesktop/scalable/fips.svg) FIPS — OpenGL based FITS image viewer
-===================================================================================
+![LOGO](/dist/freedesktop/128x128/fips.png)
+
 [![Build Status](https://travis-ci.org/matwey/fips3.svg?branch=master)](https://travis-ci.org/matwey/fips3)
+
+FIPS — OpenGL based FITS image viewer
+=====================================
 
 FIPS is a cross-platform [FITS](https://fits.gsfc.nasa.gov) viewer with
 responsive user interface. Unlike other FITS viewers FIPS uses GPU hardware via
