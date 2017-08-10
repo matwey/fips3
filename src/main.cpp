@@ -1,5 +1,6 @@
 #include <QApplication>
 #include <QCommandLineParser>
+#include <QFileDialog>
 
 #include <mainwindow.h>
 
@@ -22,13 +23,19 @@ int main(int argc, char** argv) {
 
 	const QStringList args = parser.positionalArguments();
 
-	if (args.length() != 1) {
+	QString filename;
+
+	if (args.length() == 0) {
+		filename = QFileDialog::getOpenFileName(Q_NULLPTR, QObject::tr("Open FITS file"));
+	} else if (args.length() == 1) {
+		filename = args[0];
+	} else {
 		parser.showHelp(1);
 		return 1;
 	}
 
 	try {
-		MainWindow w(args[0]);
+		MainWindow w(filename);
 		w.show();
 
 		return app.exec();
