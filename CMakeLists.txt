@@ -14,6 +14,7 @@ include_directories ("${PROJECT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR
 file(GLOB_RECURSE SOURCES src/*.cpp include/*.h)
 add_executable(fips ${SOURCES})
 target_link_libraries(fips Qt5::Widgets)
+install(TARGETS fips DESTINATION bin)
 
 enable_testing()
 add_executable(test_fits test/fits.cpp src/fits.cpp src/exception.cpp src/abstractfitsstorage.cpp src/mmapfitsstorage.cpp)
