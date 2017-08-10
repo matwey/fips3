@@ -1,5 +1,7 @@
 #include <memory>
 
+#include <QApplication>
+#include <QDesktopWidget>
 #include <QFile>
 #include <QFileInfo>
 #include <QListWidget>
@@ -58,8 +60,9 @@ MainWindow::MainWindow(const QString& fits_filename): QMainWindow() {
 	}
 
 	// Resize window to fit FITS image
-	// FIXME: reduce window size if FITS larger than Desktop and change scale_factor_
-	resize(hdu->data().imageDataUnit()->size());
+	const auto desktop_size = QApplication::desktop()->screenGeometry();
+	const QSize maximum_initial_window_size(desktop_size.width() * 2 / 3, desktop_size.height() * 2 / 3);
+	resize(hdu->data().imageDataUnit()->size().boundedTo(maximum_initial_window_size));
 
 	#ifdef Q_OS_MAC
 		setWindowTitle(QFileInfo(fits_filename).fileName());
