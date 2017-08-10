@@ -30,4 +30,4 @@ public:
 	inline quint8 channel_size() const { return channel_size_; };
 };
 
-#endif //FIPS_OPENGLTEXTURE_H
+#endif //_OPENGLTEXTURE_H

@@ -85,7 +85,8 @@ OpenGLWidget::OpenGLWidget(QWidget *parent, const FITS::HeaderDataUnit& hdu):
 	program_(new QOpenGLShaderProgram, program_deleter_),
 	viewrect_(0, 0, 1, 1),
 	pixel_viewrect_(QPoint(0, 0), image_size()),
-	shader_uniforms_(new OpenGLShaderUniforms(1, 1, 0, 1)) {
+	shader_uniforms_(new OpenGLShaderUniforms(1, 1, 0, 1)),
+	palette_(PaletteWidget::GrayPalette) {
 }
 
 OpenGLWidget::~OpenGLWidget() {
@@ -107,9 +108,7 @@ void OpenGLWidget::initializeGL() {
 					"uniform float c;\n"
 					"uniform float z;\n"
 					"void main() {\n"
-					"	float value = c * (texture2D(texture, UV).a - z);\n"
-					"	gl_FragColor = vec4(vec3(value), 1);\n"
-					"}\n";
+					"	float value = c * (texture2D(texture, UV).a - z);\n";
 		}
 		void operator() (const FITS::DataUnit<qint16>&) const {
 			*fragment_shader_source_main_ =
@@ -117,10 +116,8 @@ void OpenGLWidget::initializeGL() {
 					"uniform vec2 z;\n"
 					"void main() {\n"
 					"	vec2 raw_value = texture2D(texture, UV).ga;\n"
-					"   raw_value.x -= float(raw_value.x > 0.5) * 256.0 / 255.0;\n"
-					"	float value = dot(c, raw_value - z);\n"
-					"	gl_FragColor = vec4(vec3(value), 1);\n"
-					"}\n";
+					"   raw_value.x -= float(raw_value.x > 0.5) * 1.003921568627451;  // 256.0 / 255.0\n"
+					"	float value = dot(c, raw_value - z);\n";
 		}
 		void operator() (const FITS::DataUnit<qint32>&) const {
 			*fragment_shader_source_main_ =
@@ -128,10 +125,8 @@ void OpenGLWidget::initializeGL() {
 					"uniform vec4 z;\n"
 					"void main() {\n"
 					"	vec4 raw_value = texture2D(texture, UV);\n"
-					"   raw_value.x -= float(raw_value.x > 0.5) * 256.0 / 255.0;\n"
-					"	float value = dot(c, raw_value - z);\n"
-					"	gl_FragColor = vec4(vec3(value), 1);\n"
-					"}\n";
+					"   raw_value.x -= float(raw_value.x > 0.5) * 1.003921568627451;  // 256.0 / 255.0\n"
+					"	float value = dot(c, raw_value - z);\n";
 		}
 		void operator() (const FITS::DataUnit<qint64>&) const {
 			*fragment_shader_source_main_ =
@@ -139,10 +134,8 @@ void OpenGLWidget::initializeGL() {
 					"uniform vec4 z;\n"
 					"void main() {\n"
 					"	vec4 raw_value = texture2D(texture, UV);\n"
-					"   raw_value.x -= float(raw_value.x > 0.5) * 65536.0 / 65535.0;\n"
-					"	float value = dot(c, raw_value - z);\n"
-					"	gl_FragColor = vec4(vec3(value), 1);\n"
-					"}\n";
+					"   raw_value.x -= float(raw_value.x > 0.5) * 1.0000152590218967;  // 65536.0 / 65535.0\n"
+					"	float value = dot(c, raw_value - z);\n";
 		}
 		void operator() (const FITS::DataUnit<float>&) const {
 			// TODO: Check GL_ARB_color_buffer_float, GL_OES_texture_float.
@@ -154,9 +147,7 @@ void OpenGLWidget::initializeGL() {
 						"uniform float c;\n"
 						"uniform float z;\n"
 						"void main() {\n"
-						"	float value = c * (texture2D(texture, UV).a - z);\n"
-						"	gl_FragColor = vec4(vec3(value), 1);\n"
-						"}\n";
+						"	float value = c * (texture2D(texture, UV).a - z);\n";
 			}
 		}
 		void operator() (const FITS::DataUnit<double>&) const {
@@ -199,7 +190,32 @@ void OpenGLWidget::initializeGL() {
 			"#version 110\n"
 			"varying vec2 UV;\n"
 			"uniform sampler2D texture;\n"
-			+ fragment_shader_source_main;
+			"uniform int palette;\n"
+			"vec3 col_gray(in float x){\n"
+			"	return clamp(vec3(x), 0.0, 1.0);\n"
+			"}\n"
+			"vec3 col_half_hsl_circle(in float x){\n"
+			"	vec3 color = clamp(vec3(2.0-3.0*x, 3.0*x, -2.0+3.0*x), 0.0, 1.0);\n"
+			"	float brightness = 3.0 * x;\n"
+			"	return clamp(brightness * color, 0.0, 1.0);\n"
+			"}\n"
+			"vec3 col_purple_blue(in float x){\n"
+			"	return clamp(vec3(1.0-2.0*x, -1.0+2.0*x, 1.0), 0.0, 1.0);\n"
+			"}\n"
+			+ fragment_shader_source_main +
+			"	if (palette == 0){"
+			"		gl_FragColor = vec4(col_gray(value), 1);\n"
+			"		return;\n"
+			"	}\n"
+			"	if (palette == 1){"
+			"		gl_FragColor = vec4(col_half_hsl_circle(value), 1);\n"
+			"		return;\n"
+			"	}\n"
+			"	if (palette == 2){"
+			"		gl_FragColor = vec4(col_purple_blue(value), 1);\n"
+			"		return;\n"
+			"	}\n"
+			"}\n";
 	QOpenGLShader *fshader = new QOpenGLShader(QOpenGLShader::Fragment, this);
 	if (! fshader->compileSourceCode(fsrc)) throw ShaderCompileError(glGetError());
 
@@ -211,8 +227,8 @@ void OpenGLWidget::initializeGL() {
 	if (! program_->bind()) throw ShaderBindError(glGetError());
 	program_->enableAttributeArray(program_vertex_coord_attribute);
 	program_->enableAttributeArray(program_vertex_uv_attribute);
-	program_->setAttributeBuffer(program_vertex_coord_attribute, GL_FLOAT, 0,                   3, 3 * sizeof(GLfloat));
-	program_->setAttributeBuffer(program_vertex_uv_attribute,    GL_FLOAT, 0 * sizeof(GLfloat), 2, 3 * sizeof(GLfloat));
+	program_->setAttributeBuffer(program_vertex_coord_attribute, GL_FLOAT, 0, 3, 3 * sizeof(GLfloat));
+	program_->setAttributeBuffer(program_vertex_uv_attribute,    GL_FLOAT, 0, 2, 3 * sizeof(GLfloat));
 }
 
 void OpenGLWidget::resizeEvent(QResizeEvent* event) {
@@ -240,6 +256,11 @@ void OpenGLWidget::changeLevels(const std::pair<double, double>& minmax) {
 	update();
 }
 
+void OpenGLWidget::changePalette(int palette) {
+	palette_ = palette;
+	update();
+}
+
 void OpenGLWidget::paintGL() {
 	glClear(GL_COLOR_BUFFER_BIT);
 
@@ -247,6 +268,8 @@ void OpenGLWidget::paintGL() {
 	// QT and OpenGL have different coordinate systems, we should change y-axes direction
 	mvp.ortho(viewrect_.left(), viewrect_.right(), 1 - viewrect_.bottom(), 1 - viewrect_.top(), -1.0f, 1.0f);
 	program_->setUniformValue("MVP", mvp);
+
+	program_->setUniformValue("palette", static_cast<GLint>(palette_));
 
 	program_->setUniformValueArray("c", shader_uniforms_->get_c().data(), 1, shader_uniforms_->channels);
 	program_->setUniformValueArray("z", shader_uniforms_->get_z().data(), 1, shader_uniforms_->channels);
