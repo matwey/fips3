@@ -21,7 +21,7 @@ public:
 
 	void zoomViewport(double zoom_factor);
 	void zoomViewport(const ZoomParam& zoom);
-
+	void fitToViewport();
 	inline OpenGLWidget* viewport() const { return static_cast<OpenGLWidget*>(QAbstractScrollArea::viewport()); }
 private slots:
 	inline void translatePixelViewportX(int x) { translatePixelViewport(x, viewport()->pixelViewrect().top());  }
