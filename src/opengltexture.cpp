@@ -43,7 +43,7 @@ namespace{
 #if Q_BYTE_ORDER == Q_LITTLE_ENDIAN
 		return std::make_pair(bswap(*elements.first), bswap(*elements.second));
 #else
-		return elements;
+		return std::make_pair(*elements.first, *elements.second);
 #endif
 	}
 }
