@@ -40,7 +40,7 @@ if (APPLE)
 	target_link_libraries(Fips Qt5::Widgets)
 	add_custom_command(TARGET Fips
         POST_BUILD
-		COMMAND macdeployqt ${CMAKE_CURRENT_BINARY_DIR}/Fips.app -dmg
+		COMMAND macdeployqt ${CMAKE_CURRENT_BINARY_DIR}/Fips.app -dmg -always-overwrite
 		WORKING_DIR ${CMAKE_CURRENT_BINARY_DIR})
 elseif (UNIX)
     find_path(XDG_PREFIX
