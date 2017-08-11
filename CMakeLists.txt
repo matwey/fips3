@@ -12,24 +12,60 @@ find_package(Qt5Test REQUIRED)
 
 include_directories ("${PROJECT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}")
 
-find_path(XDG_PREFIX
-	NAMES applications icons
-	HINTS ENV XDG_DATA_DIRS
-	PATHS /usr/share /usr/local/share
-	NO_DEFAULT_PATH)
-set(XDG_DESKTOP_DIR "${XDG_PREFIX}/applications")
-set(XDG_ICONS_DIR "${XDG_PREFIX}/icons")
-
-configure_file("dist/freedesktop/fips.desktop.in" "fips.desktop" @ONLY)
-
 file(GLOB_RECURSE SOURCES src/*.cpp include/*.h)
-add_executable(fips ${SOURCES})
-target_link_libraries(fips Qt5::Widgets)
-install(TARGETS fips DESTINATION bin)
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/fips.desktop" DESTINATION ${XDG_DESKTOP_DIR})
-install(FILES "${PROJECT_SOURCE_DIR}/dist/freedesktop/scalable/fips.svg" DESTINATION "${XDG_ICONS_DIR}/hicolor/scalable/apps")
-install(FILES "${PROJECT_SOURCE_DIR}/dist/freedesktop/128x128/fips.png" DESTINATION "${XDG_ICONS_DIR}/hicolor/128x128/apps")
-install(FILES "${PROJECT_SOURCE_DIR}/dist/freedesktop/256x256/fips.png" DESTINATION "${XDG_ICONS_DIR}/hicolor/256x256/apps")
+
+if (APPLE)
+	set(RESOURCES_DIR "${PROJECT_SOURCE_DIR}/dist/macos")
+	set(ICON_NAME fips)
+	set(ICON_FILE "${RESOURCES_DIR}/${ICON_NAME}.icns")
+	set_source_files_properties(${ICON_FILE} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+
+	set(DEVELOPMENT_PROJECT_NAME Fips)
+	set(DEVELOPMENT_TEAM_ID matwey)
+	set(PRODUCT_NAME Fips)
+	set(EXECUTABLE_NAME Fips)
+	set(MACOSX_BUNDLE_EXECUTABLE_NAME Fips)
+	set(MACOSX_BUNDLE_INFO_STRING com.matwey.fips)
+	set(MACOSX_BUNDLE_GUI_IDENTIFIER ${MACOSX_BUNDLE_INFO_STRING})
+	set(MACOSX_BUNDLE_BUNDLE_NAME Fips)
+	set(MACOSX_BUNDLE_ICON_FILE ${ICON_NAME})
+	set(MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION})
+	set(MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION})
+	set(MACOSX_BUNDLE_COPYRIGHT Copyright 2017, Matwey Kornilov)
+	set(MACOSX_BUNDLE_LONG_VERSION_STRING ${PROJECT_VERSION})
+
+	add_executable(Fips MACOSX_BUNDLE ${SOURCES} ${ICON_FILE})
+	set_target_properties(Fips PROPERTIES MACOSX_BUNDLE TRUE)
+	set_target_properties(Fips PROPERTIES MACOSX_BUNDLE_INFO_PLIST "${RESOURCES_DIR}/MacOSXBundleInfo.plist.in")
+	target_link_libraries(Fips Qt5::Widgets)
+	add_custom_command(TARGET Fips
+        POST_BUILD
+		COMMAND macdeployqt ${CMAKE_CURRENT_BINARY_DIR}/Fips.app -dmg -always-overwrite
+		WORKING_DIR ${CMAKE_CURRENT_BINARY_DIR})
+elseif (UNIX)
+    find_path(XDG_PREFIX
+		NAMES applications icons
+		HINTS ENV XDG_DATA_DIRS
+		PATHS /usr/share /usr/local/share
+		NO_DEFAULT_PATH)
+	set(XDG_DESKTOP_DIR "${XDG_PREFIX}/applications")
+	set(XDG_ICONS_DIR "${XDG_PREFIX}/icons")
+
+	configure_file("dist/freedesktop/fips.desktop.in" "fips.desktop" @ONLY)
+
+	add_executable(fips ${SOURCES})
+	target_link_libraries(fips Qt5::Widgets)
+	install(TARGETS fips DESTINATION bin)
+	install(FILES "${CMAKE_CURRENT_BINARY_DIR}/fips.desktop" DESTINATION ${XDG_DESKTOP_DIR})
+	install(FILES "${PROJECT_SOURCE_DIR}/dist/freedesktop/scalable/fips.svg" DESTINATION "${XDG_ICONS_DIR}/hicolor/scalable/apps")
+	install(FILES "${PROJECT_SOURCE_DIR}/dist/freedesktop/128x128/fips.png" DESTINATION "${XDG_ICONS_DIR}/hicolor/128x128/apps")
+	install(FILES "${PROJECT_SOURCE_DIR}/dist/freedesktop/256x256/fips.png" DESTINATION "${XDG_ICONS_DIR}/hicolor/256x256/apps")
+endif(APPLE)
+
+
+if (APPLE)
+
+endif(APPLE)
 
 enable_testing()
 add_executable(test_fits test/fits.cpp src/fits.cpp src/exception.cpp src/abstractfitsstorage.cpp src/mmapfitsstorage.cpp)
