@@ -39,6 +39,8 @@ QException* MainWindow::NoImageInFITS::clone() const {
 }
 
 MainWindow::MainWindow(const QString& fits_filename): QMainWindow() {
+	setAttribute(Qt::WA_DeleteOnClose);
+
 	// Open FITS file
 	std::unique_ptr<QFile> file{new QFile(fits_filename)};
 	if (!file->open(QIODevice::ReadOnly)) {
