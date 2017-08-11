@@ -123,9 +123,6 @@ MainWindow::MainWindow(const QString& fits_filename): QMainWindow() {
 void MainWindow::openFile() {
 	QString filename = QFileDialog::getOpenFileName(Q_NULLPTR, tr("Open FITS file"));
 	if (filename.isEmpty()) {
-		if (QApplication::topLevelWidgets().isEmpty()) {
-			return openFile();
-		}
 		return;
 	}
 	auto *other = new MainWindow(filename);
