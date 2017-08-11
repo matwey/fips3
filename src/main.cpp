@@ -23,22 +23,20 @@ int main(int argc, char** argv) {
 
 	const QStringList args = parser.positionalArguments();
 
-	QString filename;
-
-	if (args.length() == 0) {
-		filename = QFileDialog::getOpenFileName(Q_NULLPTR, QObject::tr("Open FITS file"));
-	} else if (args.length() == 1) {
-		filename = args[0];
-	} else {
-		parser.showHelp(1);
-		return 1;
-	}
-
 	try {
-		MainWindow w(filename);
-		w.show();
-
-		return app.exec();
+		if (args.length() == 0) {
+			MainWindow::openFile();
+			return app.exec();
+		}
+		if (args.length() == 1) {
+			MainWindow w(args[0]);
+			w.show();
+			return app.exec();
+		}
+		if (args.length() > 1) {
+			parser.showHelp(1);
+			return 1;
+		}
 	} catch (const std::exception& e) {
 		qCritical() << e.what();
 		return 1;
