@@ -25,7 +25,10 @@ int main(int argc, char** argv) {
 
 	try {
 		if (args.length() == 0) {
-			MainWindow::openFile();
+			auto w = MainWindow::openFile();
+			if (!w) {
+				return 0;
+			}
 			return app.exec();
 		}
 		if (args.length() == 1) {

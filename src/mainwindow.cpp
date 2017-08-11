@@ -120,13 +120,14 @@ MainWindow::MainWindow(const QString& fits_filename): QMainWindow() {
 	addDockWidget(Qt::RightDockWidgetArea, palette_dock.release());
 }
 
-void MainWindow::openFile() {
+MainWindow* MainWindow::openFile() {
 	QString filename = QFileDialog::getOpenFileName(Q_NULLPTR, tr("Open FITS file"));
 	if (filename.isEmpty()) {
-		return;
+		return Q_NULLPTR;
 	}
 	auto *other = new MainWindow(filename);
 	other->show();
+	return other;
 }
 
 void MainWindow::zoomIn() {
