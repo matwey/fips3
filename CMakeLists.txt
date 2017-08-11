@@ -69,7 +69,7 @@ endif(APPLE)
 
 enable_testing()
 add_executable(test_fits test/fits.cpp src/fits.cpp src/exception.cpp src/abstractfitsstorage.cpp src/mmapfitsstorage.cpp)
-set_target_properties(test_fits PROPERTIES COMPILE_FLAGS -DPROJECT_ROOT='"${PROJECT_SOURCE_DIR}"')
+target_compile_definitions(test_fits PUBLIC PROJECT_ROOT="${PROJECT_SOURCE_DIR}")
 # Linked libraries affect ability to run without X11 display.
 #
 # http://doc.qt.io/qt-5/qtest.html#QTEST_MAIN
