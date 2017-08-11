@@ -3,9 +3,12 @@
 #include <QApplication>
 #include <QDesktopWidget>
 #include <QFile>
+#include <QFileDialog>
 #include <QFileInfo>
 #include <QListWidget>
+#include <QMessageBox>
 
+#include <application.h>
 #include <mainwindow.h>
 
 MainWindow::Exception::Exception(const QString& what):
@@ -37,7 +40,7 @@ QException* MainWindow::NoImageInFITS::clone() const {
 	return new MainWindow::NoImageInFITS(*this);
 }
 
-MainWindow::MainWindow(const QString& fits_filename): QMainWindow() {
+MainWindow::MainWindow(const QString& fits_filename, QWidget *parent): QMainWindow(parent) {
 	// Open FITS file
 	std::unique_ptr<QFile> file{new QFile(fits_filename)};
 	if (!file->open(QIODevice::ReadOnly)) {
@@ -76,6 +79,9 @@ MainWindow::MainWindow(const QString& fits_filename): QMainWindow() {
 	setCentralWidget(scroll_zoom_area.release());
 
 	std::unique_ptr<QMenuBar> menu_bar{new QMenuBar()};
+	auto file_menu = menu_bar->addMenu(tr("&File"));
+	auto file_open_action = file_menu->addAction(tr("&Open"), this, SLOT(openFile(void)));
+	file_open_action->setShortcut(QKeySequence::Open);
 	auto view_menu = menu_bar->addMenu(tr("&View"));
 	auto zoomIn_action = view_menu->addAction(tr("Zoom &In"), this, SLOT(zoomIn(void)));
 	zoomIn_action->setShortcut(QKeySequence::ZoomIn);
@@ -116,6 +122,18 @@ MainWindow::MainWindow(const QString& fits_filename): QMainWindow() {
 	addDockWidget(Qt::RightDockWidgetArea, palette_dock.release());
 }
 
+void MainWindow::openFile() {
+	QString filename = QFileDialog::getOpenFileName(this, tr("Open FITS file"));
+
+	if (filename.isEmpty()) return;
+
+	try {
+		Application::instance()->addInstance(filename);
+	} catch (const std::exception& e) {
+		QMessageBox::critical(this, "An error occured", e.what());
+	}
+}
+
 void MainWindow::zoomIn() {
 	scrollZoomArea()->zoomViewport(zoomIn_factor);
 }
@@ -126,6 +144,11 @@ void MainWindow::zoomOut() {
 
 void MainWindow::fitToWindow() {
 	scrollZoomArea()->fitToViewport();
+}
+
+void MainWindow::closeEvent(QCloseEvent *event) {
+	emit closed(*this);
+	QMainWindow::closeEvent(event);
 }
 
 void MainWindow::resizeEvent(QResizeEvent *event) {

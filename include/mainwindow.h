@@ -47,16 +47,20 @@ private:
 	std::unique_ptr<FITS> fits_;
 protected:
 	virtual void resizeEvent(QResizeEvent* event) override;
+	virtual void closeEvent(QCloseEvent *event) override;
 public:
-	MainWindow(const QString& fits_filename);
+	MainWindow(const QString& fits_filename, QWidget *parent = Q_NULLPTR);
 
 	inline ScrollZoomArea* scrollZoomArea() const {
 		return static_cast<ScrollZoomArea*>(centralWidget());
 	}
 public slots:
+	void openFile();
 	void zoomIn();
 	void zoomOut();
 	void fitToWindow();
+signals:
+	void closed(MainWindow& mainwindow);
 };
 
 #endif // _MAINWINDOW_H_

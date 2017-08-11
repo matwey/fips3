@@ -1,5 +1,6 @@
 #include <application.h>
 #include <instance.h>
+#include <mainwindow.h>
 
 #include <QCommandLineParser>
 #include <QFileDialog>
@@ -30,5 +31,5 @@ Application::Application(int &argc, char **argv):
 Application::~Application() = default;
 
 void Application::addInstance(const QString& filename) {
-	new Instance(this, filename);
+	new Instance(&root_, filename);
 }
