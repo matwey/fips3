@@ -107,7 +107,7 @@ public:
 			struct Visitor: public VisitorBase {
 				F* fun_;
 
-				inline Visitor(F* fun): fun_(fun), VisitorBase() {}
+				inline Visitor(F* fun): VisitorBase(), fun_(fun) {}
 
 				virtual void visit(const EmptyDataUnit& x) override { (*fun_)(x); };
 				virtual void visit(const DataUnit<quint8>& x) override { (*fun_)(x); };
