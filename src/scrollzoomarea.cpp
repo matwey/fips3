@@ -33,6 +33,14 @@ void ScrollZoomArea::zoomViewport(const ZoomParam& zoom) {
 	updateBars();
 }
 
+void ScrollZoomArea::fitToViewport() {
+	const auto old_viewrect = viewport()->viewrect();
+	const auto new_size = old_viewrect.size().scaled(1, 1, Qt::KeepAspectRatioByExpanding);
+	const QRectF new_viewrect{QPointF(0,0), new_size};
+	viewport()->setViewrect(new_viewrect);
+	updateBars();
+}
+
 void ScrollZoomArea::translatePixelViewport(int x, int y) {
 	QRect new_pixel_viewrect(viewport()->pixelViewrect());
 	new_pixel_viewrect.moveTopLeft({x, y});

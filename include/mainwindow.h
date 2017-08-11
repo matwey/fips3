@@ -56,6 +56,7 @@ public:
 public slots:
 	void zoomIn();
 	void zoomOut();
+	void fitToWindow();
 };
 
 #endif // _MAINWINDOW_H_

@@ -70,12 +70,6 @@ MainWindow::MainWindow(const QString& fits_filename): QMainWindow() {
 		setWindowTitle(QFileInfo(fits_filename).fileName() + " — FIPS");
 	#endif
 
-	#ifdef Q_OS_MAC
-		setWindowTitle(QFileInfo(fits_filename).fileName());
-	#else
-		setWindowTitle(QFileInfo(fits_filename).fileName() + " — FIPS");
-	#endif
-
 	// Create scroll area and put there open_gl_widget
 	std::unique_ptr<ScrollZoomArea> scroll_zoom_area{new ScrollZoomArea(this, *hdu)};
 	/* setCentralWidget promises to take ownership */
@@ -87,11 +81,8 @@ MainWindow::MainWindow(const QString& fits_filename): QMainWindow() {
 	zoomIn_action->setShortcut(QKeySequence::ZoomIn);
 	auto zoomOut_action = view_menu->addAction(tr("Zoom &Out"), this, SLOT(zoomOut(void)));
 	zoomOut_action->setShortcut(QKeySequence::ZoomOut);
-
-#if 0 // Not implemented
-	auto fitToWindow_action = view_menu->addAction(tr("&Fit to Window"), this, SLOT(zoomOut(void)));
-	fitToWindow_action->setShortcut(tr("Ctrl+F"));
-#endif
+	auto fit_to_window_action = view_menu->addAction(tr("&Fit to Window"), this, SLOT(fitToWindow(void)));
+	fit_to_window_action->setShortcut(tr("Ctrl+F"));
 
 	/* setMenuBar promises to take ownership */
 	setMenuBar(menu_bar.release());
@@ -131,6 +122,10 @@ void MainWindow::zoomIn() {
 
 void MainWindow::zoomOut() {
 	scrollZoomArea()->zoomViewport(zoomOut_factor);
+}
+
+void MainWindow::fitToWindow() {
+	scrollZoomArea()->fitToViewport();
 }
 
 void MainWindow::resizeEvent(QResizeEvent *event) {
