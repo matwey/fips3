@@ -5,7 +5,7 @@
 
 #include <opengltexture.h>
 
-namespace{
+namespace {
 	template<std::size_t N> struct bswap_traits;
 	template<> struct bswap_traits<1> {
 		using type = quint8;
@@ -13,15 +13,33 @@ namespace{
 	};
 	template<> struct bswap_traits<2> {
 		using type = quint16;
-		static inline quint16 bswap(quint16 x) { return __builtin_bswap16(x); }
+		static inline quint16 bswap(quint16 x) {
+#if _MSC_VER
+			return _byteswap_ushort(x);
+#else
+			return __builtin_bswap16(x);
+#endif
+		}
 	};
 	template<> struct bswap_traits<4> {
 		using type = quint32;
-		static inline quint32 bswap(quint32 x) { return __builtin_bswap32(x); }
+		static inline quint32 bswap(quint32 x) {
+#if _MSC_VER
+			return _byteswap_ulong(x);
+#else
+			return __builtin_bswap32(x);
+#endif
+		}
 	};
 	template<> struct bswap_traits<8> {
 		using type = quint64;
-		static inline quint64 bswap(quint64 x) { return __builtin_bswap64(x); }
+		static inline quint64 bswap(quint64 x) {
+#if _MSC_VER
+			return _byteswap_uint64(x);
+#else
+			return __builtin_bswap64(x);
+#endif
+		}
 	};
 
 	template<class T> inline T bswap(T x) {
