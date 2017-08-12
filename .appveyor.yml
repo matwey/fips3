@@ -1,0 +1,23 @@
+image:
+  - Visual Studio 2015
+
+environment:
+  matrix:
+    - PLATFORM: x86
+      QTDIR: C:\Qt\5.9\msvc2015
+      GENERATOR: Visual Studio 14
+    - PLATFORM: x64
+      QTDIR: C:\Qt\5.9\msvc2015_64
+      GENERATOR: Visual Studio 14 Win64
+
+install:
+  - set PATH=%QTDIR%\bin;%PATH%
+
+before_build:
+  - cmake -G"%GENERATOR%" -DCMAKE_PREFIX_PATH=%QTDIR% .
+
+build_script:
+  - cmake --build .
+
+test_script:
+  - ctest --output-on-failure
