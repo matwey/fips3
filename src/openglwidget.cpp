@@ -339,4 +339,4 @@ bool OpenGLWidget::correct_viewrect() {
 	return false;
 }
 
-constexpr GLfloat OpenGLWidget::vbo_data[];
+constexpr const GLfloat OpenGLWidget::vbo_data[];

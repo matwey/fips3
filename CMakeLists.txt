@@ -14,12 +14,23 @@ include_directories ("${PROJECT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR
 
 file(GLOB_RECURSE SOURCES src/*.cpp include/*.h)
 
-if (APPLE)
+if(APPLE)
+	set(TARGET Fips)
+
 	set(RESOURCES_DIR "${PROJECT_SOURCE_DIR}/dist/macos")
 	set(ICON_NAME fips)
 	set(ICON_FILE "${RESOURCES_DIR}/${ICON_NAME}.icns")
 	set_source_files_properties(${ICON_FILE} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
 
+	list(APPEND SOURCES ${ICON_FILE})
+else()
+	set(TARGET fips)
+endif(APPLE)
+
+add_executable(${TARGET} ${SOURCES})
+target_link_libraries(${TARGET} Qt5::Widgets)
+
+if(APPLE)
 	set(DEVELOPMENT_PROJECT_NAME Fips)
 	set(DEVELOPMENT_TEAM_ID matwey)
 	set(PRODUCT_NAME Fips)
@@ -34,16 +45,14 @@ if (APPLE)
 	set(MACOSX_BUNDLE_COPYRIGHT Copyright 2017, Matwey Kornilov)
 	set(MACOSX_BUNDLE_LONG_VERSION_STRING ${PROJECT_VERSION})
 
-	add_executable(Fips MACOSX_BUNDLE ${SOURCES} ${ICON_FILE})
-	set_target_properties(Fips PROPERTIES MACOSX_BUNDLE TRUE)
-	set_target_properties(Fips PROPERTIES MACOSX_BUNDLE_INFO_PLIST "${RESOURCES_DIR}/MacOSXBundleInfo.plist.in")
-	target_link_libraries(Fips Qt5::Widgets)
-	add_custom_command(TARGET Fips
+	set_target_properties(${TARGET} PROPERTIES MACOSX_BUNDLE TRUE)
+	set_target_properties(${TARGET} PROPERTIES MACOSX_BUNDLE_INFO_PLIST "${RESOURCES_DIR}/MacOSXBundleInfo.plist.in")
+	add_custom_command(TARGET ${TARGET}
         POST_BUILD
 		COMMAND macdeployqt ${CMAKE_CURRENT_BINARY_DIR}/Fips.app -dmg -always-overwrite
 		WORKING_DIR ${CMAKE_CURRENT_BINARY_DIR})
-elseif (UNIX)
-    find_path(XDG_PREFIX
+elseif(UNIX)
+	find_path(XDG_PREFIX
 		NAMES applications icons
 		HINTS ENV XDG_DATA_DIRS
 		PATHS /usr/share /usr/local/share
@@ -53,9 +62,7 @@ elseif (UNIX)
 
 	configure_file("dist/freedesktop/fips.desktop.in" "fips.desktop" @ONLY)
 
-	add_executable(fips ${SOURCES})
-	target_link_libraries(fips Qt5::Widgets)
-	install(TARGETS fips DESTINATION bin)
+	install(TARGETS "${TARGET}" DESTINATION bin)
 	install(FILES "${CMAKE_CURRENT_BINARY_DIR}/fips.desktop" DESTINATION ${XDG_DESKTOP_DIR})
 	install(FILES "${PROJECT_SOURCE_DIR}/dist/freedesktop/scalable/fips.svg" DESTINATION "${XDG_ICONS_DIR}/hicolor/scalable/apps")
 	install(FILES "${PROJECT_SOURCE_DIR}/dist/freedesktop/128x128/fips.png" DESTINATION "${XDG_ICONS_DIR}/hicolor/128x128/apps")
