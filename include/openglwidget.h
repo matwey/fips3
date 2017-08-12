@@ -120,7 +120,7 @@ private:
 	static const int program_vertex_uv_attribute    = 1;
 	// Square which is made from two triangles. Each line is xyz coordinates of triangle vertex (0-2 - first triangle,
 	// 3-5 - second triangle). First and seconds columns are used as corresponding UV-coordinates.
-	static constexpr GLfloat vbo_data[] = {
+	static constexpr const GLfloat vbo_data[] = {
 			0.0f, 0.0f, 0.0f,
 			1.0f, 0.0f, 0.0f,
 			0.0f, 1.0f, 0.0f,
