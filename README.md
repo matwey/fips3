@@ -1,6 +1,7 @@
 ![LOGO](/dist/freedesktop/128x128/fips.png)
 
 [![Build Status](https://travis-ci.org/matwey/fips3.svg?branch=master)](https://travis-ci.org/matwey/fips3)
+[![Build Status](https://ci.appveyor.com/api/projects/status/github/matwey/fips3?branch=master&svg=true)](https://ci.appveyor.com/project/matwey/fips3)
 
 FIPS — OpenGL based FITS image viewer
 =====================================
