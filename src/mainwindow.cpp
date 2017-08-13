@@ -3,6 +3,7 @@
 #include <QApplication>
 #include <QDesktopWidget>
 #include <QFile>
+#include <QFileDialog>
 #include <QFileInfo>
 #include <QListWidget>
 
@@ -38,6 +39,8 @@ QException* MainWindow::NoImageInFITS::clone() const {
 }
 
 MainWindow::MainWindow(const QString& fits_filename): QMainWindow() {
+	setAttribute(Qt::WA_DeleteOnClose);
+
 	// Open FITS file
 	std::unique_ptr<QFile> file{new QFile(fits_filename)};
 	if (!file->open(QIODevice::ReadOnly)) {
@@ -76,6 +79,9 @@ MainWindow::MainWindow(const QString& fits_filename): QMainWindow() {
 	setCentralWidget(scroll_zoom_area.release());
 
 	std::unique_ptr<QMenuBar> menu_bar{new QMenuBar()};
+	auto file_menu = menu_bar->addMenu(tr("&File"));
+	auto file_open_action = file_menu->addAction(tr("&Open"), this, SLOT(openFile(void)));
+	file_open_action->setShortcut(QKeySequence::Open);
 	auto view_menu = menu_bar->addMenu(tr("&View"));
 	auto zoomIn_action = view_menu->addAction(tr("Zoom &In"), this, SLOT(zoomIn(void)));
 	zoomIn_action->setShortcut(QKeySequence::ZoomIn);
@@ -114,6 +120,16 @@ MainWindow::MainWindow(const QString& fits_filename): QMainWindow() {
 	);
 	palette_dock->setWidget(palette_widget.release());
 	addDockWidget(Qt::RightDockWidgetArea, palette_dock.release());
+}
+
+MainWindow* MainWindow::openFile() {
+	QString filename = QFileDialog::getOpenFileName(Q_NULLPTR, tr("Open FITS file"));
+	if (filename.isEmpty()) {
+		return Q_NULLPTR;
+	}
+	auto *other = new MainWindow(filename);
+	other->show();
+	return other;
 }
 
 void MainWindow::zoomIn() {

@@ -1,5 +1,6 @@
 #include <QApplication>
 #include <QCommandLineParser>
+#include <QFileDialog>
 
 #include <mainwindow.h>
 
@@ -22,16 +23,23 @@ int main(int argc, char** argv) {
 
 	const QStringList args = parser.positionalArguments();
 
-	if (args.length() != 1) {
-		parser.showHelp(1);
-		return 1;
-	}
-
 	try {
-		MainWindow w(args[0]);
-		w.show();
-
-		return app.exec();
+		if (args.length() == 0) {
+			auto w = MainWindow::openFile();
+			if (!w) {
+				return 0;
+			}
+			return app.exec();
+		}
+		if (args.length() == 1) {
+			MainWindow w(args[0]);
+			w.show();
+			return app.exec();
+		}
+		if (args.length() > 1) {
+			parser.showHelp(1);
+			return 1;
+		}
 	} catch (const std::exception& e) {
 		qCritical() << e.what();
 		return 1;
