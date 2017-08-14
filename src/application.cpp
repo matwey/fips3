@@ -1,4 +1,5 @@
 #include <application.h>
+#include <instance.h>
 
 #include <QCommandLineParser>
 #include <QFileDialog>
@@ -24,7 +25,10 @@ Application::Application(int &argc, char **argv):
 		QApplication::exit(1);
 	}
 
-	mainwindow_.reset(new MainWindow(filename));
-	mainwindow_->show();
+	addInstance(filename);
 }
 Application::~Application() = default;
+
+void Application::addInstance(const QString& filename) {
+	new Instance(this, filename);
+}

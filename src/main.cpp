@@ -1,4 +1,6 @@
 #include <QApplication>
+#include <QDebug>
+#include <QSurfaceFormat>
 
 #include <application.h>
 
