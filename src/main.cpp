@@ -2,6 +2,7 @@
 #include <QCommandLineParser>
 #include <QFileDialog>
 
+#include <application.h>
 #include <mainwindow.h>
 
 int main(int argc, char** argv) {
@@ -10,7 +11,7 @@ int main(int argc, char** argv) {
 	surface_format.setVersion(2, 0);
 	QSurfaceFormat::setDefaultFormat(surface_format);
 
-	QApplication app(argc, argv);
+	Application app(argc, argv);
 
 	QCoreApplication::setApplicationName("fips");
 	QCoreApplication::setApplicationVersion("3.0");
