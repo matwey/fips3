@@ -46,7 +46,7 @@ if(APPLE)
 	set(MACOSX_BUNDLE_LONG_VERSION_STRING ${PROJECT_VERSION})
 
 	set_target_properties(${TARGET} PROPERTIES MACOSX_BUNDLE TRUE)
-	set_target_properties(${TARGET} PROPERTIES MACOSX_BUNDLE_INFO_PLIST "${RESOURCES_DIR}/MacOSXBundleInfo.plist.in")
+	set_target_properties(${TARGET} PROPERTIES MACOSX_BUNDLE_INFO_PLIST "${RESOURCES_DIR}/Info.plist.in")
 	add_custom_command(TARGET ${TARGET}
         POST_BUILD
 		COMMAND macdeployqt ${CMAKE_CURRENT_BINARY_DIR}/Fips.app -always-overwrite
