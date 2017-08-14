@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.11)
+cmake_minimum_required(VERSION 3.0.0)
 cmake_policy(SET CMP0048 NEW)
 project(fips LANGUAGES C CXX VERSION 3.1.0)
 
@@ -17,21 +17,35 @@ endif(Qt5Widgets_VERSION VERSION_LESS 5.5)
 include_directories ("${PROJECT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}")
 
 file(GLOB_RECURSE SOURCES src/*.cpp include/*.h)
+set(ICON_NAME fips)
 
 if(APPLE)
 	set(TARGET Fips)
 
 	set(RESOURCES_DIR "${PROJECT_SOURCE_DIR}/dist/macos")
-	set(ICON_NAME fips)
 	set(ICON_FILE "${RESOURCES_DIR}/${ICON_NAME}.icns")
 	set_source_files_properties(${ICON_FILE} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
 
 	list(APPEND SOURCES ${ICON_FILE})
+	add_executable(${TARGET} MACOSX_BUNDLE ${SOURCES})
+elseif(WIN32)
+	set(TARGET fips)
+
+	set(RESOURCES_DIR "${PROJECT_SOURCE_DIR}/dist/windows")
+	set(ICON_FILE "${RESOURCES_DIR}/${ICON_NAME}.ico")
+
+	if (NOT PROJECT_VERSION_TWEAK)
+		set(PROJECT_VERSION_TWEAK 0)
+	endif()
+	configure_file(${RESOURCES_DIR}/metafile.rc.in metafile.rc)
+
+	list(APPEND SOURCES metafile.rc)
+	add_executable(${TARGET} WIN32 ${SOURCES})
 else()
 	set(TARGET fips)
+	add_executable(${TARGET} ${SOURCES})
 endif(APPLE)
 
-add_executable(${TARGET} ${SOURCES})
 target_link_libraries(${TARGET} Qt5::Widgets)
 
 if(APPLE)
@@ -53,21 +67,21 @@ if(APPLE)
 	set_target_properties(${TARGET} PROPERTIES MACOSX_BUNDLE_INFO_PLIST "${RESOURCES_DIR}/Info.plist.in")
 	add_custom_command(TARGET ${TARGET}
 		POST_BUILD
-		COMMAND macdeployqt ${CMAKE_CURRENT_BINARY_DIR}/Fips.app -always-overwrite
-		WORKING_DIR ${CMAKE_CURRENT_BINARY_DIR})
+		COMMAND macdeployqt ${CMAKE_CURRENT_BINARY_DIR}/Fips.app -always-overwrite)
 
 	install(TARGETS ${TARGET} BUNDLE DESTINATION .)
+elseif(WIN32)
+	add_custom_command(TARGET ${TARGET}
+		POST_BUILD
+		# Visual Studio specific command. We set VS macro as environment varaible for windeployqt command:
+		COMMAND set VCINSTALLDIR=$(VCinstallDir)
+		COMMAND windeployqt $<TARGET_FILE:${TARGET}> --force --compiler-runtime)
 
-	set(CPACK_PACKAGE_NAME Fips)
-	set(CPACK_BUNDLE_NAME Fips)
-	set(CPACK_PACKAGE_DIRECTORY ${CMAKE_BINARY_DIR})
-	set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
-	set(CPACK_PACKAGE_DESCRIPTION_FILE ${CMAKE_CURRENT_SOURCE_DIR}/README.md)
-	set(CPACK_PACKAGE_INSTALL_DIRECTORY /Applications)
-	set(CPACK_PACKAGE_CHECKSUM SHA256)
-	set(CPACK_PACKAGE_FILE_NAME ${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION})
-	set(CPACK_GENERATOR DragNDrop)
-	include(CPack)
+	install(TARGETS ${TARGET} RUNTIME DESTINATION bin)
+	install(DIRECTORY $<TARGET_FILE_DIR:${TARGET}>/ DESTINATION bin
+		FILES_MATCHING PATTERN *.dll)
+	install(DIRECTORY $<TARGET_FILE_DIR:${TARGET}>/ DESTINATION bin
+		FILES_MATCHING PATTERN *.qm)
 elseif(UNIX)
 	find_path(XDG_PREFIX
 		NAMES applications icons
@@ -85,6 +99,28 @@ elseif(UNIX)
 	install(FILES "${PROJECT_SOURCE_DIR}/dist/freedesktop/128x128/fips.png" DESTINATION "${XDG_ICONS_DIR}/hicolor/128x128/apps")
 	install(FILES "${PROJECT_SOURCE_DIR}/dist/freedesktop/256x256/fips.png" DESTINATION "${XDG_ICONS_DIR}/hicolor/256x256/apps")
 endif(APPLE)
+
+if(APPLE)
+	set(CPACK_GENERATOR DragNDrop)
+	set(CPACK_PACKAGE_INSTALL_DIRECTORY /Applications)
+	set(CPACK_PACKAGE_ICON ${RESOURCES_DIR}/fips.icns)
+	set(CPACK_PACKAGE_CHECKSUM SHA256)
+elseif(WIN32)
+	set(CPACK_GENERATOR WIX)
+#	set(CPACK_WIX_TEMPLATE ${RESOURCES_DIR}/WIX.template.in)
+	set(CPACK_PACKAGE_ICON ${RESOURCES_DIR}/fips.ico)
+	set(CPACK_WIX_PRODUCT_ICON ${RESOURCES_DIR}/fips.ico)
+	set(CPACK_WIX_UPGRADE_GUID 3708A19F-9B03-4D2C-AFC9-BDF414C1E507)
+	set(CPACK_RESOURCE_FILE_LICENSE ${PROJECT_SOURCE_DIR}/LICENSE.txt)
+endif(APPLE)
+if(APPLE OR WIN32)
+	set(CPACK_PACKAGE_NAME Fips)
+	set(CPACK_BUNDLE_NAME Fips)
+	set(CPACK_PACKAGE_DIRECTORY ${CMAKE_BINARY_DIR})
+	set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
+	set(CPACK_PACKAGE_DESCRIPTION_FILE ${CMAKE_CURRENT_SOURCE_DIR}/README.md)
+	include(CPack)
+endif(APPLE OR WIN32)
 
 enable_testing()
 add_executable(test_fits test/fits.cpp src/fits.cpp src/exception.cpp src/abstractfitsstorage.cpp src/mmapfitsstorage.cpp)
