@@ -10,6 +10,10 @@ find_package(Qt5Core REQUIRED)
 find_package(Qt5Widgets REQUIRED)
 find_package(Qt5Test REQUIRED)
 
+if(Qt5Widgets_VERSION VERSION_LESS 5.5)
+	message(FATAL_ERROR "Qt5 5.5 or later is required")
+endif(Qt5Widgets_VERSION VERSION_LESS 5.5)
+
 include_directories ("${PROJECT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}")
 
 file(GLOB_RECURSE SOURCES src/*.cpp include/*.h)
