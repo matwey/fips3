@@ -15,7 +15,7 @@ matrix:
   include:
     os: osx
     language: cpp
-    osx_image: xcode7.3
+    osx_image: xcode6.4
     before_install:
       - brew install qt
       - brew link --force qt
@@ -24,11 +24,9 @@ matrix:
     install:
       - mkdir build && cd build
       - cmake ..
-      - make VERBOSE=1
+      - make package DESTDIR=$(pwd)/install
     script:
       - make test
-    services:
-    env:
 
 env:
  - BASE_IMAGE_TAG=gcc7-qt59

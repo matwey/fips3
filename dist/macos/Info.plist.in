@@ -4,6 +4,32 @@
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
+    <key>CFBundleDocumentTypes</key>
+        <array>
+            <dict>
+                <key>CFBundleTypeExtensions</key>
+                <array>
+                    <string>fits</string>
+                    <string>fit</string>
+                    <string>fts</string>
+                </array>
+                <key>CFBundleTypeMIMETypes</key>
+                <array>
+                    <string>image/fits</string>
+                    <string>application/fits</string>
+                </array>
+                <key>CFBundleTypeIconFile</key>
+                <string>${MACOSX_BUNDLE_ICON_FILE}</string>
+                <key>CFBundleTypeName</key>
+                <string>Flexible Image Transport System document</string>
+                <key>CFBundleTypeOSTypes</key>
+                <array>
+                    <string>FITS</string>
+                </array>
+                <key>CFBundleTypeRole</key>
+                <string>Viewer</string>
+			</dict>
+        </array>
 	<key>CFBundleExecutable</key>
 	<string>${MACOSX_BUNDLE_EXECUTABLE_NAME}</string>
 	<key>CFBundleGetInfoString</key>
