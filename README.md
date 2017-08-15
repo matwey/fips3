@@ -20,7 +20,7 @@ Build requirements
 
 -   [Cmake](https://cmake.org)
 
--   [QT](https://qt.io) 5.6+
+-   [QT](https://www.qt.io) 5.6+
 
 -   C++11 compatible C++ compiler, e.g. `gcc` 4.8+ or `clang` 3.4+
 
