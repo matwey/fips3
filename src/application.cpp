@@ -15,18 +15,18 @@ Application::Application(int &argc, char **argv):
 
 	const QStringList args = parser.positionalArguments();
 
-	QString filename;
-
 	if (args.length() == 0) {
-		filename = QFileDialog::getOpenFileName(Q_NULLPTR, QObject::tr("Open FITS file"));
-	} else if (args.length() == 1) {
-		filename = args[0];
+		QString filename = QFileDialog::getOpenFileName(Q_NULLPTR, QObject::tr("Open FITS file"));
+		if (filename.isEmpty()) QApplication::exit(0);
+
+		addInstance(filename);
+	} else if (args.length() >= 1) {
+		for (const auto& x: args) addInstance(x);
 	} else {
 		parser.showHelp(1);
 		QApplication::exit(1);
 	}
 
-	addInstance(filename);
 }
 Application::~Application() = default;
 
