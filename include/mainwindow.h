@@ -55,7 +55,6 @@ public:
 		return static_cast<ScrollZoomArea*>(centralWidget());
 	}
 public slots:
-	void openFile();
 	void zoomIn();
 	void zoomOut();
 	void fitToWindow();
