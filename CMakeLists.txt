@@ -53,10 +53,10 @@ if(APPLE)
 	set_target_properties(${TARGET} PROPERTIES MACOSX_BUNDLE_INFO_PLIST "${RESOURCES_DIR}/Info.plist.in")
 	add_custom_command(TARGET ${TARGET}
 		POST_BUILD
-		COMMAND macdeployqt ${CMAKE_CURRENT_BINARY_DIR}/Fips.app -always-overwrite
-		WORKING_DIR ${CMAKE_CURRENT_BINARY_DIR})
+		COMMAND macdeployqt ${CMAKE_CURRENT_BINARY_DIR}/Fips.app -always-overwrite)
 
 	install(TARGETS ${TARGET} BUNDLE DESTINATION .)
+	install(FILES LICENSE.txt DESTINATION .)
 
 	set(CPACK_PACKAGE_NAME Fips)
 	set(CPACK_BUNDLE_NAME Fips)
