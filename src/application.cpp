@@ -33,3 +33,14 @@ Application::~Application() = default;
 void Application::addInstance(const QString& filename) {
 	new Instance(&root_, filename);
 }
+
+#ifdef Q_OS_MAC
+bool Application::event(QEvent *event) {
+	if (event->type() == QEvent::FileOpen) {
+		auto *openEvent = static_cast<QFileOpenEvent *>(event);
+		addInstance(openEvent->file());
+	}
+
+	return QApplication::event(event);
+}
+#endif

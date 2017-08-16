@@ -16,6 +16,10 @@ public:
 	inline static Application* instance() {
 		return static_cast<Application*>(QCoreApplication::instance());
 	}
+
+#ifdef Q_OS_MAC
+	virtual bool event(QEvent* event) override;
+#endif
 };
 
 #endif // _APPLICATION_H_
