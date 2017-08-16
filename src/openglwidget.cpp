@@ -186,6 +186,15 @@ void OpenGLWidget::initializeGL() {
 	if (! vshader->compileSourceCode(vsrc)) throw ShaderCompileError(glGetError());
 
 	QString fsrc =
+			"#ifdef GL_ES\n"
+			"	#ifdef GL_FRAGMENT_PRECISION_HIGH\n"
+			"		precision highp float;\n"
+			"		precision highp sampler2D;\n"
+			"	#else\n"
+			"		precision mediump float;\n"
+			"		precision mediump sampler2D;\n"
+			"	#endif\n"
+			"#endif\n"
 			"varying vec2 UV;\n"
 			"uniform sampler2D texture;\n"
 			"uniform int palette;\n"
