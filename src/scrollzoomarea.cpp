@@ -30,15 +30,21 @@ void ScrollZoomArea::zoomViewport(const ZoomParam& zoom) {
 			);
 	const QRectF new_viewrect(new_top_left, new_size);
 	viewport()->setViewrect(new_viewrect);
-	updateBars();
 }
 
 void ScrollZoomArea::fitToViewport() {
 	const auto old_viewrect = viewport()->viewrect();
 	const auto new_size = old_viewrect.size().scaled(1, 1, Qt::KeepAspectRatioByExpanding);
 	const QRectF new_viewrect{QPointF(0,0), new_size};
+
+	// Hide scroll bars while do fit
+	const auto h_policy = horizontalScrollBarPolicy();
+	const auto v_policy = verticalScrollBarPolicy();
+	setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+	setVerticalScrollBarPolicy  (Qt::ScrollBarAlwaysOff);
 	viewport()->setViewrect(new_viewrect);
-	updateBars();
+	setHorizontalScrollBarPolicy(h_policy);
+	setVerticalScrollBarPolicy  (v_policy);
 }
 
 void ScrollZoomArea::translatePixelViewport(int x, int y) {
