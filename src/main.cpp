@@ -7,7 +7,7 @@
 int main(int argc, char** argv) {
 	// See related note on http://doc.qt.io/qt-5/qopenglwidget.html
 	QSurfaceFormat surface_format;
-	surface_format.setVersion(2, 0);
+	surface_format.setVersion(2, 1);
 	QSurfaceFormat::setDefaultFormat(surface_format);
 
 	try {
