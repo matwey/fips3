@@ -73,9 +73,7 @@ if(APPLE)
 elseif(WIN32)
 	add_custom_command(TARGET ${TARGET}
 		POST_BUILD
-		# Visual Studio specific command. We set VS macro as environment varaible for windeployqt command:
-		COMMAND set VCINSTALLDIR=$(VCinstallDir)
-		COMMAND windeployqt $<TARGET_FILE:${TARGET}> --force --compiler-runtime)
+		COMMAND windeployqt $<TARGET_FILE:${TARGET}> --force --no-compiler-runtime)
 
 	install(TARGETS ${TARGET} RUNTIME DESTINATION bin)
 	install(DIRECTORY $<TARGET_FILE_DIR:${TARGET}>/ DESTINATION bin
@@ -107,7 +105,7 @@ if(APPLE)
 	set(CPACK_PACKAGE_CHECKSUM SHA256)
 elseif(WIN32)
 	set(CPACK_GENERATOR WIX)
-#	set(CPACK_WIX_TEMPLATE ${RESOURCES_DIR}/WIX.template.in)
+	set(CPACK_WIX_TEMPLATE ${RESOURCES_DIR}/WIX.template.in)
 	set(CPACK_PACKAGE_ICON ${RESOURCES_DIR}/fips.ico)
 	set(CPACK_WIX_PRODUCT_ICON ${RESOURCES_DIR}/fips.ico)
 	set(CPACK_WIX_UPGRADE_GUID 3708A19F-9B03-4D2C-AFC9-BDF414C1E507)
