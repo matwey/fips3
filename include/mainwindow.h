@@ -10,7 +10,7 @@
 
 #include <exception.h>
 #include <levelswidget.h>
-#include <palettewidget.h>
+#include <colormapwidget.h>
 #include <scrollzoomarea.h>
 
 class MainWindow:

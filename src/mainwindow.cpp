@@ -119,17 +119,17 @@ MainWindow::MainWindow(const QString& fits_filename, QWidget *parent): QMainWind
 	levels_dock->setWidget(levels_widget.release());
 	addDockWidget(Qt::RightDockWidgetArea, levels_dock.release());
 
-	std::unique_ptr<QDockWidget> palette_dock{new QDockWidget(tr("Palette"), this)};
-	palette_dock->setAllowedAreas(Qt::AllDockWidgetAreas);
-	view_menu->addAction(palette_dock->toggleViewAction());
-	palette_dock->toggleViewAction()->setShortcut(tr("Ctrl+E"));
-	std::unique_ptr<PaletteWidget> palette_widget{new PaletteWidget(palette_dock.get())};
+	std::unique_ptr<QDockWidget> colormap_dock{new QDockWidget(tr("Color map"), this)};
+	colormap_dock->setAllowedAreas(Qt::AllDockWidgetAreas);
+	view_menu->addAction(colormap_dock->toggleViewAction());
+	colormap_dock->toggleViewAction()->setShortcut(tr("Ctrl+E"));
+	std::unique_ptr<ColorMapWidget> colormap_widget{new ColorMapWidget(colormap_dock.get(), *scrollZoomArea()->viewport())};
 	connect(
-			palette_widget->buttonGroup(), SIGNAL(buttonClicked(int)),
-			scrollZoomArea()->viewport(), SLOT(changePalette(int))
+			colormap_widget->buttonGroup(), SIGNAL(buttonClicked(int)),
+			scrollZoomArea()->viewport(), SLOT(changeColorMap(int))
 	);
-	palette_dock->setWidget(palette_widget.release());
-	addDockWidget(Qt::RightDockWidgetArea, palette_dock.release());
+	colormap_dock->setWidget(colormap_widget.release());
+	addDockWidget(Qt::RightDockWidgetArea, colormap_dock.release());
 }
 
 void MainWindow::zoomIn() {
