@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.0.0)
 cmake_policy(SET CMP0048 NEW)
 project(fips LANGUAGES C CXX VERSION 3.1.0)
 
+include(InstallRequiredSystemLibraries)
+
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_CXX_STANDARD 11)
@@ -97,6 +99,8 @@ elseif(UNIX)
 	install(FILES "${PROJECT_SOURCE_DIR}/dist/freedesktop/128x128/fips.png" DESTINATION "${XDG_ICONS_DIR}/hicolor/128x128/apps")
 	install(FILES "${PROJECT_SOURCE_DIR}/dist/freedesktop/256x256/fips.png" DESTINATION "${XDG_ICONS_DIR}/hicolor/256x256/apps")
 endif(APPLE)
+
+message(STATUS "==${MSVC_REDIST_DIR}==")
 
 if(APPLE)
 	set(CPACK_GENERATOR DragNDrop)
