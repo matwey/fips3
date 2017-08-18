@@ -18,9 +18,23 @@ OpenGLShaderUniforms::OpenGLShaderUniforms(quint8 channels, quint8 channel_size,
 	}
 }
 
-void OpenGLShaderUniforms::setMinMax(double minimum, double maximum) {
-	const auto alpha = 1 / (maximum - minimum);
-	auto minus_d = minimum - bzero;
+void OpenGLShaderUniforms::setMinMax(const std::pair<double,double>& minmax) {
+	if (minmax != minmax_) {
+		minmax_ = minmax;
+		update_cz();
+	}
+}
+
+void OpenGLShaderUniforms::setColorMapSize(int colormap_size) {
+	if (colormap_size != colormap_size_) {
+		colormap_size_ = colormap_size;
+		update_cz();
+	}
+}
+
+void OpenGLShaderUniforms::update_cz() {
+	const auto alpha = (1.0 - 1.0 / colormap_size_) / (minmax_.second - minmax_.first);
+	auto minus_d = - 0.5 / (alpha * colormap_size_) + minmax_.first - bzero;
 	if (channel_size > 0) {
 		for (quint8 i = 0; i < channels; ++i) {
 			c_[i] = static_cast<GLfloat>(bscale * alpha * a_[i]);

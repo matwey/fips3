@@ -176,6 +176,7 @@ void OpenGLWidget::initializeGL() {
 	for (auto& x: colormaps_) {
 		x->initialize();
 	}
+	shader_uniforms_->setColorMapSize(colormaps_[colormap_index_]->width());
 
 	vbo_.create();
 	vbo_.bind();
@@ -206,9 +207,8 @@ void OpenGLWidget::initializeGL() {
 			"varying vec2 UV;\n"
 			"uniform sampler2D texture;\n"
 			"uniform sampler1D colormap;\n"
-			"uniform float colormap_size;\n"
 			+ fragment_shader_source_main +
-			"	gl_FragColor = texture1D(colormap, clamp(value, 0.0, 1.0) * (colormap_size-1.0)/colormap_size + 0.5/colormap_size);\n"
+			"	gl_FragColor = texture1D(colormap, clamp(value, 0.0, 1.0));\n"
 			"}\n";
 	QOpenGLShader *fshader = new QOpenGLShader(QOpenGLShader::Fragment, this);
 	if (! fshader->compileSourceCode(fsrc)) throw ShaderCompileError(glGetError());
@@ -257,6 +257,7 @@ void OpenGLWidget::changeColorMap(int colormap_index) {
 	Q_ASSERT(colormap_index >= 0 && colormap_index < colormaps_.size());
 	if (colormap_index != colormap_index_) {
 		colormap_index_ = colormap_index;
+		shader_uniforms_->setColorMapSize(colormaps_[colormap_index]->width());
 		update();
 	}
 }
@@ -274,7 +275,6 @@ void OpenGLWidget::paintGL() {
 
 	texture_->bind(program_texture_uniform_);
 	colormaps_[colormap_index_]->bind(program_colormap_uniform_);
-	program_->setUniformValue("colormap_size", static_cast<GLfloat>(colormaps_[colormap_index_]->width()));
 
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 }
