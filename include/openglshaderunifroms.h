@@ -14,6 +14,8 @@ public:
 private:
 	vec4_type a_;
 	vec4_type c_, z_;
+	std::pair<double, double> minmax_;
+	int colormap_size_;
 public:
 	const quint8 channels, channel_size;
 	const double bzero, bscale;
@@ -21,11 +23,13 @@ public:
 
 	OpenGLShaderUniforms(quint8 channels, quint8 channel_size, double bzero, double bscale);
 
-	void setMinMax(double minimum, double maximum);
-	inline void setMinMax(const std::pair<double, double>& minmax) { setMinMax(minmax.first, minmax.second); }
+	void setMinMax(const std::pair<double, double>& minmax);
+	void setColorMapSize(int colormap_size);
 	inline const vec4_type& get_a() const { return a_; }
 	inline const vec4_type& get_c() const { return c_; }
 	inline const vec4_type& get_z() const { return z_; }
+private:
+	void update_cz();
 };
 
 

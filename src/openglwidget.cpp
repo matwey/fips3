@@ -86,7 +86,11 @@ OpenGLWidget::OpenGLWidget(QWidget *parent, const FITS::HeaderDataUnit& hdu):
 	viewrect_(0, 0, 1, 1),
 	pixel_viewrect_(QPoint(0, 0), image_size()),
 	shader_uniforms_(new OpenGLShaderUniforms(1, 1, 0, 1)),
-	palette_(PaletteWidget::GrayPalette) {
+	colormaps_{{
+		openGL_unique_ptr<OpenGLColorMap>(new GrayscaleColorMap() , colormap_deleter_type(this)),
+		openGL_unique_ptr<OpenGLColorMap>(new PurpleBlueColorMap(), colormap_deleter_type(this)),
+	}},
+	colormap_index_(0) {
 }
 
 OpenGLWidget::~OpenGLWidget() {
@@ -169,6 +173,11 @@ void OpenGLWidget::initializeGL() {
 	shader_uniforms_.reset(new OpenGLShaderUniforms(texture_->channels(), texture_->channel_size(), hdu_->header().bzero(), hdu_->header().bscale()));
 	shader_uniforms_->setMinMax(texture_->hdu_minmax());
 
+	for (auto& x: colormaps_) {
+		x->initialize();
+	}
+	shader_uniforms_->setColorMapSize(colormaps_[colormap_index_]->width());
+
 	vbo_.create();
 	vbo_.bind();
 	vbo_.allocate(vbo_data, sizeof(vbo_data));
@@ -197,45 +206,26 @@ void OpenGLWidget::initializeGL() {
 			"#endif\n"
 			"varying vec2 UV;\n"
 			"uniform sampler2D texture;\n"
-			"uniform int palette;\n"
-			"vec3 col_gray(in float x){\n"
-			"	return clamp(vec3(x), 0.0, 1.0);\n"
-			"}\n"
-			"vec3 col_half_hsl_circle(in float x){\n"
-			"	vec3 color = clamp(vec3(2.0-3.0*x, 3.0*x, -2.0+3.0*x), 0.0, 1.0);\n"
-			"	float brightness = 3.0 * x;\n"
-			"	return clamp(brightness * color, 0.0, 1.0);\n"
-			"}\n"
-			"vec3 col_purple_blue(in float x){\n"
-			"	return clamp(vec3(1.0-2.0*x, -1.0+2.0*x, 1.0), 0.0, 1.0);\n"
-			"}\n"
+			"uniform sampler1D colormap;\n"
 			+ fragment_shader_source_main +
-			"	if (palette == 0){"
-			"		gl_FragColor = vec4(col_gray(value), 1);\n"
-			"		return;\n"
-			"	}\n"
-			"	if (palette == 1){"
-			"		gl_FragColor = vec4(col_half_hsl_circle(value), 1);\n"
-			"		return;\n"
-			"	}\n"
-			"	if (palette == 2){"
-			"		gl_FragColor = vec4(col_purple_blue(value), 1);\n"
-			"		return;\n"
-			"	}\n"
+			"	gl_FragColor = texture1D(colormap, clamp(value, 0.0, 1.0));\n"
 			"}\n";
 	QOpenGLShader *fshader = new QOpenGLShader(QOpenGLShader::Fragment, this);
 	if (! fshader->compileSourceCode(fsrc)) throw ShaderCompileError(glGetError());
 
 	if (! program_->addShader(vshader)) throw ShaderLoadError(glGetError());
 	if (! program_->addShader(fshader)) throw ShaderLoadError(glGetError());
-	program_->bindAttributeLocation("vertexCoord", program_vertex_coord_attribute);
-	program_->bindAttributeLocation("vertexUV",    program_vertex_uv_attribute);
+	program_->bindAttributeLocation("vertexCoord", program_vertex_coord_attribute_);
+	program_->bindAttributeLocation("vertexUV",    program_vertex_uv_attribute_);
 	if (! program_->link()) throw ShaderLoadError(glGetError());
 	if (! program_->bind()) throw ShaderBindError(glGetError());
-	program_->enableAttributeArray(program_vertex_coord_attribute);
-	program_->enableAttributeArray(program_vertex_uv_attribute);
-	program_->setAttributeBuffer(program_vertex_coord_attribute, GL_FLOAT, 0, 3, 3 * sizeof(GLfloat));
-	program_->setAttributeBuffer(program_vertex_uv_attribute,    GL_FLOAT, 0, 2, 3 * sizeof(GLfloat));
+	program_->enableAttributeArray(program_vertex_coord_attribute_);
+	program_->enableAttributeArray(program_vertex_uv_attribute_);
+	program_->setAttributeBuffer(program_vertex_coord_attribute_, GL_FLOAT, 0, 3, 3 * sizeof(GLfloat));
+	program_->setAttributeBuffer(program_vertex_uv_attribute_,    GL_FLOAT, 0, 2, 3 * sizeof(GLfloat));
+
+	program_->setUniformValue("texture",  program_texture_uniform_);
+	program_->setUniformValue("colormap", program_colormap_uniform_);
 }
 
 void OpenGLWidget::resizeEvent(QResizeEvent* event) {
@@ -263,9 +253,13 @@ void OpenGLWidget::changeLevels(const std::pair<double, double>& minmax) {
 	update();
 }
 
-void OpenGLWidget::changePalette(int palette) {
-	palette_ = palette;
-	update();
+void OpenGLWidget::changeColorMap(int colormap_index) {
+	Q_ASSERT(colormap_index >= 0 && colormap_index < colormaps_.size());
+	if (colormap_index != colormap_index_) {
+		colormap_index_ = colormap_index;
+		shader_uniforms_->setColorMapSize(colormaps_[colormap_index]->width());
+		update();
+	}
 }
 
 void OpenGLWidget::paintGL() {
@@ -276,12 +270,11 @@ void OpenGLWidget::paintGL() {
 	mvp.ortho(viewrect_.left(), viewrect_.right(), 1 - viewrect_.bottom(), 1 - viewrect_.top(), -1.0f, 1.0f);
 	program_->setUniformValue("MVP", mvp);
 
-	program_->setUniformValue("palette", static_cast<GLint>(palette_));
-
 	program_->setUniformValueArray("c", shader_uniforms_->get_c().data(), 1, shader_uniforms_->channels);
 	program_->setUniformValueArray("z", shader_uniforms_->get_z().data(), 1, shader_uniforms_->channels);
 
-	texture_->bind();
+	texture_->bind(program_texture_uniform_);
+	colormaps_[colormap_index_]->bind(program_colormap_uniform_);
 
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 }

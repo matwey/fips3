@@ -17,9 +17,9 @@
 
 #include <exception.h>
 #include <fits.h>
+#include <openglcolormap.h>
 #include <openglshaderunifroms.h>
 #include <opengltexture.h>
-#include <palettewidget.h>
 
 class OpenGLWidget: public QOpenGLWidget, protected QOpenGLFunctions {
 	Q_OBJECT
@@ -79,6 +79,8 @@ public:
 	};
 
 	template<class T> using openGL_unique_ptr = std::unique_ptr<T, OpenGLDeleter<T>>;
+	typedef std::array<openGL_unique_ptr<OpenGLColorMap>, 2> colormaps_type;
+	typedef OpenGLDeleter<OpenGLColorMap> colormap_deleter_type;
 
 public:
 	OpenGLWidget(QWidget *parent, const FITS::HeaderDataUnit& hdu);
@@ -90,6 +92,8 @@ public:
 	inline const QRect& pixelViewrect() const { return pixel_viewrect_; }
 	inline QSize image_size() const { return hdu_->data().imageDataUnit()->size(); }
 	QRect viewrectToPixelViewrect (const QRectF& viewrect) const;
+	inline const colormaps_type& colormaps() const { return colormaps_; }
+	inline int colorMapIndex() const {return colormap_index_; }
 
 signals:
 	void pixelViewrectChanged(const QRect& pixel_viewrect);
@@ -97,7 +101,7 @@ signals:
 
 public slots:
 	void changeLevels(const std::pair<double, double>& minmax);
-	void changePalette(int palette);
+	void changeColorMap(int colormap_index);
 
 protected:
 	void initializeGL() override;
@@ -116,8 +120,10 @@ private:
 	QOpenGLBuffer vbo_;
 	QMatrix4x4 base_mvp_;
 
-	static const int program_vertex_coord_attribute = 0;
-	static const int program_vertex_uv_attribute    = 1;
+	static const int program_vertex_coord_attribute_ = 0;
+	static const int program_vertex_uv_attribute_    = 1;
+	static const int program_texture_uniform_  = 0;
+	static const int program_colormap_uniform_ = 1;
 	// Square which is made from two triangles. Each line is xyz coordinates of triangle vertex (0-2 - first triangle,
 	// 3-5 - second triangle). First and seconds columns are used as corresponding UV-coordinates.
 	static constexpr const GLfloat vbo_data[] = {
@@ -144,7 +150,8 @@ private:
 
 	std::unique_ptr<OpenGLShaderUniforms> shader_uniforms_;
 
-	int palette_;
+	colormaps_type colormaps_;
+	int colormap_index_;
 };
 
 

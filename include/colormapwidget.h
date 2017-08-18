@@ -1,5 +1,5 @@
-#ifndef _PALETTEWIDGET_H
-#define _PALETTEWIDGET_H
+#ifndef _COLORMAPWIDGET_H
+#define _COLORMAPWIDGET_H
 
 #include <QtGui/qopengl.h>
 #include <QButtonGroup>
@@ -8,23 +8,19 @@
 #include <QVBoxLayout>
 #include <QWidget>
 
+#include <array>
 #include <memory>
 
-class PaletteWidget: public QWidget {
-public:
-	enum PaletteType {
-		GrayPalette = 0,
-		HalfHSLCirclePalette = 1,
-		PurpleBluePalette = 2
-	};
+#include <openglcolormap.h>
+#include <openglwidget.h>
 
+class ColorMapWidget: public QWidget {
+	Q_OBJECT
 private:
 	std::unique_ptr<QButtonGroup> button_group_;
-
 public:
-	explicit PaletteWidget(QWidget* parent);
-
+	ColorMapWidget(QWidget* parent, const OpenGLWidget& open_gl_widget);
 	inline QButtonGroup* buttonGroup() const { return button_group_.get(); }
 };
 
-#endif //_PALETTEWIDGET_H
+#endif //_COLORMAPWIDGET_H
