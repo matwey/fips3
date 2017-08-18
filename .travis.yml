@@ -1,14 +1,10 @@
 sudo: required
-
 language: cpp
-
 services:
- - docker
-
+- docker
 os:
-  - linux
-  - osx
-
+- linux
+- osx
 matrix:
   exclude:
     os: osx
@@ -17,37 +13,47 @@ matrix:
     language: cpp
     osx_image: xcode6.4
     before_install:
-      - brew install qt
-      - brew link --force qt
-      - ln -s $(brew --prefix qt)/mkspecs $(brew --prefix)/mkspecs
-      - ln -s $(brew --prefix qt)/plugins $(brew --prefix)/plugins
+    - brew install qt
+    - brew link --force qt
+    - ln -s $(brew --prefix qt)/mkspecs $(brew --prefix)/mkspecs
+    - ln -s $(brew --prefix qt)/plugins $(brew --prefix)/plugins
     install:
-      - mkdir build && cd build
-      - cmake ..
-      - make package DESTDIR=$(pwd)/install
+    - mkdir build && cd build
+    - cmake .. -DCMAKE_BUILD_TYPE=Release
+    - make package VERBOSE=1 DESTDIR=$(pwd)/install
     script:
-      - make test
+    - make test
+    before_deploy:
+    - export RELEASE_DMG_FILE=$(ls Fips-*.dmg)
+    - echo "deploying $RELEASE_DMG_FILE to GitHub Releases"
+    deploy:
+      provider: releases
+      api_key:
+        secure: I4SgyRVqHPF8f+QhyfiAXlsd98/NesRliYBap5cq1pt3/XyTREwfoYnA0rwNZ6r5oovEkQuy11tIL5k5WZuCOxqEKNqQYhLpi3Io42NX+49vS2jMTDyarE00c6YA4bLesPJQuXWWX7zdNlR6n/6MQLTL4BX5OtYfWP2xGnbzNZfkkaKUphU1rzuzPjK+y6EsglYCwSJuZMQduc+TzESQUyZ32S4mv97w3m8UTRSocIYCcNdxyuBCXMiebyprLcd2UwwrADthJTMIzRJ8298xEMfQRIoACxJou2QDhfjnLtqD1ojd+9PjPzER1zkVrwYESLiEiZLEvRCqUcbuz0iCo6LAOOrQhEOGv1yr6wXDcFeQtWjprBelTbkWyDCPktdkLRszhvrO+Q/abs+bTm+TnOt52Ax/SVC1hSF7pWfbBdzaHYeo80BaphkiF3K5bysogb1nSQjfppEY+zLfYdHl69S6RMxiF6j9RRLi8biCzUNROl/xDHvM+y5HmGoJLk04ciTIiMr7zSM4rd4m7ia3VB2i21fFA2unMgpBy5vrfTsoeonn1HSzT/TMOKFfnVClOibekAoGm66jWLqVHGVBv0D0s2MLVVJBzq855iIeFk86VTwDXJY+BZKMHqbiQ8aqoZL/97D/h4pOSFeQo975PSFoEMrMHqCpLNtc81Wci/k=
+      file: "${RELEASE_DMG_FILE}"
+      skip_cleanup: true
+      on:
+        tags: true
+        branch: master
 
 env:
- - BASE_IMAGE_TAG=gcc7-qt59
- - BASE_IMAGE_TAG=gcc7-qt58
- - BASE_IMAGE_TAG=gcc7-qt57
- - BASE_IMAGE_TAG=gcc7-qt56
- - BASE_IMAGE_TAG=gcc7-qt55
- - BASE_IMAGE_TAG=gcc6-qt59
- - BASE_IMAGE_TAG=gcc6-qt58
- - BASE_IMAGE_TAG=gcc6-qt57
- - BASE_IMAGE_TAG=gcc6-qt56
- - BASE_IMAGE_TAG=gcc6-qt55
- - BASE_IMAGE_TAG=gcc4.8-qt59
- - BASE_IMAGE_TAG=gcc4.8-qt58
- - BASE_IMAGE_TAG=gcc4.8-qt57
- - BASE_IMAGE_TAG=gcc4.8-qt56
- - BASE_IMAGE_TAG=gcc4.8-qt55
-
+- BASE_IMAGE_TAG=gcc7-qt59
+- BASE_IMAGE_TAG=gcc7-qt58
+- BASE_IMAGE_TAG=gcc7-qt57
+- BASE_IMAGE_TAG=gcc7-qt56
+- BASE_IMAGE_TAG=gcc7-qt55
+- BASE_IMAGE_TAG=gcc6-qt59
+- BASE_IMAGE_TAG=gcc6-qt58
+- BASE_IMAGE_TAG=gcc6-qt57
+- BASE_IMAGE_TAG=gcc6-qt56
+- BASE_IMAGE_TAG=gcc6-qt55
+- BASE_IMAGE_TAG=gcc4.8-qt59
+- BASE_IMAGE_TAG=gcc4.8-qt58
+- BASE_IMAGE_TAG=gcc4.8-qt57
+- BASE_IMAGE_TAG=gcc4.8-qt56
+- BASE_IMAGE_TAG=gcc4.8-qt55
 install:
- - cat Dockerfile.in | m4 -DBASE_IMAGE_TAG=${BASE_IMAGE_TAG} > Dockerfile
- - docker build . -t test
-
+- cat Dockerfile.in | m4 -DBASE_IMAGE_TAG=${BASE_IMAGE_TAG} > Dockerfile
+- docker build . -t test
 script:
- - docker run test
+- docker run test
