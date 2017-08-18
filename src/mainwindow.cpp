@@ -1,6 +1,7 @@
 #include <memory>
 
 #include <QApplication>
+#include <QDesktopServices>
 #include <QDesktopWidget>
 #include <QFile>
 #include <QFileDialog>
@@ -78,10 +79,14 @@ MainWindow::MainWindow(const QString& fits_filename, QWidget *parent): QMainWind
 	/* setCentralWidget promises to take ownership */
 	setCentralWidget(scroll_zoom_area.release());
 
-	std::unique_ptr<QMenuBar> menu_bar{new QMenuBar()};
+	std::unique_ptr<QMenuBar> menu_bar{new QMenuBar(this)};
+	// File menu
 	auto file_menu = menu_bar->addMenu(tr("&File"));
-	auto file_open_action = file_menu->addAction(tr("&Open"), this, SLOT(openFile(void)));
+	auto file_open_action = file_menu->addAction(tr("&Open"), Application::instance(), SLOT(openFile(void)));
 	file_open_action->setShortcut(QKeySequence::Open);
+	auto file_close_action = file_menu->addAction(tr("&Close"), this, SLOT(close()));
+	file_close_action->setShortcut(QKeySequence::Close);
+	// View menu
 	auto view_menu = menu_bar->addMenu(tr("&View"));
 	auto zoomIn_action = view_menu->addAction(tr("Zoom &In"), this, SLOT(zoomIn(void)));
 	zoomIn_action->setShortcut(QKeySequence::ZoomIn);
@@ -89,7 +94,12 @@ MainWindow::MainWindow(const QString& fits_filename, QWidget *parent): QMainWind
 	zoomOut_action->setShortcut(QKeySequence::ZoomOut);
 	auto fit_to_window_action = view_menu->addAction(tr("&Fit to Window"), this, SLOT(fitToWindow(void)));
 	fit_to_window_action->setShortcut(tr("Ctrl+F"));
-
+	view_menu->addSeparator();
+	// To be continued in docks block
+	// Help menu
+	auto help_menu = menu_bar->addMenu(tr("&Help"));
+	help_menu->addAction(tr("&About"), this, SLOT(about()));
+	help_menu->addAction(tr("&Homepage"), this, SLOT(homepage()));
 	/* setMenuBar promises to take ownership */
 	setMenuBar(menu_bar.release());
 
@@ -122,24 +132,12 @@ MainWindow::MainWindow(const QString& fits_filename, QWidget *parent): QMainWind
 	addDockWidget(Qt::RightDockWidgetArea, palette_dock.release());
 }
 
-void MainWindow::openFile() {
-	QString filename = QFileDialog::getOpenFileName(this, tr("Open FITS file"));
-
-	if (filename.isEmpty()) return;
-
-	try {
-		Application::instance()->addInstance(filename);
-	} catch (const std::exception& e) {
-		QMessageBox::critical(this, "An error occured", e.what());
-	}
-}
-
 void MainWindow::zoomIn() {
-	scrollZoomArea()->zoomViewport(zoomIn_factor);
+	scrollZoomArea()->zoomViewport(zoomIn_factor_);
 }
 
 void MainWindow::zoomOut() {
-	scrollZoomArea()->zoomViewport(zoomOut_factor);
+	scrollZoomArea()->zoomViewport(zoomOut_factor_);
 }
 
 void MainWindow::fitToWindow() {
@@ -153,4 +151,16 @@ void MainWindow::closeEvent(QCloseEvent *event) {
 
 void MainWindow::resizeEvent(QResizeEvent *event) {
 	QMainWindow::resizeEvent(event);
+}
+
+void MainWindow::about() {
+	QMessageBox::about(
+			this,
+			tr("Fips"),
+			tr("<b>Fips.</b> Copyright © 2017 Matwey Kornilov. ") + QString(homePageURL())
+	);
+}
+
+void MainWindow::homepage() {
+	QDesktopServices::openUrl(QUrl(homePageURL()));
 }

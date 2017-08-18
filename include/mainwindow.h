@@ -41,8 +41,9 @@ public:
 		virtual QException* clone() const override;
 	};
 private:
-	static constexpr double zoomIn_factor  = 1.25;
-	static constexpr double zoomOut_factor = 0.8;
+	static constexpr double zoomIn_factor_  = 1.25;
+	static constexpr double zoomOut_factor_ = 0.8;
+	static constexpr const char homepage_url_[] = "http://fips.space";
 
 	std::unique_ptr<FITS> fits_;
 protected:
@@ -54,11 +55,13 @@ public:
 	inline ScrollZoomArea* scrollZoomArea() const {
 		return static_cast<ScrollZoomArea*>(centralWidget());
 	}
+	inline const char* homePageURL() const { return "http://fips.space"; }
 public slots:
-	void openFile();
 	void zoomIn();
 	void zoomOut();
 	void fitToWindow();
+	void about();
+	void homepage();
 signals:
 	void closed(MainWindow& mainwindow);
 };
