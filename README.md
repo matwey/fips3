@@ -38,6 +38,19 @@ zypper ar -f obs://home:matwey:fips fips
 zypper in fips
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+#### macOS
+
+Download [release package](https://github.com/matwey/fips3/releases/latest) or
+install using [Homebrew](https://brew.sh) [Caskroom](http://caskroom.github.io):
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+brew cask install fips
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#### Windows
+
+Download [release package](https://github.com/matwey/fips3/releases/latest).
+
 If you haven't found your distro above than you can build from sources or
 contribute building packages for your favourite distro. Let us know to insert
 missing instructions.
