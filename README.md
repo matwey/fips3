@@ -54,7 +54,7 @@ make
 
 For Windows (make sure you have `cmake` in your `PATH`, then run in PowerShell):
 
-```powershell
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~powershell
 $Platform = 'x64' # or 'x86'
 $QtDir = 'E:\Libs\Qt\5.9.1\msvc2017_64' # make sure the path and platform is right
 $Generator = 'Visual Studio 15 2017 Win64' # drop ' Win64' to build x86 version
@@ -66,4 +66,4 @@ $env:QTDIR = $QtDir
 $env:PATH = "$QtDir\bin;$env:PATH"
 cmake -G"$Generator" . -DFIPS_CONFIGURATION="$Configuration"
 cmake --build . --config $Configuration --target PACKAGE
-``` 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
