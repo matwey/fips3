@@ -27,6 +27,7 @@
 #include <QSlider>
 #include <QWidget>
 
+#include <cmath>
 #include <memory>
 
 #include <opengltexture.h>
@@ -40,6 +41,7 @@ public:
 	virtual QString textFromValue(double value) const override;
 	virtual double valueFromText(const QString& text) const override;
 	virtual QValidator::State validate(QString& text, int& pos) const override;
+	virtual void stepBy(int steps) override;
 };
 
 class SpinboxWithSlider: public QWidget {

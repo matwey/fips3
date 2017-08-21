@@ -63,6 +63,23 @@ QValidator::State ScientificSpinBox::validate(QString &text, int &pos) const {
 	return QValidator::Invalid;
 }
 
+void ScientificSpinBox::stepBy(int steps) {
+	if (steps == 0) return;
+	const int abs_steps = abs(steps);
+	const auto sign_steps = static_cast<double>(steps > 0) - static_cast<double>(steps < 0);
+	double v = value();
+	double step = 0;
+	for (int i = 0; i < abs_steps; ++i) {
+		if (v != 0) {
+			step = sign_steps * std::pow(10.0, std::floor(std::log10(v)));
+		} else if (step == 0) { // if current value is zero then use previous value of step. If step is zero then initialize it
+			step = sign_steps * std::pow(10.0, std::floor(std::log10((maximum() - minimum()))) - 3.0);
+		}
+		v += step;
+	}
+	setValue(v);
+}
+
 
 SpinboxWithSlider::SpinboxWithSlider(Qt::Orientation orientation, QWidget *parent):
 		QWidget(parent),
