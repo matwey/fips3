@@ -23,15 +23,14 @@ ScientificSpinBox::ScientificSpinBox(QWidget *parent, int decimals): QDoubleSpin
 }
 
 QString ScientificSpinBox::textFromValue(double value) const {
-	// We do not honor user's locale settings. If we would like to do it in the future, then use locale().toString. Look ::valueFromText() and ::validate()
-	return QString::number(value, text_format_, decimals());
+	return locale().toString(value, text_format_, decimals());
 }
 
 double ScientificSpinBox::valueFromText(const QString &text) const {
 	bool ok = false;
-	// We do not honor user's locale settings. If we would like to do it in the future, then use locale().toDouble. Look ::textToValue() and ::validate()
-	const auto value = text.toDouble(&ok);
+	const auto value = locale().toDouble(text, &ok);
 	if (! ok) {
+		// We shouldn't be here. Fix ::validate()
 		Q_ASSERT(0);
 	}
 	return value;
@@ -39,25 +38,26 @@ double ScientificSpinBox::valueFromText(const QString &text) const {
 
 QValidator::State ScientificSpinBox::validate(QString &text, int &pos) const {
 	bool ok = false;
-	// We do not honor user's locale settings. If we would like to do it in the future, then use locale().toDouble. Look ::valueFromText() and ::textToValue()
-	text.toDouble(&ok);
+	locale().toDouble(text, &ok);
 	if (ok) {
 		return QValidator::Acceptable;
 	}
 	if (text.isEmpty()) {
 		return QValidator::Intermediate;
 	}
-	if (text == '-') {
+	if (text == "-") {
 		if (minimum() < 0) {
 			return QValidator::Intermediate;
 		}
 		return QValidator::Invalid;
 	}
-	// If we are honor to locale settings, then use locale().decimalPoint()
-	if (text == '.') {
+	if (text == locale().decimalPoint()) {
 		return QValidator::Intermediate;
 	}
-	if (text.endsWith('e', Qt::CaseInsensitive) || text.endsWith("e+", Qt::CaseInsensitive) || text.endsWith("e-", Qt::CaseInsensitive)) {
+	if (text.startsWith("e", Qt::CaseInsensitive) || text.contains(locale().decimalPoint() + 'e', Qt::CaseInsensitive)) {
+		return QValidator::Invalid;
+	}
+	if (text.endsWith("e", Qt::CaseInsensitive) || text.endsWith("e+", Qt::CaseInsensitive) || text.endsWith("e-", Qt::CaseInsensitive)) {
 		return QValidator::Intermediate;
 	}
 	return QValidator::Invalid;
