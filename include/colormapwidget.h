@@ -35,10 +35,10 @@
 class ColorMapWidget: public QWidget {
 	Q_OBJECT
 private:
-	std::unique_ptr<QButtonGroup> button_group_;
+	QButtonGroup* button_group_;
 public:
-	ColorMapWidget(QWidget* parent, const OpenGLWidget& open_gl_widget);
-	inline QButtonGroup* buttonGroup() const { return button_group_.get(); }
+	ColorMapWidget(QWidget* parent, const OpenGLWidget& open_gl_widget) noexcept;
+	inline QButtonGroup* buttonGroup() const { return button_group_; }
 };
 
 #endif //_COLORMAPWIDGET_H

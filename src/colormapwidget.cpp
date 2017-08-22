@@ -18,7 +18,7 @@
 
 #include <colormapwidget.h>
 
-ColorMapWidget::ColorMapWidget(QWidget* parent, const OpenGLWidget& open_gl_widget):
+ColorMapWidget::ColorMapWidget(QWidget* parent, const OpenGLWidget& open_gl_widget) noexcept:
 	QWidget(parent),
 	button_group_(new QButtonGroup(this)) {
 
