@@ -51,13 +51,13 @@ class SpinboxWithSlider: public QWidget {
 	Q_OBJECT
 private:
 	static constexpr int slider_range_ = 10000;
-	std::unique_ptr<ScientificSpinBox> spinbox_;
-	std::unique_ptr<QSlider> slider_;
+	ScientificSpinBox* spinbox_;
+	QSlider* slider_;
 
 public:
 	SpinboxWithSlider(Qt::Orientation orientation, QWidget* parent=Q_NULLPTR);
 
-	inline ScientificSpinBox* spinbox() const { return spinbox_.get(); }
+	inline ScientificSpinBox* spinbox() const { return spinbox_; }
 	int spinboxValueToSlider(double value) const;
 
 private slots:

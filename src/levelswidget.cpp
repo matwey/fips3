@@ -82,18 +82,18 @@ SpinboxWithSlider::SpinboxWithSlider(Qt::Orientation orientation, QWidget *paren
 	slider_->setRange(0, slider_range_);
 
 	std::unique_ptr<QGridLayout> widget_layout{new QGridLayout(this)};
-	widget_layout->addWidget(slider_.get(), 0, 0);
+	widget_layout->addWidget(slider_, 0, 0);
 	if (orientation == Qt::Horizontal) {
-		widget_layout->addWidget(spinbox_.get(), 0, 1);
+		widget_layout->addWidget(spinbox_, 0, 1);
 		widget_layout->setRowStretch(1, 1);
 	} else {
-		widget_layout->addWidget(spinbox_.get(), 1, 0);
+		widget_layout->addWidget(spinbox_, 1, 0);
 		widget_layout->setColumnStretch(1, 1);
 	}
 	setLayout(widget_layout.release());
 
-	connect(spinbox_.get(), SIGNAL(valueChanged(double)), this, SLOT(notifySpinboxValueChanged(double)));
-	connect(slider_.get(), SIGNAL(valueChanged(int)), this, SLOT(notifySliderValueChanged(int)));
+	connect(spinbox_, SIGNAL(valueChanged(double)), this, SLOT(notifySpinboxValueChanged(double)));
+	connect(slider_, SIGNAL(valueChanged(int)), this, SLOT(notifySliderValueChanged(int)));
 }
 
 int SpinboxWithSlider::spinboxValueToSlider(double value) const {
