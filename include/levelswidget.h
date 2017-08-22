@@ -34,8 +34,8 @@
 
 class ScientificSpinBox: public QDoubleSpinBox {
 private:
-	const char text_format_ = 'g';
-	const int log10_steps_in_range_ = 2;
+	static constexpr const char text_format_ = 'g';
+	static constexpr const int log10_steps_in_range_ = 2;
 public:
 	ScientificSpinBox(QWidget* parent=Q_NULLPTR, int decimals=5);
 
