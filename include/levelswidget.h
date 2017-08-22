@@ -27,21 +27,37 @@
 #include <QSlider>
 #include <QWidget>
 
+#include <cmath>
 #include <memory>
 
 #include <opengltexture.h>
+
+class ScientificSpinBox: public QDoubleSpinBox {
+private:
+	static constexpr const char text_format_ = 'g';
+	static constexpr const int log10_steps_in_range_ = 2;
+public:
+	ScientificSpinBox(QWidget* parent=Q_NULLPTR, int decimals=5);
+
+	virtual QString textFromValue(double value) const override;
+	virtual double valueFromText(const QString& text) const override;
+	virtual QValidator::State validate(QString& text, int& pos) const override;
+	inline void setMaximum(double max) { setRange(minimum(), max); }
+	inline void setMinimum(double min) { setRange(min, maximum()); }
+	void setRange(double min, double max);
+};
 
 class SpinboxWithSlider: public QWidget {
 	Q_OBJECT
 private:
 	static constexpr int slider_range_ = 10000;
-	std::unique_ptr<QDoubleSpinBox> spinbox_;
+	std::unique_ptr<ScientificSpinBox> spinbox_;
 	std::unique_ptr<QSlider> slider_;
 
 public:
 	SpinboxWithSlider(Qt::Orientation orientation, QWidget* parent=Q_NULLPTR);
 
-	inline QDoubleSpinBox* spinbox() const { return spinbox_.get(); }
+	inline ScientificSpinBox* spinbox() const { return spinbox_.get(); }
 	int spinboxValueToSlider(double value) const;
 
 private slots:
