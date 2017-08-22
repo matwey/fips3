@@ -65,6 +65,15 @@ void ScrollZoomArea::fitToViewport() {
 	setVerticalScrollBarPolicy  (v_policy);
 }
 
+void ScrollZoomArea::reloadViewport(const FITS::HeaderDataUnit &hdu) {
+	try {
+		std::unique_ptr<OpenGLWidget> open_gl_widget{new OpenGLWidget(this, hdu)};
+		setViewport(open_gl_widget.release());
+	} catch (const std::exception& e) {
+		QMessageBox::critical(this, "An error occured", e.what());
+	}
+}
+
 void ScrollZoomArea::translatePixelViewport(int x, int y) {
 	QRect new_pixel_viewrect(viewport()->pixelViewrect());
 	new_pixel_viewrect.moveTopLeft({x, y});

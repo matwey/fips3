@@ -20,6 +20,7 @@
 #define _SCROLLZOOMAREA_H
 
 #include <QAbstractScrollArea>
+#include <QMessageBox>
 
 #include <fits.h>
 #include <openglwidget.h>
@@ -41,6 +42,7 @@ public:
 	void zoomViewport(const ZoomParam& zoom);
 	void fitToViewport();
 	inline OpenGLWidget* viewport() const { return static_cast<OpenGLWidget*>(QAbstractScrollArea::viewport()); }
+	void reloadViewport(const FITS::HeaderDataUnit& hdu);
 private slots:
 	inline void translatePixelViewportX(int x) { translatePixelViewport(x, viewport()->pixelViewrect().top());  }
 	inline void translatePixelViewportY(int y) { translatePixelViewport(viewport()->pixelViewrect().left(), y); }

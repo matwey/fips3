@@ -59,27 +59,10 @@ QException* MainWindow::NoImageInFITS::clone() const {
 	return new MainWindow::NoImageInFITS(*this);
 }
 
-MainWindow::MainWindow(const QString& fits_filename, QWidget *parent): QMainWindow(parent) {
-	// Open FITS file
-	std::unique_ptr<QFile> file{new QFile(fits_filename)};
-	if (!file->open(QIODevice::ReadOnly)) {
-		throw FileOpenError(file->errorString());
-	}
-
-	// Read FITS from file
-	fits_.reset(new FITS(file.release()));
-	const FITS::HeaderDataUnit* hdu = &fits_->primary_hdu();
-
-	for (auto it = fits_->begin();
-		it != fits_->end() && !hdu->data().imageDataUnit();
-		++it) {
-
-		hdu = &(*it);
-	}
-
-	if (!hdu->data().imageDataUnit()) {
-		throw NoImageInFITS();
-	}
+MainWindow::MainWindow(const QString& fits_filename, QWidget *parent):
+	QMainWindow(parent),
+	fits_filename_(fits_filename) {
+	const auto hdu = initializeFITS();
 
 	// Resize window to fit FITS image
 	const auto desktop_size = QApplication::desktop()->screenGeometry();
@@ -100,10 +83,16 @@ MainWindow::MainWindow(const QString& fits_filename, QWidget *parent): QMainWind
 	std::unique_ptr<QMenuBar> menu_bar{new QMenuBar(this)};
 	// File menu
 	auto file_menu = menu_bar->addMenu(tr("&File"));
-	auto file_open_action = file_menu->addAction(tr("&Open"), Application::instance(), SLOT(openFile(void)));
+	auto file_open_action = file_menu->addAction(tr("&Open in new window"), Application::instance(), SLOT(openFile(void)));
 	file_open_action->setShortcut(QKeySequence::Open);
+	auto file_open_here_action = file_menu->addAction(tr("Open in this &window"), this, SLOT(openFileInThisWindow()));
+	file_open_here_action->setShortcut(tr("ctrl+shift+o"));
 	auto file_close_action = file_menu->addAction(tr("&Close"), this, SLOT(close()));
 	file_close_action->setShortcut(QKeySequence::Close);
+	file_menu->addSeparator();
+	auto refresh_action = file_menu->addAction(tr("&Refresh file"), this, SLOT(refresh()));
+	QList<QKeySequence> refresh_shortcuts {QKeySequence::Refresh, QKeySequence(Qt::Key_F5)};
+	refresh_action->setShortcuts(refresh_shortcuts);
 	// View menu
 	auto view_menu = menu_bar->addMenu(tr("&View"));
 	auto zoomIn_action = view_menu->addAction(tr("Zoom &In"), this, SLOT(zoomIn(void)));
@@ -148,6 +137,48 @@ MainWindow::MainWindow(const QString& fits_filename, QWidget *parent): QMainWind
 	);
 	colormap_dock->setWidget(colormap_widget.release());
 	addDockWidget(Qt::RightDockWidgetArea, colormap_dock.release());
+}
+
+const FITS::HeaderDataUnit* MainWindow::initializeFITS() {
+	// Open FITS file
+	std::unique_ptr<QFile> file{new QFile(fits_filename_)};
+	if (!file->open(QIODevice::ReadOnly)) {
+		throw FileOpenError(file->errorString());
+	}
+
+	// Read FITS from file
+	fits_.reset(new FITS(file.release()));
+	const FITS::HeaderDataUnit* hdu = &fits_->primary_hdu();
+
+	for (auto it = fits_->begin();
+		 it != fits_->end() && !hdu->data().imageDataUnit();
+		 ++it) {
+
+		hdu = &(*it);
+	}
+
+	if (!hdu->data().imageDataUnit()) {
+		throw NoImageInFITS();
+	}
+
+	return hdu;
+}
+
+void MainWindow::openFileInThisWindow() {
+	try {
+		fits_filename_ = QFileDialog::getOpenFileName(this, tr("Open FITS file in current window"));
+		scrollZoomArea()->reloadViewport(*initializeFITS());
+	} catch (const std::exception& e) {
+		QMessageBox::critical(this, "An error occured", e.what());
+	}
+}
+
+void MainWindow::refresh() {
+	try {
+		scrollZoomArea()->reloadViewport(*initializeFITS());
+	} catch (const std::exception& e) {
+		QMessageBox::critical(this, "An error occured", e.what());
+	}
 }
 
 void MainWindow::zoomIn() {
