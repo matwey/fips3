@@ -126,9 +126,9 @@ LevelsWidget::LevelsWidget(QWidget* parent):
 
 	std::unique_ptr<QGridLayout> widget_layout{new QGridLayout(this)};
 	widget_layout->addWidget(new QLabel(tr("Min"), this), 0, 0);
-	widget_layout->addWidget(min_level_.get(), 0, 1);
+	widget_layout->addWidget(min_level_, 0, 1);
 	widget_layout->addWidget(new QLabel(tr("Max"), this), 1, 0);
-	widget_layout->addWidget(max_level_.get(), 1, 1);
+	widget_layout->addWidget(max_level_, 1, 1);
 	widget_layout->setRowStretch(2, 1);
 	setLayout(widget_layout.release());
 }

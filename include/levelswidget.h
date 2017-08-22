@@ -69,7 +69,8 @@ private slots:
 class LevelsWidget: public QWidget {
 	Q_OBJECT
 private:
-	std::unique_ptr<SpinboxWithSlider> min_level_, max_level_;
+	SpinboxWithSlider* min_level_;
+	SpinboxWithSlider* max_level_;
 
 public:
 	explicit LevelsWidget(QWidget* parent);
