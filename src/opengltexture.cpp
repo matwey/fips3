@@ -56,14 +56,11 @@ QException* OpenGLTexture::TextureCreateError::clone() const {
 	return new OpenGLTexture::TextureCreateError(*this);
 }
 
-OpenGLTexture::OpenGLTexture(const FITS::HeaderDataUnit* hdu):
-		QOpenGLTexture(QOpenGLTexture::Target2D),
-		hdu_(hdu) {
-}
+OpenGLTexture::OpenGLTexture(): QOpenGLTexture(QOpenGLTexture::Target2D) {}
 
-void OpenGLTexture::initialize() {
+void OpenGLTexture::initialize(const FITS::HeaderDataUnit* hdu) {
 	struct Loader {
-		const FITS::HeaderDataUnit* hdu_;
+		const FITS::HeaderDataUnit* hdu;
 		QOpenGLTexture::TextureFormat* texture_format;
 		QOpenGLTexture::PixelFormat* pixel_format;
 		QOpenGLTexture::PixelType *pixel_type;
@@ -84,11 +81,11 @@ void OpenGLTexture::initialize() {
 			*alignment = Utils::row_align(data.width());
 
 			*minmax = swaped_minmax_element(data.data(), data.data() + data.length());
-			minmax->first = minmax->first  * hdu_->header().bscale() + hdu_->header().bzero();
-			minmax->second = minmax->second * hdu_->header().bscale() + hdu_->header().bzero();
+			minmax->first = minmax->first  * hdu->header().bscale() + hdu->header().bzero();
+			minmax->second = minmax->second * hdu->header().bscale() + hdu->header().bzero();
 
-			instrumental_minmax->first  = hdu_->header().bzero();
-			instrumental_minmax->second = static_cast<double>(std::numeric_limits<quint8>::max()) * hdu_->header().bscale() + hdu_->header().bzero();
+			instrumental_minmax->first  = hdu->header().bzero();
+			instrumental_minmax->second = static_cast<double>(std::numeric_limits<quint8>::max()) * hdu->header().bscale() + hdu->header().bzero();
 		}
 
 		void operator() (const FITS::DataUnit<qint16>& data) const {
@@ -101,11 +98,11 @@ void OpenGLTexture::initialize() {
 			*alignment = Utils::row_align(data.width() * *channels);
 
 			*minmax = swaped_minmax_element(data.data(), data.data() + data.length());
-			minmax->first = minmax->first  * hdu_->header().bscale() + hdu_->header().bzero();
-			minmax->second = minmax->second * hdu_->header().bscale() + hdu_->header().bzero();
+			minmax->first = minmax->first  * hdu->header().bscale() + hdu->header().bzero();
+			minmax->second = minmax->second * hdu->header().bscale() + hdu->header().bzero();
 
-			instrumental_minmax->first  = static_cast<double>(std::numeric_limits<qint16>::min()) * hdu_->header().bscale() + hdu_->header().bzero();
-			instrumental_minmax->second = static_cast<double>(std::numeric_limits<qint16>::max()) * hdu_->header().bscale() + hdu_->header().bzero();
+			instrumental_minmax->first  = static_cast<double>(std::numeric_limits<qint16>::min()) * hdu->header().bscale() + hdu->header().bzero();
+			instrumental_minmax->second = static_cast<double>(std::numeric_limits<qint16>::max()) * hdu->header().bscale() + hdu->header().bzero();
 		}
 		void operator() (const FITS::DataUnit<qint32>& data) const {
 			*texture_format = QOpenGLTexture::RGBAFormat;
@@ -117,11 +114,11 @@ void OpenGLTexture::initialize() {
 			*alignment = Utils::row_align(data.width() * *channels);
 
 			*minmax = swaped_minmax_element(data.data(), data.data() + data.length());
-			minmax->first = minmax->first  * hdu_->header().bscale() + hdu_->header().bzero();
-			minmax->second = minmax->second * hdu_->header().bscale() + hdu_->header().bzero();
+			minmax->first = minmax->first  * hdu->header().bscale() + hdu->header().bzero();
+			minmax->second = minmax->second * hdu->header().bscale() + hdu->header().bzero();
 
-			instrumental_minmax->first  = static_cast<double>(std::numeric_limits<qint32>::min()) * hdu_->header().bscale() + hdu_->header().bzero();
-			instrumental_minmax->second = static_cast<double>(std::numeric_limits<qint32>::max()) * hdu_->header().bscale() + hdu_->header().bzero();
+			instrumental_minmax->first  = static_cast<double>(std::numeric_limits<qint32>::min()) * hdu->header().bscale() + hdu->header().bzero();
+			instrumental_minmax->second = static_cast<double>(std::numeric_limits<qint32>::max()) * hdu->header().bscale() + hdu->header().bzero();
 		}
 		void operator() (const FITS::DataUnit<qint64>& data) const {
 			*texture_format = QOpenGLTexture::RGBA16_UNorm;
@@ -133,11 +130,11 @@ void OpenGLTexture::initialize() {
 			*alignment = Utils::row_align(data.width() * *channels * *channel_size);
 
 			*minmax = swaped_minmax_element(data.data(), data.data() + data.length());
-			minmax->first = minmax->first  * hdu_->header().bscale() + hdu_->header().bzero();
-			minmax->second = minmax->second * hdu_->header().bscale() + hdu_->header().bzero();
+			minmax->first = minmax->first  * hdu->header().bscale() + hdu->header().bzero();
+			minmax->second = minmax->second * hdu->header().bscale() + hdu->header().bzero();
 
-			instrumental_minmax->first  = static_cast<double>(std::numeric_limits<qint64>::min()) * hdu_->header().bscale() + hdu_->header().bzero();
-			instrumental_minmax->second = static_cast<double>(std::numeric_limits<qint64>::max()) * hdu_->header().bscale() + hdu_->header().bzero();
+			instrumental_minmax->first  = static_cast<double>(std::numeric_limits<qint64>::min()) * hdu->header().bscale() + hdu->header().bzero();
+			instrumental_minmax->second = static_cast<double>(std::numeric_limits<qint64>::max()) * hdu->header().bscale() + hdu->header().bzero();
 		}
 		void operator() (const FITS::DataUnit<float>& data) const {
 			// TODO: Check GL_ARB_color_buffer_float, GL_OES_texture_float.
@@ -157,8 +154,8 @@ void OpenGLTexture::initialize() {
 				*alignment = Utils::row_align(data.width() * 4);
 
 				*minmax = swaped_minmax_element(data.data(), data.data() + data.length());
-				minmax->first = minmax->first  * hdu_->header().bscale() + hdu_->header().bzero();
-				minmax->second = minmax->second * hdu_->header().bscale() + hdu_->header().bzero();
+				minmax->first = minmax->first  * hdu->header().bscale() + hdu->header().bzero();
+				minmax->second = minmax->second * hdu->header().bscale() + hdu->header().bzero();
 
 				instrumental_minmax->first  = minmax->first;
 				instrumental_minmax->second = minmax->second;
@@ -173,8 +170,8 @@ void OpenGLTexture::initialize() {
 	};
 
 	int alignment;
-	hdu_->data().apply(Loader{
-			hdu_,
+	hdu->data().apply(Loader{
+			hdu,
 			&texture_format_,
 			&pixel_format_,
 			&pixel_type_,
@@ -189,7 +186,7 @@ void OpenGLTexture::initialize() {
 	setMagnificationFilter(QOpenGLTexture::Nearest);
 	setFormat(texture_format_);
 	throwIfGLError<TextureCreateError>();
-	setSize(hdu_->data().imageDataUnit()->width(), hdu_->data().imageDataUnit()->height());
+	setSize(hdu->data().imageDataUnit()->width(), hdu->data().imageDataUnit()->height());
 	throwIfGLError<TextureCreateError>();
 	// We use this overloading to provide a possibility to use texture internal format unsupported by QT
 	allocateStorage(pixel_format_, pixel_type_);
@@ -197,6 +194,6 @@ void OpenGLTexture::initialize() {
 	QOpenGLPixelTransferOptions pixel_transfer_options;
 	pixel_transfer_options.setAlignment(alignment);
 	pixel_transfer_options.setSwapBytesEnabled(swap_bytes_enabled_);
-	this->setData(pixel_format_, pixel_type_, hdu_->data().data(), &pixel_transfer_options);
+	this->setData(pixel_format_, pixel_type_, hdu->data().data(), &pixel_transfer_options);
 	throwIfGLError<TextureCreateError>();
 }

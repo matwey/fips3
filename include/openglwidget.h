@@ -29,6 +29,7 @@
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLWidget>
 #include <QMatrix4x4>
+#include <QMessageBox>
 #include <QResizeEvent>
 
 #include <cmath>
@@ -70,7 +71,8 @@ public:
 	private:
 		QOpenGLWidget *openGL_widget_;
 	public:
-		OpenGLDeleter(QOpenGLWidget *openGL_widget = nullptr): openGL_widget_(openGL_widget) {}
+		OpenGLDeleter(): openGL_widget_(nullptr) {}
+		OpenGLDeleter(QOpenGLWidget *openGL_widget): openGL_widget_(openGL_widget) {}
 		OpenGLDeleter(const OpenGLDeleter& other) = default;
 		OpenGLDeleter& operator=(const OpenGLDeleter& other) = default;
 		OpenGLDeleter(OpenGLDeleter&& other) = default;
@@ -98,10 +100,12 @@ public:
 	inline const QRectF& viewrect() const { return viewrect_; }
 	void setPixelViewrect(const QRect& pixel_viewrect);
 	inline const QRect& pixelViewrect() const { return pixel_viewrect_; }
+	void fitViewrect();
 	inline QSize image_size() const { return hdu_->data().imageDataUnit()->size(); }
 	QRect viewrectToPixelViewrect (const QRectF& viewrect) const;
 	inline const colormaps_type& colormaps() const { return colormaps_; }
 	inline int colorMapIndex() const {return colormap_index_; }
+	void setHDU(const FITS::HeaderDataUnit& hdu);
 
 signals:
 	void pixelViewrectChanged(const QRect& pixel_viewrect);
@@ -120,7 +124,6 @@ protected:
 private:
 	const FITS::HeaderDataUnit* hdu_;
 	openGL_unique_ptr<OpenGLTexture> texture_;
-	openGL_unique_ptr<QOpenGLPixelTransferOptions> pixel_transfer_options_;
 	openGL_unique_ptr<QOpenGLShaderProgram> program_;
 	QOpenGLBuffer vbo_;
 	QMatrix4x4 base_mvp_;

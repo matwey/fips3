@@ -52,7 +52,6 @@ QException* OpenGLWidget::ShaderCompileError::clone() const {
 OpenGLWidget::OpenGLWidget(QWidget *parent, const FITS::HeaderDataUnit& hdu):
 	QOpenGLWidget(parent),
 	hdu_(&hdu),
-	pixel_transfer_options_(new QOpenGLPixelTransferOptions, OpenGLDeleter<QOpenGLPixelTransferOptions>(this)),
 	viewrect_(0, 0, 1, 1),
 	pixel_viewrect_(QPoint(0, 0), image_size()),
 	shader_uniforms_(new OpenGLShaderUniforms(1, 1, 0, 1)),
@@ -196,12 +195,17 @@ void OpenGLWidget::initializeTextureAndShaders() {
 	new_program->setUniformValue("texture",  program_texture_uniform_);
 	new_program->setUniformValue("colormap", program_colormap_uniform_);
 
-	openGL_unique_ptr<OpenGLTexture> new_texture(new OpenGLTexture(hdu_), OpenGLDeleter<OpenGLTexture>(this));
-	new_texture->initialize();
+	openGL_unique_ptr<OpenGLTexture> new_texture(new OpenGLTexture(), OpenGLDeleter<OpenGLTexture>(this));
+	new_texture->initialize(hdu_);
 
 	// If no exceptions were thrown then we can put new objects to object's member pointers
+	if (program_) program_->release();
 	program_ = std::move(new_program);
+	program_->bind();
+
+	if (texture_ && texture_->isBound(program_texture_uniform_)) texture_->release(program_texture_uniform_);
 	texture_ = std::move(new_texture);
+	texture_->bind(program_texture_uniform_);
 
 	emit textureInitialized(texture_.get());
 	shader_uniforms_.reset(new OpenGLShaderUniforms(texture_->channels(), texture_->channel_size(), hdu_->header().bzero(), hdu_->header().bscale()));
@@ -216,16 +220,49 @@ void OpenGLWidget::resizeEvent(QResizeEvent* event) {
 	auto old_widget_size = event->oldSize();
 	// event->oldSize() for the first call of resizeEvent equals -1,-1
 	if (old_widget_size.width() < 0 || old_widget_size.height() < 0) {
-		const auto ratio = (image_size().height() - 1.0) * (new_widget_size.width() - 1.0) / (image_size().width() - 1.0) / (new_widget_size.height() - 1.0);
-		QSizeF new_size(ratio, 1);
-		QRectF new_viewrect(QPointF(0, 0), new_size);
-		setViewrect(new_viewrect);
+		fitViewrect();
 	} else {
-		const auto new_viewrect_width = viewrect_.width() * (static_cast<double>(new_widget_size.width()) - 1.0) / (static_cast<double>(old_widget_size.width()) - 1.0);
+		const auto new_viewrect_width  = viewrect_.width()  * (new_widget_size.width()  - 1.0) / (old_widget_size.width()  - 1.0);
 		const auto new_viewrect_height = viewrect_.height() * (new_widget_size.height() - 1.0) / (old_widget_size.height() - 1.0);
 		QRectF new_viewrect(viewrect_);
 		new_viewrect.setSize({new_viewrect_width, new_viewrect_height});
 		setViewrect(new_viewrect);
+	}
+}
+
+void OpenGLWidget::paintGL() {
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	program_->bind();
+
+	QMatrix4x4 mvp(base_mvp_);
+	// QT and OpenGL have different coordinate systems, we should change y-axes direction
+	mvp.ortho(viewrect_.left(), viewrect_.right(), 1 - viewrect_.bottom(), 1 - viewrect_.top(), -1.0f, 1.0f);
+	program_->setUniformValue("MVP", mvp);
+
+	program_->setUniformValueArray("c", shader_uniforms_->get_c().data(), 1, shader_uniforms_->channels);
+	program_->setUniformValueArray("z", shader_uniforms_->get_z().data(), 1, shader_uniforms_->channels);
+
+	texture_->bind(program_texture_uniform_);
+	colormaps_[colormap_index_]->bind(program_colormap_uniform_);
+
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+}
+
+void OpenGLWidget::setHDU(const FITS::HeaderDataUnit &hdu) {
+	const auto old_image_size = image_size();
+	const auto old_hdu = hdu_;
+	hdu_ = &hdu;
+	try {
+		initializeTextureAndShaders();
+		if (image_size() != old_image_size) {
+			fitViewrect();
+		} else {
+			update();
+		}
+	} catch (const std::exception& e) {
+		hdu_ = old_hdu;
+		throw e;
 	}
 }
 
@@ -241,23 +278,6 @@ void OpenGLWidget::changeColorMap(int colormap_index) {
 		shader_uniforms_->setColorMapSize(colormaps_[colormap_index]->width());
 		update();
 	}
-}
-
-void OpenGLWidget::paintGL() {
-	glClear(GL_COLOR_BUFFER_BIT);
-
-	QMatrix4x4 mvp(base_mvp_);
-	// QT and OpenGL have different coordinate systems, we should change y-axes direction
-	mvp.ortho(viewrect_.left(), viewrect_.right(), 1 - viewrect_.bottom(), 1 - viewrect_.top(), -1.0f, 1.0f);
-	program_->setUniformValue("MVP", mvp);
-
-	program_->setUniformValueArray("c", shader_uniforms_->get_c().data(), 1, shader_uniforms_->channels);
-	program_->setUniformValueArray("z", shader_uniforms_->get_z().data(), 1, shader_uniforms_->channels);
-
-	texture_->bind(program_texture_uniform_);
-	colormaps_[colormap_index_]->bind(program_colormap_uniform_);
-
-	glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
 QSize OpenGLWidget::sizeHint() const {
@@ -289,6 +309,13 @@ void OpenGLWidget::setPixelViewrect(const QRect& pixel_viewrect) {
 	const auto width  = static_cast<double>(pixel_viewrect.width() ) / image_size().width();
 	const auto height = static_cast<double>(pixel_viewrect.height()) / image_size().height();
 	setViewrect({left, top, width, height});
+}
+
+void OpenGLWidget::fitViewrect() {
+	QSizeF new_size((image_size().height() - 1.0) * (size().width() - 1.0), (image_size().width() - 1.0) * (size().height() - 1.0));
+	new_size.scale(1, 1, Qt::KeepAspectRatioByExpanding);
+	const QRectF new_viewrect(QPointF(0, 0), new_size);
+	setViewrect(new_viewrect);
 }
 
 bool OpenGLWidget::correct_viewrect() {

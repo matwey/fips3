@@ -65,7 +65,9 @@ private:
 
 	QString fits_filename_;
 	std::unique_ptr<FITS> fits_;
-	const FITS::HeaderDataUnit* initializeFITS();
+	std::unique_ptr<FITS> loadFITS(const QString& fits_filename) const;
+	void openInThisWindow(const QString& fits_filename);
+	void updateWindowTitle();
 protected:
 	virtual void resizeEvent(QResizeEvent* event) override;
 	virtual void closeEvent(QCloseEvent *event) override;
@@ -77,7 +79,7 @@ public:
 	}
 	inline const char* homePageURL() const { return "http://fips.space"; }
 public slots:
-	void openFileInThisWindow();
+	void openFileHere();
 	void refresh();
 	void zoomIn();
 	void zoomOut();

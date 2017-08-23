@@ -62,18 +62,18 @@ QException* MainWindow::NoImageInFITS::clone() const {
 MainWindow::MainWindow(const QString& fits_filename, QWidget *parent):
 	QMainWindow(parent),
 	fits_filename_(fits_filename) {
-	const auto hdu = initializeFITS();
+	fits_ = loadFITS(fits_filename);
+	const auto hdu = &fits_->first_hdu();
+	if (!hdu->data().imageDataUnit()) {
+		throw NoImageInFITS();
+	}
+
+	updateWindowTitle();
 
 	// Resize window to fit FITS image
 	const auto desktop_size = QApplication::desktop()->screenGeometry();
 	const QSize maximum_initial_window_size(desktop_size.width() * 2 / 3, desktop_size.height() * 2 / 3);
 	resize(hdu->data().imageDataUnit()->size().boundedTo(maximum_initial_window_size));
-
-	#ifdef Q_OS_MAC
-		setWindowTitle(QFileInfo(fits_filename).fileName());
-	#else
-		setWindowTitle(QFileInfo(fits_filename).fileName() + " — FIPS");
-	#endif
 
 	// Create scroll area and put there open_gl_widget
 	std::unique_ptr<ScrollZoomArea> scroll_zoom_area{new ScrollZoomArea(this, *hdu)};
@@ -83,10 +83,10 @@ MainWindow::MainWindow(const QString& fits_filename, QWidget *parent):
 	std::unique_ptr<QMenuBar> menu_bar{new QMenuBar(this)};
 	// File menu
 	auto file_menu = menu_bar->addMenu(tr("&File"));
+	auto file_open_here_action = file_menu->addAction(tr("Open in this &window"), this, SLOT(openFileHere()));
+	file_open_here_action->setShortcut(QKeySequence::Open);
 	auto file_open_action = file_menu->addAction(tr("&Open in new window"), Application::instance(), SLOT(openFile(void)));
-	file_open_action->setShortcut(QKeySequence::Open);
-	auto file_open_here_action = file_menu->addAction(tr("Open in this &window"), this, SLOT(openFileInThisWindow()));
-	file_open_here_action->setShortcut(tr("ctrl+shift+o"));
+	file_open_action->setShortcut(tr("ctrl+shift+o"));
 	auto file_close_action = file_menu->addAction(tr("&Close"), this, SLOT(close()));
 	file_close_action->setShortcut(QKeySequence::Close);
 	file_menu->addSeparator();
@@ -139,46 +139,45 @@ MainWindow::MainWindow(const QString& fits_filename, QWidget *parent):
 	addDockWidget(Qt::RightDockWidgetArea, colormap_dock.release());
 }
 
-const FITS::HeaderDataUnit* MainWindow::initializeFITS() {
-	// Open FITS file
-	std::unique_ptr<QFile> file{new QFile(fits_filename_)};
+void MainWindow::updateWindowTitle() {
+#ifdef Q_OS_MAC
+	QMainWindow::setWindowTitle(QFileInfo(fits_filename_).fileName());
+#else
+	QMainWindow::setWindowTitle(QFileInfo(fits_filename_).fileName() + " — FIPS");
+#endif
+}
+
+std::unique_ptr<FITS> MainWindow::loadFITS(const QString &fits_filename) const {
+	std::unique_ptr<QFile> file{new QFile(fits_filename)};
 	if (!file->open(QIODevice::ReadOnly)) {
 		throw FileOpenError(file->errorString());
 	}
-
-	// Read FITS from file
-	fits_.reset(new FITS(file.release()));
-	const FITS::HeaderDataUnit* hdu = &fits_->primary_hdu();
-
-	for (auto it = fits_->begin();
-		 it != fits_->end() && !hdu->data().imageDataUnit();
-		 ++it) {
-
-		hdu = &(*it);
-	}
-
-	if (!hdu->data().imageDataUnit()) {
-		throw NoImageInFITS();
-	}
-
-	return hdu;
+	return std::unique_ptr<FITS>(new FITS(file.release()));
 }
 
-void MainWindow::openFileInThisWindow() {
+void MainWindow::openInThisWindow(const QString& fits_filename) {
 	try {
-		fits_filename_ = QFileDialog::getOpenFileName(this, tr("Open FITS file in current window"));
-		scrollZoomArea()->reloadViewport(*initializeFITS());
+		auto new_fits = loadFITS(fits_filename);
+		const auto hdu = &new_fits->first_hdu();
+		if (!hdu->data().imageDataUnit()) {
+			throw NoImageInFITS();
+		}
+		scrollZoomArea()->viewport()->setHDU(*hdu);
+		fits_ = std::move(new_fits);
+		fits_filename_ = fits_filename;
+		updateWindowTitle();
 	} catch (const std::exception& e) {
 		QMessageBox::critical(this, "An error occured", e.what());
 	}
+}
+
+void MainWindow::openFileHere() {
+	const auto fits_filename = QFileDialog::getOpenFileName(this, tr("Open FITS file in current window"));
+	openInThisWindow(fits_filename);
 }
 
 void MainWindow::refresh() {
-	try {
-		scrollZoomArea()->reloadViewport(*initializeFITS());
-	} catch (const std::exception& e) {
-		QMessageBox::critical(this, "An error occured", e.what());
-	}
+	openInThisWindow(fits_filename_);
 }
 
 void MainWindow::zoomIn() {

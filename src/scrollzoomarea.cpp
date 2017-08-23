@@ -18,6 +18,7 @@
 
 #include <QResizeEvent>
 #include <QScrollBar>
+#include <QMessageBox>
 
 #include <scrollzoomarea.h>
 
@@ -51,27 +52,14 @@ void ScrollZoomArea::zoomViewport(const ZoomParam& zoom) {
 }
 
 void ScrollZoomArea::fitToViewport() {
-	const auto old_viewrect = viewport()->viewrect();
-	const auto new_size = old_viewrect.size().scaled(1, 1, Qt::KeepAspectRatioByExpanding);
-	const QRectF new_viewrect{QPointF(0,0), new_size};
-
 	// Hide scroll bars while do fit
 	const auto h_policy = horizontalScrollBarPolicy();
 	const auto v_policy = verticalScrollBarPolicy();
 	setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 	setVerticalScrollBarPolicy  (Qt::ScrollBarAlwaysOff);
-	viewport()->setViewrect(new_viewrect);
+	viewport()->fitViewrect();
 	setHorizontalScrollBarPolicy(h_policy);
 	setVerticalScrollBarPolicy  (v_policy);
-}
-
-void ScrollZoomArea::reloadViewport(const FITS::HeaderDataUnit &hdu) {
-	try {
-		std::unique_ptr<OpenGLWidget> open_gl_widget{new OpenGLWidget(this, hdu)};
-		setViewport(open_gl_widget.release());
-	} catch (const std::exception& e) {
-		QMessageBox::critical(this, "An error occured", e.what());
-	}
 }
 
 void ScrollZoomArea::translatePixelViewport(int x, int y) {

@@ -38,7 +38,6 @@ public:
 	};
 
 private:
-	const FITS::HeaderDataUnit* hdu_;
 	quint8 channels_;  // Number of color channels
 	quint8 channel_size_;  // Bytes per channel for integral texture, 0 for float one
 	std::pair<double, double> minmax_;
@@ -49,9 +48,9 @@ private:
 	bool swap_bytes_enabled_;
 
 public:
-	explicit OpenGLTexture(const FITS::HeaderDataUnit* hdu);
+	OpenGLTexture();
 
-	void initialize();
+	void initialize(const FITS::HeaderDataUnit* hdu);
 	inline const std::pair<double, double>& hdu_minmax() const { return minmax_; }
 	inline const std::pair<double, double>& instrumental_minmax() const { return instrumental_minmax_; }
 	inline quint8 channels() const { return channels_; }

@@ -213,6 +213,7 @@ public:
 	inline const HeaderDataUnit&   primary_hdu() const { return primary_hdu_; }
 	inline const HeaderUnit&       header_unit() const { return primary_hdu_.header(); }
 	inline const AbstractDataUnit& data_unit()   const { return primary_hdu_.data(); }
+	const HeaderDataUnit& first_hdu() const;
 
 	const_iterator begin() const { return extensions_.begin(); }
 	const_iterator end()   const { return extensions_.end(); }
