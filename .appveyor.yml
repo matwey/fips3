@@ -40,6 +40,5 @@ deploy:
     secure: 0dqD0nJznh5C1ljdK5XdGXiivGzx5BWbfVMAdYVRsKC1QhbBIBzFl9tvRfzcuDSp
   artifact: Installer
   on:
-    branch: master
     appveyor_repo_tag: true
     configuration: Release
