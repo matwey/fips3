@@ -82,6 +82,16 @@ namespace {
 		return std::make_pair(*elements.first, *elements.second);
 #endif
 	}
+
+	inline int row_alignment(quint64 bytes_width) {
+		unsigned long index;
+#if _MSC_VER
+		_BitScanForward(&index, static_cast<quint32>(bytes_width)); // We are interesting on lower 4 bits only.
+#else
+		index = __builtin_ctzll(bytes_width);
+#endif
+		return std::min(8, 1<<index);
+	}
 }
 
 OpenGLTexture::OpenGLTexture(const FITS::HeaderDataUnit* hdu):
@@ -97,6 +107,7 @@ void OpenGLTexture::initialize() {
 		QOpenGLTexture::PixelType *pixel_type;
 		quint8* channels;
 		quint8* channel_size;
+		int* alignment;
 		bool* swap_bytes_enabled;
 		std::pair<double, double>* minmax;
 		std::pair<double, double>* instrumental_minmax;
@@ -108,6 +119,7 @@ void OpenGLTexture::initialize() {
 			*swap_bytes_enabled = false;
 			*channels = 1;
 			*channel_size = 1;
+			*alignment = row_alignment(data.width());
 
 			*minmax = swaped_minmax_element(data.data(), data.data() + data.length());
 			minmax->first = minmax->first  * hdu_->header().bscale() + hdu_->header().bzero();
@@ -124,6 +136,7 @@ void OpenGLTexture::initialize() {
 			*swap_bytes_enabled = false;
 			*channels = 2;
 			*channel_size = 1;
+			*alignment = row_alignment(data.width() * *channels);
 
 			*minmax = swaped_minmax_element(data.data(), data.data() + data.length());
 			minmax->first = minmax->first  * hdu_->header().bscale() + hdu_->header().bzero();
@@ -139,6 +152,7 @@ void OpenGLTexture::initialize() {
 			*swap_bytes_enabled = false;
 			*channels = 4;
 			*channel_size = 1;
+			*alignment = row_alignment(data.width() * *channels);
 
 			*minmax = swaped_minmax_element(data.data(), data.data() + data.length());
 			minmax->first = minmax->first  * hdu_->header().bscale() + hdu_->header().bzero();
@@ -154,6 +168,7 @@ void OpenGLTexture::initialize() {
 			*swap_bytes_enabled = true;
 			*channels = 4;
 			*channel_size = 2;
+			*alignment = row_alignment(data.width() * *channels * *channel_size);
 
 			*minmax = swaped_minmax_element(data.data(), data.data() + data.length());
 			minmax->first = minmax->first  * hdu_->header().bscale() + hdu_->header().bzero();
@@ -177,6 +192,7 @@ void OpenGLTexture::initialize() {
 				*swap_bytes_enabled = true;
 				*channels = 1;
 				*channel_size = 0;  // special value for float channel
+				*alignment = row_alignment(data.width() * 4);
 
 				*minmax = swaped_minmax_element(data.data(), data.data() + data.length());
 				minmax->first = minmax->first  * hdu_->header().bscale() + hdu_->header().bzero();
@@ -194,12 +210,14 @@ void OpenGLTexture::initialize() {
 		}
 	};
 
+	int alignment;
 	hdu_->data().apply(Loader{
 			hdu_,
 			&texture_format_,
 			&pixel_format_,
 			&pixel_type_,
 			&channels_, &channel_size_,
+			&alignment,
 			&swap_bytes_enabled_,
 			&minmax_,
 			&instrumental_minmax_
@@ -215,6 +233,7 @@ void OpenGLTexture::initialize() {
 	allocateStorage(pixel_format_, pixel_type_);
 //	throwIfGLError<TextureCreateError>();
 	QOpenGLPixelTransferOptions pixel_transfer_options;
+	pixel_transfer_options.setAlignment(alignment);
 	pixel_transfer_options.setSwapBytesEnabled(swap_bytes_enabled_);
 	this->setData(pixel_format_, pixel_type_, hdu_->data().data(), &pixel_transfer_options);
 //	throwIfGLError<TextureCreateError>();
