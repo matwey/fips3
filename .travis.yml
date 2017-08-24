@@ -52,6 +52,11 @@ env:
 - BASE_IMAGE_TAG=gcc4.8-qt57
 - BASE_IMAGE_TAG=gcc4.8-qt56
 - BASE_IMAGE_TAG=gcc4.8-qt55
+- BASE_IMAGE_TAG=clang4-qt59
+- BASE_IMAGE_TAG=clang4-qt58
+- BASE_IMAGE_TAG=clang4-qt57
+- BASE_IMAGE_TAG=clang4-qt56
+- BASE_IMAGE_TAG=clang4-qt55
 install:
 - cat Dockerfile.in | m4 -DBASE_IMAGE_TAG=${BASE_IMAGE_TAG} > Dockerfile
 - docker build . -t test
