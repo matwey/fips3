@@ -56,8 +56,8 @@ template<> struct swap_bytes_traits<8> {
 template<class T> union swap_bytes_union {
 	using traits_type = detail::swap_bytes_traits<sizeof(T)>;
 
-	T value;
 	alignas(T) typename traits_type::type rep;
+	T value;
 };
 
 } // detail
@@ -66,9 +66,7 @@ template<class T> inline T swap_bytes(const T& x) {
 	using union_type  = detail::swap_bytes_union<T>;
 	using traits_type = typename union_type::traits_type;
 
-	const union_type out{
-		.rep = traits_type::swap_bytes(reinterpret_cast<const union_type*>(&x)->rep)
-	};
+	const union_type out{traits_type::swap_bytes(reinterpret_cast<const union_type*>(&x)->rep)};
 	return out.value;
 }
 
