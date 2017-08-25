@@ -29,16 +29,19 @@
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLWidget>
 #include <QMatrix4x4>
+#include <QMouseEvent>
 #include <QMessageBox>
 #include <QResizeEvent>
 
 #include <cmath>
+#include <memory>
 
 #include <fits.h>
 #include <openglcolormap.h>
 #include <openglerrors.h>
 #include <openglshaderunifroms.h>
 #include <opengltexture.h>
+#include <pixel.h>
 
 class OpenGLWidget: public QOpenGLWidget, protected QOpenGLFunctions {
 	Q_OBJECT
@@ -100,6 +103,7 @@ public:
 	inline const QRectF& viewrect() const { return viewrect_; }
 	void setPixelViewrect(const QRect& pixel_viewrect);
 	inline const QRect& pixelViewrect() const { return pixel_viewrect_; }
+	Pixel pixelFromWidgetCoordinate(const QPoint &widget_coord) const;
 	void fitViewrect();
 	inline QSize image_size() const { return hdu_->data().imageDataUnit()->size(); }
 	QRect viewrectToPixelViewrect (const QRectF& viewrect) const;
@@ -116,10 +120,10 @@ public slots:
 	void changeColorMap(int colormap_index);
 
 protected:
-	void initializeGL() override;
-	void paintGL() override;
-	QSize sizeHint() const override;
-	void resizeEvent(QResizeEvent* event) override;
+	virtual void initializeGL() override;
+	virtual void paintGL() override;
+	virtual QSize sizeHint() const override;
+	virtual void resizeEvent(QResizeEvent* event) override;
 
 private:
 	const FITS::HeaderDataUnit* hdu_;

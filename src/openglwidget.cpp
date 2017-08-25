@@ -20,6 +20,24 @@
 #include <QPoint>
 
 #include <openglwidget.h>
+#include <utils/swapbytes.h>
+
+namespace {
+struct HDUValueGetter {
+	const FITS::HeaderDataUnit* hdu;
+	const QPoint* image_position;
+	double* value;
+
+	template<class T> void operator() (const FITS::DataUnit<T>& data) const {
+		using Utils::swap_bytes;
+		const auto raw_value = static_cast<double>(swap_bytes(*(data.data() + image_position->y() * data.width() + image_position->x())));
+		*value = raw_value * hdu->header().bscale() + hdu->header().bzero();
+	}
+	void operator() (const FITS::EmptyDataUnit&) const {
+		Q_ASSERT(0);
+	}
+};
+}
 
 OpenGLWidget::ShaderLoadError::ShaderLoadError(GLenum gl_error_code):
 	OpenGLException("Cannot load the shader", gl_error_code) {
@@ -60,6 +78,7 @@ OpenGLWidget::OpenGLWidget(QWidget *parent, const FITS::HeaderDataUnit& hdu):
 		openGL_unique_ptr<OpenGLColorMap>(new PurpleBlueColorMap(), colormap_deleter_type(this)),
 	}},
 	colormap_index_(0) {
+	setMouseTracking(true); // We need it to catch mouseEvent when mouse buttons aren't pressed
 }
 
 OpenGLWidget::~OpenGLWidget() {
@@ -333,18 +352,32 @@ bool OpenGLWidget::correct_viewrect() {
 	if (viewrect.size().height() > 1) {
 		viewrect.moveCenter({viewrect.center().x(), 0.5});
 	} else {
-		if (viewrect.top() < 0 ) {
+		if (viewrect.top() < 0) {
 			viewrect.moveTop(0);
 		}
 		if (viewrect.bottom() > 1) {
 			viewrect.moveBottom(1);
 		}
 	}
-	if ( viewrect != viewrect_ ){
+	if (viewrect != viewrect_) {
 		viewrect_ = viewrect;
 		return true;
 	}
 	return false;
+}
+
+Pixel OpenGLWidget::pixelFromWidgetCoordinate(const QPoint &widget_coord) const {
+	const QPoint position(
+			static_cast<int>(image_size().width()  * (viewrect_.left()      + widget_coord.x() * viewrect_.width()  / (size().width()  - 1.0))),
+			static_cast<int>(image_size().height() * (1.0 - viewrect_.top() - widget_coord.y() * viewrect_.height() / (size().height() - 1.0)))
+	);
+	const bool inside_image = QRect({0, 0}, image_size()).contains(position);
+	if (inside_image) {
+		double value;
+		hdu_->data().apply(HDUValueGetter{hdu_, &position, &value});
+		return Pixel(position, value);
+	}
+	return Pixel(position);
 }
 
 constexpr const GLfloat OpenGLWidget::vbo_data[];

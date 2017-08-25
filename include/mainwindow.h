@@ -21,15 +21,27 @@
 
 #include <QDockWidget>
 #include <QMainWindow>
+#include <QMouseEvent>
 #include <QMenuBar>
+#include <QStatusBar>
 #include <QString>
 
 #include <memory>
 
 #include <levelswidget.h>
+#include <mousepositionwidget.h>
 #include <colormapwidget.h>
 #include <scrollzoomarea.h>
 #include <utils/exception.h>
+
+class MouseMoveEventFilter: public QObject {
+private:
+	MousePositionWidget* mouse_position_widget_;
+public:
+	MouseMoveEventFilter(MousePositionWidget* mouse_position_widget, QObject* parent = Q_NULLPTR);
+protected:
+	virtual bool eventFilter(QObject* open_gl_widget, QEvent* event) override;
+};
 
 class MainWindow:
 	public QMainWindow {
@@ -68,6 +80,7 @@ private:
 	std::unique_ptr<FITS> loadFITS(const QString& fits_filename) const;
 	void openInThisWindow(const QString& fits_filename);
 	void updateWindowTitle();
+	std::unique_ptr<MouseMoveEventFilter> mouse_move_event_filter_;
 protected:
 	virtual void resizeEvent(QResizeEvent* event) override;
 	virtual void closeEvent(QCloseEvent *event) override;
