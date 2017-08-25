@@ -19,7 +19,7 @@
                     <string>application/fits</string>
                 </array>
                 <key>CFBundleTypeIconFile</key>
-                <string>${MACOSX_BUNDLE_ICON_FILE}</string>
+                <string>${MACOSX_BUNDLE_DOC_ICON_FILE}</string>
                 <key>CFBundleTypeName</key>
                 <string>Flexible Image Transport System document</string>
                 <key>CFBundleTypeOSTypes</key>
