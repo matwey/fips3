@@ -22,63 +22,24 @@
 #include <QtGlobal>
 
 #include <opengltexture.h>
+#include <utils/swapbytes.h>
 #include <utils/openglrowalign.h>
 
 namespace {
-	template<std::size_t N> struct bswap_traits;
-	template<> struct bswap_traits<1> {
-		using type = quint8;
-		static inline quint8 bswap(quint8 x) { return x; }
-	};
-	template<> struct bswap_traits<2> {
-		using type = quint16;
-		static inline quint16 bswap(quint16 x) {
-#if _MSC_VER
-			return _byteswap_ushort(x);
-#else
-			return __builtin_bswap16(x);
-#endif
-		}
-	};
-	template<> struct bswap_traits<4> {
-		using type = quint32;
-		static inline quint32 bswap(quint32 x) {
-#if _MSC_VER
-			return _byteswap_ulong(x);
-#else
-			return __builtin_bswap32(x);
-#endif
-		}
-	};
-	template<> struct bswap_traits<8> {
-		using type = quint64;
-		static inline quint64 bswap(quint64 x) {
-#if _MSC_VER
-			return _byteswap_uint64(x);
-#else
-			return __builtin_bswap64(x);
-#endif
-		}
-	};
-
-	template<class T> inline T bswap(T x) {
-		using traits = bswap_traits<sizeof(T)>;
-		auto value = traits::bswap(*reinterpret_cast<typename traits::type*>(&x));
-		return *reinterpret_cast<T*>(&value);
-	}
-
 	template<class T> std::pair<T, T> swaped_minmax_element(T* begin, T* end) {
+		using Utils::swap_bytes;
+
 		auto elements = std::minmax_element(
 				begin,
 				end,
 #if Q_BYTE_ORDER == Q_LITTLE_ENDIAN
-				[](T x, T y) { return bswap(x) < bswap(y); }
+				[](T x, T y) { return swap_bytes(x) < swap_bytes(y); }
 #else
 				[](T x, T y) { return x < y; }
 #endif
 		);
 #if Q_BYTE_ORDER == Q_LITTLE_ENDIAN
-		return std::make_pair(bswap(*elements.first), bswap(*elements.second));
+		return std::make_pair(swap_bytes(*elements.first), swap_bytes(*elements.second));
 #else
 		return std::make_pair(*elements.first, *elements.second);
 #endif
