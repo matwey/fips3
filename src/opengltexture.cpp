@@ -22,6 +22,7 @@
 #include <QtGlobal>
 
 #include <opengltexture.h>
+#include <utils/openglrowalign.h>
 
 namespace {
 	template<std::size_t N> struct bswap_traits;
@@ -82,16 +83,6 @@ namespace {
 		return std::make_pair(*elements.first, *elements.second);
 #endif
 	}
-
-	inline int row_alignment(quint64 bytes_width) {
-		unsigned long index;
-#if _MSC_VER
-		_BitScanForward(&index, static_cast<quint32>(bytes_width)); // We are interesting on lower 4 bits only.
-#else
-		index = __builtin_ctzll(bytes_width);
-#endif
-		return std::min(8, 1<<index);
-	}
 }
 
 OpenGLTexture::OpenGLTexture(const FITS::HeaderDataUnit* hdu):
@@ -119,7 +110,7 @@ void OpenGLTexture::initialize() {
 			*swap_bytes_enabled = false;
 			*channels = 1;
 			*channel_size = 1;
-			*alignment = row_alignment(data.width());
+			*alignment = Utils::row_align(data.width());
 
 			*minmax = swaped_minmax_element(data.data(), data.data() + data.length());
 			minmax->first = minmax->first  * hdu_->header().bscale() + hdu_->header().bzero();
@@ -136,7 +127,7 @@ void OpenGLTexture::initialize() {
 			*swap_bytes_enabled = false;
 			*channels = 2;
 			*channel_size = 1;
-			*alignment = row_alignment(data.width() * *channels);
+			*alignment = Utils::row_align(data.width() * *channels);
 
 			*minmax = swaped_minmax_element(data.data(), data.data() + data.length());
 			minmax->first = minmax->first  * hdu_->header().bscale() + hdu_->header().bzero();
@@ -152,7 +143,7 @@ void OpenGLTexture::initialize() {
 			*swap_bytes_enabled = false;
 			*channels = 4;
 			*channel_size = 1;
-			*alignment = row_alignment(data.width() * *channels);
+			*alignment = Utils::row_align(data.width() * *channels);
 
 			*minmax = swaped_minmax_element(data.data(), data.data() + data.length());
 			minmax->first = minmax->first  * hdu_->header().bscale() + hdu_->header().bzero();
@@ -168,7 +159,7 @@ void OpenGLTexture::initialize() {
 			*swap_bytes_enabled = true;
 			*channels = 4;
 			*channel_size = 2;
-			*alignment = row_alignment(data.width() * *channels * *channel_size);
+			*alignment = Utils::row_align(data.width() * *channels * *channel_size);
 
 			*minmax = swaped_minmax_element(data.data(), data.data() + data.length());
 			minmax->first = minmax->first  * hdu_->header().bscale() + hdu_->header().bzero();
@@ -192,7 +183,7 @@ void OpenGLTexture::initialize() {
 				*swap_bytes_enabled = true;
 				*channels = 1;
 				*channel_size = 0;  // special value for float channel
-				*alignment = row_alignment(data.width() * 4);
+				*alignment = Utils::row_align(data.width() * 4);
 
 				*minmax = swaped_minmax_element(data.data(), data.data() + data.length());
 				minmax->first = minmax->first  * hdu_->header().bscale() + hdu_->header().bzero();
