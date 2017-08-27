@@ -78,9 +78,15 @@ if(APPLE)
 
 	set_target_properties(${TARGET} PROPERTIES MACOSX_BUNDLE TRUE)
 	set_target_properties(${TARGET} PROPERTIES MACOSX_BUNDLE_INFO_PLIST "${RESOURCES_DIR}/Info.plist.in")
+	if (${CMAKE_VERSION} VERSION_LESS 3.9.0)
+		# This is true for Makefile generators only
+		set(BUNDLE_DIR ${CMAKE_CURRENT_BINARY_DIR}/Fips.app)
+	else()
+		set(BUNDLE_DIR $<TARGET_BUNDLE_DIR:${TARGET}>)
+	endif(${CMAKE_VERSION} VERSION_LESS 3.9.0)
 	add_custom_command(TARGET ${TARGET}
 		POST_BUILD
-		COMMAND macdeployqt ARGS "${CMAKE_CURRENT_BINARY_DIR}/Fips.app" -always-overwrite
+		COMMAND macdeployqt ARGS ${BUNDLE_DIR} -always-overwrite
 		WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
 
 	install(TARGETS ${TARGET} BUNDLE DESTINATION .)
