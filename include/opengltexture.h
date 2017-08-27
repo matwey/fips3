@@ -25,8 +25,18 @@
 #include <algorithm>
 
 #include <fits.h>
+#include <openglerrors.h>
 
 class OpenGLTexture: public QOpenGLTexture {
+public:
+	class TextureCreateError: public OpenGLException {
+	public:
+		TextureCreateError(GLenum gl_error_code);
+
+		virtual void raise() const override;
+		virtual QException* clone() const override;
+	};
+
 private:
 	const FITS::HeaderDataUnit* hdu_;
 	quint8 channels_;  // Number of color channels

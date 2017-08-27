@@ -46,6 +46,16 @@ namespace {
 	}
 }
 
+OpenGLTexture::TextureCreateError::TextureCreateError(GLenum gl_error_code):
+		OpenGLException("Cannot create texture", gl_error_code) {
+}
+void OpenGLTexture::TextureCreateError::raise() const {
+	throw *this;
+}
+QException* OpenGLTexture::TextureCreateError::clone() const {
+	return new OpenGLTexture::TextureCreateError(*this);
+}
+
 OpenGLTexture::OpenGLTexture(const FITS::HeaderDataUnit* hdu):
 		QOpenGLTexture(QOpenGLTexture::Target2D),
 		hdu_(hdu) {
@@ -178,15 +188,15 @@ void OpenGLTexture::initialize() {
 	setMinificationFilter(QOpenGLTexture::Nearest);
 	setMagnificationFilter(QOpenGLTexture::Nearest);
 	setFormat(texture_format_);
-//	throwIfGLError<TextureCreateError>();
+	throwIfGLError<TextureCreateError>();
 	setSize(hdu_->data().imageDataUnit()->width(), hdu_->data().imageDataUnit()->height());
-//	throwIfGLError<TextureCreateError>();
+	throwIfGLError<TextureCreateError>();
 	// We use this overloading to provide a possibility to use texture internal format unsupported by QT
 	allocateStorage(pixel_format_, pixel_type_);
-//	throwIfGLError<TextureCreateError>();
+	throwIfGLError<TextureCreateError>();
 	QOpenGLPixelTransferOptions pixel_transfer_options;
 	pixel_transfer_options.setAlignment(alignment);
 	pixel_transfer_options.setSwapBytesEnabled(swap_bytes_enabled_);
 	this->setData(pixel_format_, pixel_type_, hdu_->data().data(), &pixel_transfer_options);
-//	throwIfGLError<TextureCreateError>();
+	throwIfGLError<TextureCreateError>();
 }
