@@ -24,7 +24,6 @@ build_script:
   - cmake --build . --config %CONFIGURATION%
 
 after_build:
-  - cmake --build . --config %CONFIGURATION% --target INSTALL
   - cmake --build . --config %CONFIGURATION% --target PACKAGE
 
 test_script:
