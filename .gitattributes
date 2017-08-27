@@ -1,2 +1,6 @@
 *.fits binary
-
+*.png binary
+*.eps binary
+*.svg binary
+*.ico binary
+*.icns binary
