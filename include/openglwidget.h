@@ -29,29 +29,21 @@
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLWidget>
 #include <QMatrix4x4>
+#include <QMessageBox>
 #include <QResizeEvent>
 
 #include <cmath>
 
-#include <exception.h>
 #include <fits.h>
 #include <openglcolormap.h>
+#include <openglerrors.h>
 #include <openglshaderunifroms.h>
 #include <opengltexture.h>
 
 class OpenGLWidget: public QOpenGLWidget, protected QOpenGLFunctions {
 	Q_OBJECT
 public:
-	class Exception: public ::Exception {
-	public:
-		Exception(const QString &reason, GLenum gl_error_code);
-
-		virtual void raise() const override;
-		virtual QException* clone() const override;
-		static QString glErrorString(GLenum gl_error_code);
-	};
-
-	class ShaderLoadError: public Exception {
+	class ShaderLoadError: public OpenGLException {
 	public:
 		ShaderLoadError(GLenum gl_error_code);
 
@@ -59,7 +51,7 @@ public:
 		virtual QException* clone() const override;
 	};
 
-	class ShaderBindError: public Exception {
+	class ShaderBindError: public OpenGLException {
 	public:
 		ShaderBindError(GLenum gl_error_code);
 
@@ -67,17 +59,9 @@ public:
 		virtual QException* clone() const override;
 	};
 
-	class ShaderCompileError: public Exception {
+	class ShaderCompileError: public OpenGLException {
 	public:
 		ShaderCompileError(GLenum gl_error_code);
-
-		virtual void raise() const override;
-		virtual QException* clone() const override;
-	};
-
-	class TextureCreateError: public Exception {
-	public:
-		TextureCreateError(GLenum gl_error_code);
 
 		virtual void raise() const override;
 		virtual QException* clone() const override;
@@ -87,9 +71,13 @@ public:
 	private:
 		QOpenGLWidget *openGL_widget_;
 	public:
-		OpenGLDeleter(QOpenGLWidget *openGL_widget):
-				openGL_widget_(openGL_widget){}
-		void operator() (T* ptr) {
+		OpenGLDeleter(): openGL_widget_(nullptr) {}
+		OpenGLDeleter(QOpenGLWidget *openGL_widget): openGL_widget_(openGL_widget) {}
+		OpenGLDeleter(const OpenGLDeleter& other) = default;
+		OpenGLDeleter& operator=(const OpenGLDeleter& other) = default;
+		OpenGLDeleter(OpenGLDeleter&& other) = default;
+		OpenGLDeleter& operator=(OpenGLDeleter&& other) = default;
+		inline void operator() (T* ptr) {
 			openGL_widget_->makeCurrent();
 			delete ptr;
 			openGL_widget_->doneCurrent();
@@ -104,14 +92,20 @@ public:
 	OpenGLWidget(QWidget *parent, const FITS::HeaderDataUnit& hdu);
 	~OpenGLWidget() override;
 
+private:
+	void initializeTextureAndShaders();
+
+public:
 	void setViewrect(const QRectF &viewrect);
 	inline const QRectF& viewrect() const { return viewrect_; }
 	void setPixelViewrect(const QRect& pixel_viewrect);
 	inline const QRect& pixelViewrect() const { return pixel_viewrect_; }
+	void fitViewrect();
 	inline QSize image_size() const { return hdu_->data().imageDataUnit()->size(); }
 	QRect viewrectToPixelViewrect (const QRectF& viewrect) const;
 	inline const colormaps_type& colormaps() const { return colormaps_; }
 	inline int colorMapIndex() const {return colormap_index_; }
+	void setHDU(const FITS::HeaderDataUnit& hdu);
 
 signals:
 	void pixelViewrectChanged(const QRect& pixel_viewrect);
@@ -129,11 +123,7 @@ protected:
 
 private:
 	const FITS::HeaderDataUnit* hdu_;
-	OpenGLDeleter<OpenGLTexture> texture_deleter_;
 	openGL_unique_ptr<OpenGLTexture> texture_;
-	OpenGLDeleter<QOpenGLPixelTransferOptions> pixel_transfer_options_deleter_;
-	openGL_unique_ptr<QOpenGLPixelTransferOptions> pixel_transfer_options_;
-	OpenGLDeleter<QOpenGLShaderProgram> program_deleter_;
 	openGL_unique_ptr<QOpenGLShaderProgram> program_;
 	QOpenGLBuffer vbo_;
 	QMatrix4x4 base_mvp_;
@@ -158,13 +148,6 @@ private:
 
 	// Returns true if viewrect has been corrected
 	bool correct_viewrect();
-
-	template<class T> void throwIfGLError() throw(T) {
-		const auto gl_error_code = glGetError();
-		if (gl_error_code) {
-			throw T(gl_error_code);
-		}
-	}
 
 	std::unique_ptr<OpenGLShaderUniforms> shader_uniforms_;
 

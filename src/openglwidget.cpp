@@ -21,42 +21,8 @@
 
 #include <openglwidget.h>
 
-OpenGLWidget::Exception::Exception(const QString &what, GLenum gl_error_code):
-	::Exception(what + ": " + glErrorString(gl_error_code)) {
-}
-void OpenGLWidget::Exception::raise() const {
-	throw *this;
-}
-QException* OpenGLWidget::Exception::clone() const {
-	return new OpenGLWidget::Exception(*this);
-}
-// From OpenGL ES 2.0 documentation:
-// https://www.khronos.org/registry/OpenGL-Refpages/es2.0/xhtml/glGetError.xml
-QString OpenGLWidget::Exception::glErrorString(GLenum gl_error_code) {
-	switch (gl_error_code) {
-//		case GL_NO_ERROR:
-//			return "No error has been recorded. The value of this symbolic constant is guaranteed to be 0.";
-		case GL_INVALID_ENUM:
-			return "An unacceptable value is specified for an enumerated argument. "
-					"The offending command is ignored and has no other side effect than to set the error flag.";
-		case GL_INVALID_VALUE:
-			return "A numeric argument is out of range. "
-					"The offending command is ignored and has no other side effect than to set the error flag.";
-		case GL_INVALID_OPERATION:
-			return "The specified operation is not allowed in the current state. "
-					"The offending command is ignored and has no other side effect than to set the error flag.";
-		case GL_INVALID_FRAMEBUFFER_OPERATION:
-			return "The command is trying to render to or read from the framebuffer while the currently bound framebuffer is not framebuffer complete (i.e. the return value from glCheckFramebufferStatus is not GL_FRAMEBUFFER_COMPLETE). "
-					"The offending command is ignored and has no other side effect than to set the error flag.";
-		case GL_OUT_OF_MEMORY:
-			return "There is not enough memory left to execute the command. "
-					"The state of the GL is undefined, except for the state of the error flags, after this error is recorded.";
-		default:
-			return "Unknown error";
-	}
-}
 OpenGLWidget::ShaderLoadError::ShaderLoadError(GLenum gl_error_code):
-	OpenGLWidget::Exception("Cannot load the shader", gl_error_code) {
+	OpenGLException("Cannot load the shader", gl_error_code) {
 }
 void OpenGLWidget::ShaderLoadError::raise() const {
 	throw *this;
@@ -65,7 +31,7 @@ QException* OpenGLWidget::ShaderLoadError::clone() const {
 	return new OpenGLWidget::ShaderLoadError(*this);
 }
 OpenGLWidget::ShaderBindError::ShaderBindError(GLenum gl_error_code):
-	OpenGLWidget::Exception("Cannot bind the shader", gl_error_code) {
+	OpenGLException("Cannot bind the shader", gl_error_code) {
 }
 void OpenGLWidget::ShaderBindError::raise() const {
 	throw *this;
@@ -74,7 +40,7 @@ QException* OpenGLWidget::ShaderBindError::clone() const {
 	return new OpenGLWidget::ShaderBindError(*this);
 }
 OpenGLWidget::ShaderCompileError::ShaderCompileError(GLenum gl_error_code):
-	OpenGLWidget::Exception("Cannot compile the shader", gl_error_code) {
+	OpenGLException("Cannot compile the shader", gl_error_code) {
 }
 void OpenGLWidget::ShaderCompileError::raise() const {
 	throw *this;
@@ -82,25 +48,10 @@ void OpenGLWidget::ShaderCompileError::raise() const {
 QException* OpenGLWidget::ShaderCompileError::clone() const {
 	return new OpenGLWidget::ShaderCompileError(*this);
 }
-OpenGLWidget::TextureCreateError::TextureCreateError(GLenum gl_error_code):
-		OpenGLWidget::Exception("Cannot create texture", gl_error_code) {
-}
-void OpenGLWidget::TextureCreateError::raise() const {
-	throw *this;
-}
-QException* OpenGLWidget::TextureCreateError::clone() const {
-	return new OpenGLWidget::TextureCreateError(*this);
-}
 
 OpenGLWidget::OpenGLWidget(QWidget *parent, const FITS::HeaderDataUnit& hdu):
 	QOpenGLWidget(parent),
 	hdu_(&hdu),
-	texture_deleter_(this),
-	texture_(new OpenGLTexture(hdu_), texture_deleter_),
-	pixel_transfer_options_deleter_(this),
-	pixel_transfer_options_(new QOpenGLPixelTransferOptions, pixel_transfer_options_deleter_),
-	program_deleter_(this),
-	program_(new QOpenGLShaderProgram, program_deleter_),
 	viewrect_(0, 0, 1, 1),
 	pixel_viewrect_(QPoint(0, 0), image_size()),
 	shader_uniforms_(new OpenGLShaderUniforms(1, 1, 0, 1)),
@@ -122,6 +73,22 @@ OpenGLWidget::~OpenGLWidget() {
 void OpenGLWidget::initializeGL() {
 	initializeOpenGLFunctions();
 
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glDisable(GL_DEPTH_TEST);
+
+	vbo_.create();
+	vbo_.bind();
+	vbo_.allocate(vbo_data, sizeof(vbo_data));
+
+	for (auto& x: colormaps_) {
+		x->initialize();
+	}
+
+	// Should be after vbo_ and colormaps_ initializing
+	initializeTextureAndShaders();
+}
+
+void OpenGLWidget::initializeTextureAndShaders() {
 	struct ShaderLoader {
 		QString* fragment_shader_source_main_;
 
@@ -183,23 +150,6 @@ void OpenGLWidget::initializeGL() {
 	QString fragment_shader_source_main;
 	hdu_->data().apply(ShaderLoader{&fragment_shader_source_main});
 
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-	glDisable(GL_DEPTH_TEST);
-
-	texture_->initialize();
-	emit textureInitialized(texture_.get());
-	shader_uniforms_.reset(new OpenGLShaderUniforms(texture_->channels(), texture_->channel_size(), hdu_->header().bzero(), hdu_->header().bscale()));
-	shader_uniforms_->setMinMax(texture_->hdu_minmax());
-
-	for (auto& x: colormaps_) {
-		x->initialize();
-	}
-	shader_uniforms_->setColorMapSize(colormaps_[colormap_index_]->width());
-
-	vbo_.create();
-	vbo_.bind();
-	vbo_.allocate(vbo_data, sizeof(vbo_data));
-
 	QOpenGLShader *vshader = new QOpenGLShader(QOpenGLShader::Vertex, this);
 	const char *vsrc =
 			"attribute vec2 VertexUV;\n"
@@ -231,19 +181,36 @@ void OpenGLWidget::initializeGL() {
 	QOpenGLShader *fshader = new QOpenGLShader(QOpenGLShader::Fragment, this);
 	if (! fshader->compileSourceCode(fsrc)) throw ShaderCompileError(glGetError());
 
-	if (! program_->addShader(vshader)) throw ShaderLoadError(glGetError());
-	if (! program_->addShader(fshader)) throw ShaderLoadError(glGetError());
-	program_->bindAttributeLocation("vertexCoord", program_vertex_coord_attribute_);
-	program_->bindAttributeLocation("vertexUV",    program_vertex_uv_attribute_);
-	if (! program_->link()) throw ShaderLoadError(glGetError());
-	if (! program_->bind()) throw ShaderBindError(glGetError());
-	program_->enableAttributeArray(program_vertex_coord_attribute_);
-	program_->enableAttributeArray(program_vertex_uv_attribute_);
-	program_->setAttributeBuffer(program_vertex_coord_attribute_, GL_FLOAT, 0, 3, 3 * sizeof(GLfloat));
-	program_->setAttributeBuffer(program_vertex_uv_attribute_,    GL_FLOAT, 0, 2, 3 * sizeof(GLfloat));
+	openGL_unique_ptr<QOpenGLShaderProgram> new_program(new QOpenGLShaderProgram(this), OpenGLDeleter<QOpenGLShaderProgram>(this));
+	if (! new_program->addShader(vshader)) throw ShaderLoadError(glGetError());
+	if (! new_program->addShader(fshader)) throw ShaderLoadError(glGetError());;
+	new_program->bindAttributeLocation("vertexCoord", program_vertex_coord_attribute_);
+	new_program->bindAttributeLocation("vertexUV",    program_vertex_uv_attribute_);
+	if (! new_program->link()) throw ShaderLoadError(glGetError());
+	if (! new_program->bind()) throw ShaderBindError(glGetError());
+	new_program->enableAttributeArray(program_vertex_coord_attribute_);
+	new_program->enableAttributeArray(program_vertex_uv_attribute_);
+	new_program->setAttributeBuffer(program_vertex_coord_attribute_, GL_FLOAT, 0, 3, 3 * sizeof(GLfloat));
+	new_program->setAttributeBuffer(program_vertex_uv_attribute_,    GL_FLOAT, 0, 2, 3 * sizeof(GLfloat));
+	new_program->setUniformValue("texture",  program_texture_uniform_);
+	new_program->setUniformValue("colormap", program_colormap_uniform_);
 
-	program_->setUniformValue("texture",  program_texture_uniform_);
-	program_->setUniformValue("colormap", program_colormap_uniform_);
+	openGL_unique_ptr<OpenGLTexture> new_texture(new OpenGLTexture(), OpenGLDeleter<OpenGLTexture>(this));
+	new_texture->initialize(hdu_);
+
+	// If no exceptions were thrown then we can put new objects to object's member pointers
+	if (program_) program_->release();
+	program_ = std::move(new_program);
+	program_->bind();
+
+	if (texture_ && texture_->isBound(program_texture_uniform_)) texture_->release(program_texture_uniform_);
+	texture_ = std::move(new_texture);
+	texture_->bind(program_texture_uniform_);
+
+	emit textureInitialized(texture_.get());
+	shader_uniforms_.reset(new OpenGLShaderUniforms(texture_->channels(), texture_->channel_size(), hdu_->header().bzero(), hdu_->header().bscale()));
+	shader_uniforms_->setMinMax(texture_->hdu_minmax());
+	shader_uniforms_->setColorMapSize(colormaps_[colormap_index_]->width());
 }
 
 void OpenGLWidget::resizeEvent(QResizeEvent* event) {
@@ -253,16 +220,49 @@ void OpenGLWidget::resizeEvent(QResizeEvent* event) {
 	auto old_widget_size = event->oldSize();
 	// event->oldSize() for the first call of resizeEvent equals -1,-1
 	if (old_widget_size.width() < 0 || old_widget_size.height() < 0) {
-		const auto ratio = (image_size().height() - 1.0) * (new_widget_size.width() - 1.0) / (image_size().width() - 1.0) / (new_widget_size.height() - 1.0);
-		QSizeF new_size(ratio, 1);
-		QRectF new_viewrect(QPointF(0, 0), new_size);
-		setViewrect(new_viewrect);
+		fitViewrect();
 	} else {
-		const auto new_viewrect_width = viewrect_.width() * (static_cast<double>(new_widget_size.width()) - 1.0) / (static_cast<double>(old_widget_size.width()) - 1.0);
+		const auto new_viewrect_width  = viewrect_.width()  * (new_widget_size.width()  - 1.0) / (old_widget_size.width()  - 1.0);
 		const auto new_viewrect_height = viewrect_.height() * (new_widget_size.height() - 1.0) / (old_widget_size.height() - 1.0);
 		QRectF new_viewrect(viewrect_);
 		new_viewrect.setSize({new_viewrect_width, new_viewrect_height});
 		setViewrect(new_viewrect);
+	}
+}
+
+void OpenGLWidget::paintGL() {
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	program_->bind();
+
+	QMatrix4x4 mvp(base_mvp_);
+	// QT and OpenGL have different coordinate systems, we should change y-axes direction
+	mvp.ortho(viewrect_.left(), viewrect_.right(), 1 - viewrect_.bottom(), 1 - viewrect_.top(), -1.0f, 1.0f);
+	program_->setUniformValue("MVP", mvp);
+
+	program_->setUniformValueArray("c", shader_uniforms_->get_c().data(), 1, shader_uniforms_->channels);
+	program_->setUniformValueArray("z", shader_uniforms_->get_z().data(), 1, shader_uniforms_->channels);
+
+	texture_->bind(program_texture_uniform_);
+	colormaps_[colormap_index_]->bind(program_colormap_uniform_);
+
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+}
+
+void OpenGLWidget::setHDU(const FITS::HeaderDataUnit &hdu) {
+	const auto old_image_size = image_size();
+	const auto old_hdu = hdu_;
+	hdu_ = &hdu;
+	try {
+		initializeTextureAndShaders();
+		if (image_size() != old_image_size) {
+			fitViewrect();
+		} else {
+			update();
+		}
+	} catch (const std::exception& e) {
+		hdu_ = old_hdu;
+		throw e;
 	}
 }
 
@@ -278,23 +278,6 @@ void OpenGLWidget::changeColorMap(int colormap_index) {
 		shader_uniforms_->setColorMapSize(colormaps_[colormap_index]->width());
 		update();
 	}
-}
-
-void OpenGLWidget::paintGL() {
-	glClear(GL_COLOR_BUFFER_BIT);
-
-	QMatrix4x4 mvp(base_mvp_);
-	// QT and OpenGL have different coordinate systems, we should change y-axes direction
-	mvp.ortho(viewrect_.left(), viewrect_.right(), 1 - viewrect_.bottom(), 1 - viewrect_.top(), -1.0f, 1.0f);
-	program_->setUniformValue("MVP", mvp);
-
-	program_->setUniformValueArray("c", shader_uniforms_->get_c().data(), 1, shader_uniforms_->channels);
-	program_->setUniformValueArray("z", shader_uniforms_->get_z().data(), 1, shader_uniforms_->channels);
-
-	texture_->bind(program_texture_uniform_);
-	colormaps_[colormap_index_]->bind(program_colormap_uniform_);
-
-	glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
 QSize OpenGLWidget::sizeHint() const {
@@ -326,6 +309,13 @@ void OpenGLWidget::setPixelViewrect(const QRect& pixel_viewrect) {
 	const auto width  = static_cast<double>(pixel_viewrect.width() ) / image_size().width();
 	const auto height = static_cast<double>(pixel_viewrect.height()) / image_size().height();
 	setViewrect({left, top, width, height});
+}
+
+void OpenGLWidget::fitViewrect() {
+	QSizeF new_size((image_size().height() - 1.0) * (size().width() - 1.0), (image_size().width() - 1.0) * (size().height() - 1.0));
+	new_size.scale(1, 1, Qt::KeepAspectRatioByExpanding);
+	const QRectF new_viewrect(QPointF(0, 0), new_size);
+	setViewrect(new_viewrect);
 }
 
 bool OpenGLWidget::correct_viewrect() {

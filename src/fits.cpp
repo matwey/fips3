@@ -166,3 +166,15 @@ FITS::HeaderDataUnit::HeaderDataUnit(AbstractFITSStorage::Page& begin, const Abs
 		data_.reset(new EmptyDataUnit(begin, end));
 	}
 }
+
+const FITS::HeaderDataUnit& FITS::first_hdu() const {
+	const FITS::HeaderDataUnit* hdu = &primary_hdu();
+
+	for (auto it = begin();
+		 it != end() && !hdu->data().imageDataUnit();
+		 ++it) {
+
+		hdu = &(*it);
+	}
+	return *hdu;
+}
