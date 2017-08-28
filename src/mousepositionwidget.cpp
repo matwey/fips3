@@ -24,6 +24,18 @@ MousePositionWidget::MousePositionWidget(QWidget *parent):
 	y_position_(new QLabel(this)),
 	value_(new QLabel(this)) {
 
+	x_position_->setAlignment(Qt::AlignRight);
+	y_position_->setAlignment(Qt::AlignRight);
+	value_->setAlignment(Qt::AlignRight);
+
+	const auto char_width = fontMetrics().averageCharWidth();
+	const auto position_text_width = (max_number_of_digits_image_size_+1) * char_width; // +1 for sign
+	x_position_->setFixedWidth(position_text_width);
+	y_position_->setFixedWidth(position_text_width);
+	// +1 for number sign, +1 for decimal point, +2 for exponent sign and +/- after it, +3 for exponent digits
+	const auto value_text_width = (decimals_ + 6) * char_width;
+	value_->setFixedWidth(value_text_width);
+
 	std::unique_ptr<QHBoxLayout> widget_layout{new QHBoxLayout(this)};
 
 	auto x_label = new QLabel(tr("x:"), this);
@@ -49,5 +61,6 @@ void MousePositionWidget::setPositionAndValue(const Pixel& pixel) {
 	}
 }
 
+constexpr const int MousePositionWidget::max_number_of_digits_image_size_;
 constexpr const char MousePositionWidget::text_format_;
 constexpr const int MousePositionWidget::decimals_;

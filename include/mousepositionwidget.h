@@ -25,12 +25,14 @@
 #include <QPoint>
 #include <QWidget>
 
+#include <algorithm>
 #include <memory>
 
 #include <pixel.h>
 
 class MousePositionWidget: public QWidget {
 private:
+	static constexpr const int max_number_of_digits_image_size_ = 5;
 	static constexpr const char text_format_ = 'g';
 	static constexpr const int decimals_ = 5;
 	QLabel* x_position_;
