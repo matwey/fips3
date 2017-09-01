@@ -67,6 +67,31 @@ QException* OpenGLWidget::ShaderCompileError::clone() const {
 	return new OpenGLWidget::ShaderCompileError(*this);
 }
 
+OpenGLWidget::VertexCoordinates::VertexCoordinates(const QSize &image_size, GLfloat factor):
+	image_size_(image_size),
+	factor_(factor) {
+	const auto semi_width  = (image_size_.width()  - 1.0f) / factor;
+	const auto semi_height = (image_size_.height() - 1.0f) / factor;
+	// Center of the rectangle should be in (0,0)
+	data_ = {
+			-semi_width, -semi_height,
+			-semi_width,  semi_height,
+			 semi_width,  semi_height,
+			 semi_width, -semi_height,
+	};
+}
+OpenGLWidget::VertexCoordinates::VertexCoordinates(const QSize &image_size):
+	VertexCoordinates(image_size, image_size.width() - 1) {}
+QRectF OpenGLWidget::VertexCoordinates::borderRect(GLfloat angle) {
+	QMatrix4x4 rotation_matrix;
+	// Rotation in viewrect coordinates is clockwise, but it doesn't matter in
+	// the case of rectangle with the center in (0,0)
+	rotation_matrix.rotate(-angle, 0, 0, 1);
+	// Arguments are top left and bottom right corners in viewrect coordinates:
+	QRectF non_rotated_image(QPointF(data_[2], -data_[3]), QPointF(data_[6], -data_[7]));
+	return rotation_matrix.mapRect(non_rotated_image);
+}
+
 OpenGLWidget::OpenGLWidget(QWidget *parent, const FITS::HeaderDataUnit& hdu):
 	QOpenGLWidget(parent),
 	hdu_(&hdu),
@@ -81,33 +106,23 @@ OpenGLWidget::OpenGLWidget(QWidget *parent, const FITS::HeaderDataUnit& hdu):
 	setMouseTracking(true); // We need it to catch mouseEvent when mouse buttons aren't pressed
 }
 
-OpenGLWidget::~OpenGLWidget() {
-	makeCurrent();
-
-	vbo_.destroy();
-
-	doneCurrent();
-}
-
 void OpenGLWidget::initializeGL() {
 	initializeOpenGLFunctions();
 
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glDisable(GL_DEPTH_TEST);
 
-	vbo_.create();
-	vbo_.bind();
-	vbo_.allocate(vbo_data, sizeof(vbo_data));
-
 	for (auto& x: colormaps_) {
 		x->initialize();
 	}
 
 	// Should be after vbo_ and colormaps_ initializing
-	initializeTextureAndShaders();
+	initializeGLObjects();
 }
 
-void OpenGLWidget::initializeTextureAndShaders() {
+void OpenGLWidget::initializeGLObjects() {
+	std::unique_ptr<VertexCoordinates> new_vertex_coords{new VertexCoordinates(image_size())};
+
 	struct ShaderLoader {
 		QString* fragment_shader_source_main_;
 
@@ -171,12 +186,12 @@ void OpenGLWidget::initializeTextureAndShaders() {
 
 	QOpenGLShader *vshader = new QOpenGLShader(QOpenGLShader::Vertex, this);
 	const char *vsrc =
+			"attribute vec2 vertexCoord;\n"
 			"attribute vec2 VertexUV;\n"
-			"attribute vec3 vertexCoord;\n"
 			"varying vec2 UV;\n"
 			"uniform mat4 MVP;\n"
 			"void main() {\n"
-			"	gl_Position = MVP * vec4(vertexCoord,1);\n"
+			"	gl_Position = MVP * vec4(vertexCoord,0,1);\n"
 			"	UV = VertexUV;\n"
 			"}\n";
 	if (! vshader->compileSourceCode(vsrc)) throw ShaderCompileError(glGetError());
@@ -209,8 +224,8 @@ void OpenGLWidget::initializeTextureAndShaders() {
 	if (! new_program->bind()) throw ShaderBindError(glGetError());
 	new_program->enableAttributeArray(program_vertex_coord_attribute_);
 	new_program->enableAttributeArray(program_vertex_uv_attribute_);
-	new_program->setAttributeBuffer(program_vertex_coord_attribute_, GL_FLOAT, 0, 3, 3 * sizeof(GLfloat));
-	new_program->setAttributeBuffer(program_vertex_uv_attribute_,    GL_FLOAT, 0, 2, 3 * sizeof(GLfloat));
+	new_program->setAttributeArray(program_vertex_coord_attribute_, new_vertex_coords->data(), 2);
+	new_program->setAttributeArray(program_vertex_uv_attribute_, uv_data, 2);
 	new_program->setUniformValue("texture",  program_texture_uniform_);
 	new_program->setUniformValue("colormap", program_colormap_uniform_);
 
@@ -218,6 +233,8 @@ void OpenGLWidget::initializeTextureAndShaders() {
 	new_texture->initialize(hdu_);
 
 	// If no exceptions were thrown then we can put new objects to object's member pointers
+	vertex_coords_ = std::move(new_vertex_coords);
+
 	if (program_) program_->release();
 	program_ = std::move(new_program);
 	program_->bind();
@@ -256,7 +273,8 @@ void OpenGLWidget::paintGL() {
 
 	QMatrix4x4 mvp(base_mvp_);
 	// QT and OpenGL have different coordinate systems, we should change y-axes direction
-	mvp.ortho(viewrect_.left(), viewrect_.right(), 1 - viewrect_.bottom(), 1 - viewrect_.top(), -1.0f, 1.0f);
+	mvp.ortho(viewrect_.left(), viewrect_.right(), -viewrect_.bottom(), -viewrect_.top(), -1.0f, 1.0f);
+	mvp.rotate(angle_, 0, 0, 1);
 	program_->setUniformValue("MVP", mvp);
 
 	program_->setUniformValueArray("c", shader_uniforms_->get_c().data(), 1, shader_uniforms_->channels);
@@ -265,7 +283,7 @@ void OpenGLWidget::paintGL() {
 	texture_->bind(program_texture_uniform_);
 	colormaps_[colormap_index_]->bind(program_colormap_uniform_);
 
-	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
 
 void OpenGLWidget::setHDU(const FITS::HeaderDataUnit &hdu) {
@@ -273,7 +291,7 @@ void OpenGLWidget::setHDU(const FITS::HeaderDataUnit &hdu) {
 	const auto old_hdu = hdu_;
 	hdu_ = &hdu;
 	try {
-		initializeTextureAndShaders();
+		initializeGLObjects();
 		if (image_size() != old_image_size) {
 			fitViewrect();
 		} else {
@@ -305,7 +323,7 @@ QSize OpenGLWidget::sizeHint() const {
 
 void OpenGLWidget::setViewrect(const QRectF &viewrect) {
 	viewrect_ = viewrect;
-	correct_viewrect();
+	alignViewrect();
 	const QRect old_pixel_viewrect(pixel_viewrect_);
 	pixel_viewrect_ = viewrectToPixelViewrect(viewrect_);
 	if (pixel_viewrect_ != old_pixel_viewrect) {
@@ -331,32 +349,34 @@ void OpenGLWidget::setPixelViewrect(const QRect& pixel_viewrect) {
 }
 
 void OpenGLWidget::fitViewrect() {
-	QSizeF new_size((image_size().height() - 1.0) * (size().width() - 1.0), (image_size().width() - 1.0) * (size().height() - 1.0));
-	new_size.scale(1, 1, Qt::KeepAspectRatioByExpanding);
+	QSizeF new_size(size().width() - 1.0, size().height() - 1.0);
+	new_size.scale(vertex_coords_->borderRect(angle_).size(), Qt::KeepAspectRatioByExpanding);
+	// It will be aligned in alignViewrect(), so top left corner value doesn't matter
 	const QRectF new_viewrect(QPointF(0, 0), new_size);
 	setViewrect(new_viewrect);
 }
 
-bool OpenGLWidget::correct_viewrect() {
+bool OpenGLWidget::alignViewrect() {
+	const auto border_rect = vertex_coords_->borderRect(angle_);
 	auto viewrect = viewrect_;
-	if (viewrect.size().width() > 1) {
-		viewrect.moveCenter({0.5, viewrect.center().y()});
+	if (viewrect.size().width() > border_rect.width()) {
+		viewrect.moveCenter({border_rect.center().x(), viewrect.center().y()});
 	} else {
-		if (viewrect.left() < 0) {
-			viewrect.moveLeft(0);
+		if (viewrect.left() < border_rect.left()) {
+			viewrect.moveLeft(border_rect.left());
 		}
-		if (viewrect.right() > 1) {
-			viewrect.moveRight(1);
+		if (viewrect.right() > border_rect.right()) {
+			viewrect.moveRight(border_rect.right());
 		}
 	}
-	if (viewrect.size().height() > 1) {
-		viewrect.moveCenter({viewrect.center().x(), 0.5});
+	if (viewrect.size().height() > border_rect.height()) {
+		viewrect.moveCenter({viewrect.center().x(), border_rect.center().y()});
 	} else {
-		if (viewrect.top() < 0) {
-			viewrect.moveTop(0);
+		if (viewrect.top() < border_rect.top()) {
+			viewrect.moveTop(border_rect.top());
 		}
-		if (viewrect.bottom() > 1) {
-			viewrect.moveBottom(1);
+		if (viewrect.bottom() > border_rect.bottom()) {
+			viewrect.moveBottom(border_rect.bottom());
 		}
 	}
 	if (viewrect != viewrect_) {
@@ -364,6 +384,14 @@ bool OpenGLWidget::correct_viewrect() {
 		return true;
 	}
 	return false;
+}
+
+void OpenGLWidget::changeRotationAngle(double angle) {
+	if (angle_ != angle) {
+		angle_ = angle;
+		// TODO: translate viewrect_
+		emit rotationAngleChanged(angle_);
+	}
 }
 
 Pixel OpenGLWidget::pixelFromWidgetCoordinate(const QPoint &widget_coord) const {
@@ -380,4 +408,4 @@ Pixel OpenGLWidget::pixelFromWidgetCoordinate(const QPoint &widget_coord) const 
 	return Pixel(position);
 }
 
-constexpr const GLfloat OpenGLWidget::vbo_data[];
+constexpr const GLfloat OpenGLWidget::uv_data[];

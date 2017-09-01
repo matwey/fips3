@@ -29,10 +29,10 @@
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLWidget>
 #include <QMatrix4x4>
-#include <QMouseEvent>
 #include <QMessageBox>
 #include <QResizeEvent>
 
+#include <array>
 #include <cmath>
 #include <memory>
 
@@ -70,6 +70,28 @@ public:
 		virtual QException* clone() const override;
 	};
 
+	class VertexCoordinates {
+	private:
+		const QSize image_size_;
+		const GLfloat factor_;
+		std::array<GLfloat, 8> data_;
+	public:
+		VertexCoordinates(const QSize &image_size, GLfloat factor);
+		VertexCoordinates(const QSize &image_size);
+
+		inline GLfloat factor() { return factor_; }
+		inline const GLfloat* data() { return data_.data(); }
+		QRectF borderRect(GLfloat angle);
+		inline GLfloat left()   { return data_[0]; }
+		inline GLfloat right()  { return data_[4]; }
+		inline GLfloat bottom() { return data_[1]; }
+		inline GLfloat top()    { return data_[5]; }
+		inline GLfloat width()  { return right() - left(); }
+		inline GLfloat height() { return top() - bottom(); }
+		inline QSizeF size() { return {width(), height()}; }
+		inline QPointF center() { return {0, 0}; } // Always should be zero
+	};
+
 	template<class T> class OpenGLDeleter {
 	private:
 		QOpenGLWidget *openGL_widget_;
@@ -93,31 +115,12 @@ public:
 
 public:
 	OpenGLWidget(QWidget *parent, const FITS::HeaderDataUnit& hdu);
-	~OpenGLWidget() override;
 
 private:
-	void initializeTextureAndShaders();
-
-public:
-	void setViewrect(const QRectF &viewrect);
-	inline const QRectF& viewrect() const { return viewrect_; }
-	void setPixelViewrect(const QRect& pixel_viewrect);
-	inline const QRect& pixelViewrect() const { return pixel_viewrect_; }
-	Pixel pixelFromWidgetCoordinate(const QPoint &widget_coord) const;
-	void fitViewrect();
-	inline QSize image_size() const { return hdu_->data().imageDataUnit()->size(); }
-	QRect viewrectToPixelViewrect (const QRectF& viewrect) const;
-	inline const colormaps_type& colormaps() const { return colormaps_; }
-	inline int colorMapIndex() const {return colormap_index_; }
-	void setHDU(const FITS::HeaderDataUnit& hdu);
+	void initializeGLObjects();
 
 signals:
-	void pixelViewrectChanged(const QRect& pixel_viewrect);
 	void textureInitialized(const OpenGLTexture* texture);
-
-public slots:
-	void changeLevels(const std::pair<double, double>& minmax);
-	void changeColorMap(int colormap_index);
 
 protected:
 	virtual void initializeGL() override;
@@ -125,38 +128,67 @@ protected:
 	virtual QSize sizeHint() const override;
 	virtual void resizeEvent(QResizeEvent* event) override;
 
+public:
+	inline QSize image_size() const { return hdu_->data().imageDataUnit()->size(); }
+	void setHDU(const FITS::HeaderDataUnit& hdu);
+	Pixel pixelFromWidgetCoordinate(const QPoint &widget_coord) const;
+
 private:
 	const FITS::HeaderDataUnit* hdu_;
 	openGL_unique_ptr<OpenGLTexture> texture_;
 	openGL_unique_ptr<QOpenGLShaderProgram> program_;
-	QOpenGLBuffer vbo_;
 	QMatrix4x4 base_mvp_;
 
+private:
 	static const int program_vertex_coord_attribute_ = 0;
 	static const int program_vertex_uv_attribute_    = 1;
 	static const int program_texture_uniform_  = 0;
 	static const int program_colormap_uniform_ = 1;
-	// Square which is made from two triangles. Each line is xyz coordinates of triangle vertex (0-2 - first triangle,
-	// 3-5 - second triangle). First and seconds columns are used as corresponding UV-coordinates.
-	static constexpr const GLfloat vbo_data[] = {
-			0.0f, 0.0f, 0.0f,
-			1.0f, 0.0f, 0.0f,
-			0.0f, 1.0f, 0.0f,
-			0.0f, 1.0f, 0.0f,
-			1.0f, 0.0f, 0.0f,
-			1.0f, 1.0f, 0.0f,
+	// UV coordinates for triangle fan. See vertex_data_
+	static constexpr const GLfloat uv_data[] = {
+			0.0f, 0.0f,
+			0.0f, 1.0f,
+			1.0f, 1.0f,
+			1.0f, 0.0f
 	};
+	std::unique_ptr<VertexCoordinates> vertex_coords_;
 
+private:
 	QRectF viewrect_;
 	QRect pixel_viewrect_;
-
 	// Returns true if viewrect has been corrected
-	bool correct_viewrect();
+	bool alignViewrect();
+protected:
+	QRect viewrectToPixelViewrect (const QRectF& viewrect) const;
+public:
+	void setViewrect(const QRectF &viewrect);
+	inline const QRectF& viewrect() const { return viewrect_; }
+	void setPixelViewrect(const QRect& pixel_viewrect);
+	inline const QRect& pixelViewrect() const { return pixel_viewrect_; }
+	void fitViewrect();
+signals:
+	void pixelViewrectChanged(const QRect& pixel_viewrect);
 
+private:
+	double angle_ = 30; // degrees
+public slots:
+	void changeRotationAngle(double angle);
+signals:
+	void rotationAngleChanged(double angle);
+
+private:
 	std::unique_ptr<OpenGLShaderUniforms> shader_uniforms_;
+public slots:
+	void changeLevels(const std::pair<double, double>& minmax);
 
+private:
 	colormaps_type colormaps_;
 	int colormap_index_;
+public:
+	inline const colormaps_type& colormaps() const { return colormaps_; }
+	inline int colorMapIndex() const {return colormap_index_; }
+public slots:
+	void changeColorMap(int colormap_index);
 };
 
 
