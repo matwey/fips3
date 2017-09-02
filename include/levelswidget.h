@@ -41,7 +41,7 @@ public:
 
 	virtual QString textFromValue(double value) const override;
 	virtual double valueFromText(const QString& text) const override;
-	virtual QValidator::State validate(QString& text, int& pos) const override;
+	virtual QValidator::State validate(QString& text, int&) const override;
 	inline void setMaximum(double max) { setRange(minimum(), max); }
 	inline void setMinimum(double min) { setRange(min, maximum()); }
 	void setRange(double min, double max);

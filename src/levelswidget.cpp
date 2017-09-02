@@ -33,7 +33,7 @@ double ScientificSpinBox::valueFromText(const QString &text) const {
 	return value;
 }
 
-QValidator::State ScientificSpinBox::validate(QString &text, int &pos) const {
+QValidator::State ScientificSpinBox::validate(QString &text, int&) const {
 	const auto decimal_point = locale().decimalPoint();
 	bool ok = false;
 	locale().toDouble(text, &ok);
