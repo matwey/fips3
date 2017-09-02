@@ -17,13 +17,13 @@ private slots:
 void TestOpenGLShaderUniforms::test_a11() {
 	OpenGLShaderUniforms su(1, 1, 0, 1);
 	QCOMPARE(255, static_cast<int>(su.get_a()[0]));
-};
+}
 
 void TestOpenGLShaderUniforms::test_a22() {
 	OpenGLShaderUniforms su(2, 2, 0, 1);
 	QCOMPARE(static_cast<quint64>(su.get_a()[0]), static_cast<quint64>(65535) * 65536);
 	QCOMPARE(static_cast<quint64>(su.get_a()[1]), static_cast<quint64>(65535));
-};
+}
 
 void TestOpenGLShaderUniforms::test_a10() {
 	OpenGLShaderUniforms su(1, 0, 0, 1);
