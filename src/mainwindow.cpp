@@ -47,6 +47,43 @@ bool MouseMoveEventFilter::eventFilter(QObject* open_gl_widget, QEvent* event) {
 	}
 }
 
+MainWindowState::MainWindowState(const QString& filename, bool watch):
+	filename_(QFileInfo(filename).absoluteFilePath()),
+	watcher_(new QFileSystemWatcher(this)) {
+
+	std::unique_ptr<QFile> file{new QFile{filename}};
+	if (!file->open(QIODevice::ReadOnly)) {
+		throw MainWindow::FileOpenError(file->errorString());
+	}
+	fits_.reset(new FITS{file.release()});
+
+	if (!fits_->first_hdu().data().imageDataUnit()) {
+		throw MainWindow::NoImageInFITS();
+	}
+
+	connect(watcher_, SIGNAL(fileChanged(const QString&)), this, SLOT(fileChanged(const QString&)));
+
+	setWatch(watch);
+}
+
+bool MainWindowState::isWatched() const {
+	return watcher_->files().contains(filename_);
+}
+bool MainWindowState::setWatch(bool watch) {
+	if (watch == isWatched())
+		return true;
+
+	if (watch) {
+		return watcher_->addPath(filename_);
+	} else {
+		return watcher_->removePath(filename_);
+	}
+}
+void MainWindowState::fileChanged(const QString& path) {
+	Q_ASSERT(path == filename_);
+
+	emit fileChanged();
+}
 
 MainWindow::Exception::Exception(const QString& what):
 	Utils::Exception(what) {
@@ -79,22 +116,17 @@ QException* MainWindow::NoImageInFITS::clone() const {
 
 MainWindow::MainWindow(const QString& fits_filename, QWidget *parent):
 	QMainWindow(parent),
-	fits_filename_(fits_filename) {
-	fits_ = loadFITS(fits_filename);
-	const auto hdu = &fits_->first_hdu();
-	if (!hdu->data().imageDataUnit()) {
-		throw NoImageInFITS();
-	}
+	state_{new MainWindowState{fits_filename, false}} {
 
-	updateWindowTitle();
+	connect(state_.get(), SIGNAL(fileChanged()), this, SLOT(refresh()));
 
 	// Resize window to fit FITS image
 	const auto desktop_size = QApplication::desktop()->screenGeometry();
 	const QSize maximum_initial_window_size(desktop_size.width() * 2 / 3, desktop_size.height() * 2 / 3);
-	resize(hdu->data().imageDataUnit()->size().boundedTo(maximum_initial_window_size));
+	resize(state_->fits().first_hdu().data().imageDataUnit()->size().boundedTo(maximum_initial_window_size));
 
 	// Create scroll area and put there open_gl_widget
-	std::unique_ptr<ScrollZoomArea> scroll_zoom_area{new ScrollZoomArea(this, *hdu)};
+	std::unique_ptr<ScrollZoomArea> scroll_zoom_area{new ScrollZoomArea(this, state_->fits().first_hdu())};
 	/* setCentralWidget promises to take ownership */
 	setCentralWidget(scroll_zoom_area.release());
 
@@ -111,6 +143,10 @@ MainWindow::MainWindow(const QString& fits_filename, QWidget *parent):
 	auto refresh_action = file_menu->addAction(tr("&Refresh file"), this, SLOT(refresh()));
 	QList<QKeySequence> refresh_shortcuts {QKeySequence::Refresh, QKeySequence(Qt::Key_F5)};
 	refresh_action->setShortcuts(refresh_shortcuts);
+	auto autorefresh_action = file_menu->addAction(tr("Auto refresh"));
+	autorefresh_action->setShortcut(tr("Ctrl+R"));
+	autorefresh_action->setCheckable(true);
+	connect(autorefresh_action, SIGNAL(toggled(bool)), this, SLOT(setAutoRefresh(bool)));
 	// View menu
 	auto view_menu = menu_bar->addMenu(tr("&View"));
 	auto zoomIn_action = view_menu->addAction(tr("Zoom &In"), this, SLOT(zoomIn(void)));
@@ -164,45 +200,57 @@ MainWindow::MainWindow(const QString& fits_filename, QWidget *parent):
 	setStatusBar(status_bar.release());
 }
 
-void MainWindow::updateWindowTitle() {
+void MainWindow::setWindowTitle(const QString& filename) {
 #ifdef Q_OS_MAC
-	QMainWindow::setWindowTitle(QFileInfo(fits_filename_).fileName());
+	QMainWindow::setWindowTitle(QFileInfo(filename).fileName());
 #else
-	QMainWindow::setWindowTitle(QFileInfo(fits_filename_).fileName() + " — FIPS");
+	QMainWindow::setWindowTitle(QFileInfo(filename).fileName() + " — FIPS");
 #endif
 }
 
-std::unique_ptr<FITS> MainWindow::loadFITS(const QString &fits_filename) const {
-	std::unique_ptr<QFile> file{new QFile(fits_filename)};
-	if (!file->open(QIODevice::ReadOnly)) {
-		throw FileOpenError(file->errorString());
-	}
-	return std::unique_ptr<FITS>(new FITS(file.release()));
+void MainWindow::setState(MainWindowState* new_state) {
+	return setState(std::unique_ptr<MainWindowState>{new_state});
 }
 
-void MainWindow::openInThisWindow(const QString& fits_filename) {
+void MainWindow::setState(std::unique_ptr<MainWindowState>&& new_state) {
+	if (new_state.get() == state_.get())
+		return;
+
+	scrollZoomArea()->viewport()->setHDU(new_state->fits().first_hdu());
+	setWindowTitle(new_state->filename());
+
+	state_ = std::move(new_state);
+	connect(state_.get(), SIGNAL(fileChanged()), this, SLOT(refresh()));
+}
+
+void MainWindow::openFileHere() {
+	const auto filename = QFileDialog::getOpenFileName(this, tr("Open FITS file in current window"));
+
+	if (filename.isEmpty())
+		return;
+
 	try {
-		auto new_fits = loadFITS(fits_filename);
-		const auto hdu = &new_fits->first_hdu();
-		if (!hdu->data().imageDataUnit()) {
-			throw NoImageInFITS();
-		}
-		scrollZoomArea()->viewport()->setHDU(*hdu);
-		fits_ = std::move(new_fits);
-		fits_filename_ = fits_filename;
-		updateWindowTitle();
+		setState(new MainWindowState{filename, state_->isWatched()});
 	} catch (const std::exception& e) {
 		QMessageBox::critical(this, "An error occured", e.what());
 	}
 }
 
-void MainWindow::openFileHere() {
-	const auto fits_filename = QFileDialog::getOpenFileName(this, tr("Open FITS file in current window"));
-	openInThisWindow(fits_filename);
+void MainWindow::refresh() {
+	try {
+		setState(new MainWindowState{state_->filename(), state_->isWatched()});
+	} catch (const FITS::UnexpectedEnd&) {
+		/* When the file is being overwritten, QFileSystemWatcher is
+		 * quick enough to report multiple times. Just ignore if file
+		 * is not ready yet.
+		 */
+	} catch (const std::exception& e) {
+		QMessageBox::critical(this, "An error occured", e.what());
+	}
 }
 
-void MainWindow::refresh() {
-	openInThisWindow(fits_filename_);
+void MainWindow::setAutoRefresh(bool autorefresh) {
+	state_->setWatch(autorefresh);
 }
 
 void MainWindow::zoomIn() {
