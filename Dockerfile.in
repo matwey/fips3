@@ -1,7 +1,7 @@
 FROM matwey/opensuse-ci:BASE_IMAGE_TAG
 
 ENV CTEST_OUTPUT_ON_FAILURE 1
-ENV CXXFLAGS -Wall
+ENV CXXFLAGS -Wall -Wextra -pedantic
 ENV FIPS_BUILD_DIR /tmp/build
 
 WORKDIR ${FIPS_BUILD_DIR}
