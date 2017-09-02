@@ -22,7 +22,7 @@ ColorMapWidget::ColorMapWidget(QWidget* parent, const OpenGLWidget& open_gl_widg
 	QWidget(parent),
 	button_group_(new QButtonGroup(this)) {
 
-	for (int i = 0; i < open_gl_widget.colormaps().size(); ++i) {
+	for (std::size_t i = 0; i < open_gl_widget.colormaps().size(); ++i) {
 		button_group_->addButton(new QRadioButton(tr(open_gl_widget.colormaps()[i]->name()), this), i);
 	}
 	button_group_->buttons()[open_gl_widget.colorMapIndex()]->setChecked(true);
