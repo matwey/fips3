@@ -22,9 +22,9 @@
 #include <QOpenGLContext>
 #include <QOpenGLFunctions>
 
-#include <exception.h>
+#include <utils/exception.h>
 
-class OpenGLException: public Exception {
+class OpenGLException: public Utils::Exception {
 public:
 	OpenGLException(const QString &reason, GLenum gl_error_code);
 

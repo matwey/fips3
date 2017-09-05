@@ -22,16 +22,21 @@
 #include <QException>
 #include <QString>
 
-class Exception: public QException {
+namespace Utils {
+
+class Exception : public QException {
 private:
 	QString what_;
 public:
 	explicit Exception(const QString& what);
 
 	virtual void raise() const override;
+
 	virtual QException* clone() const override;
 
 	virtual const char* what() const noexcept override;
 };
+
+} // Utils
 
 #endif // _EXCEPTION_H_

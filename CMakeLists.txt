@@ -149,7 +149,7 @@ elseif(UNIX)
 endif(APPLE)
 
 enable_testing()
-add_executable(test_fits test/fits.cpp src/fits.cpp src/exception.cpp src/abstractfitsstorage.cpp src/mmapfitsstorage.cpp)
+add_executable(test_fits test/fits.cpp src/fits.cpp src/utils/exception.cpp src/abstractfitsstorage.cpp src/mmapfitsstorage.cpp)
 target_compile_definitions(test_fits PUBLIC PROJECT_ROOT="${PROJECT_SOURCE_DIR}")
 # Linked libraries affect ability to run without X11 display.
 #

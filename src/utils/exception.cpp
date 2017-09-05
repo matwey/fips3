@@ -16,16 +16,23 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <exception.h>
+#include <utils/exception.h>
+
+namespace Utils {
 
 Exception::Exception(const QString& what): what_(what) {
 }
+
 void Exception::raise() const {
 	throw *this;
 }
+
 QException* Exception::clone() const {
 	return new Exception(*this);
 }
+
 const char* Exception::what() const noexcept {
 	return what_.toLatin1().constData();
 }
+
+} //Utils

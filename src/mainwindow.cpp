@@ -31,7 +31,7 @@
 #include <mainwindow.h>
 
 MainWindow::Exception::Exception(const QString& what):
-	::Exception(what) {
+	Utils::Exception(what) {
 }
 void MainWindow::Exception::raise() const {
 	throw *this;

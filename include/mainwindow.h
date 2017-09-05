@@ -26,16 +26,16 @@
 
 #include <memory>
 
-#include <exception.h>
 #include <levelswidget.h>
 #include <colormapwidget.h>
 #include <scrollzoomarea.h>
+#include <utils/exception.h>
 
 class MainWindow:
 	public QMainWindow {
 	Q_OBJECT
 public:
-	class Exception: public ::Exception {
+	class Exception: public Utils::Exception {
 	public:
 		explicit Exception(const QString& what);
 

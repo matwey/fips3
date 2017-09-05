@@ -53,7 +53,7 @@ FITS::FITS(AbstractFITSStorage* fits_storage): FITS(fits_storage, fits_storage->
 }
 FITS::FITS(QFileDevice* file_device): FITS(new MMapFITSStorage(file_device)) {
 }
-FITS::Exception::Exception(const QString& what): ::Exception(what) {
+FITS::Exception::Exception(const QString& what): Utils::Exception(what) {
 }
 void FITS::Exception::raise() const {
 	throw *this;
