@@ -198,6 +198,7 @@ MainWindow::MainWindow(const QString& fits_filename, QWidget *parent):
 	scrollZoomArea()->viewport()->installEventFilter(mouse_move_event_filter_.get());
 	status_bar->addWidget(mouse_position_widget.release());
 	setStatusBar(status_bar.release());
+	setWindowTitle(state_->filename());
 }
 
 void MainWindow::setWindowTitle(const QString& filename) {
