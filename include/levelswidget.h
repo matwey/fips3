@@ -19,51 +19,11 @@
 #ifndef _LEVELSWIDGET_H
 #define _LEVELSWIDGET_H
 
-#include <QDebug>
-#include <QDoubleSpinBox>
-#include <QGridLayout>
-#include <QLabel>
-#include <QResizeEvent>
-#include <QSlider>
 #include <QWidget>
 
-#include <cmath>
-#include <memory>
-
 #include <opengltexture.h>
-
-class ScientificSpinBox: public QDoubleSpinBox {
-private:
-	static constexpr const char text_format_ = 'g';
-	static constexpr const int log10_steps_in_range_ = 2;
-public:
-	ScientificSpinBox(QWidget* parent=Q_NULLPTR, int decimals=5);
-
-	virtual QString textFromValue(double value) const override;
-	virtual double valueFromText(const QString& text) const override;
-	virtual QValidator::State validate(QString& text, int&) const override;
-	inline void setMaximum(double max) { setRange(minimum(), max); }
-	inline void setMinimum(double min) { setRange(min, maximum()); }
-	void setRange(double min, double max);
-};
-
-class SpinboxWithSlider: public QWidget {
-	Q_OBJECT
-private:
-	static constexpr int slider_range_ = 10000;
-	ScientificSpinBox* spinbox_;
-	QSlider* slider_;
-
-public:
-	SpinboxWithSlider(Qt::Orientation orientation, QWidget* parent=Q_NULLPTR);
-
-	inline ScientificSpinBox* spinbox() const { return spinbox_; }
-	int spinboxValueToSlider(double value) const;
-
-private slots:
-	void notifySliderValueChanged(int value);
-	void notifySpinboxValueChanged(double value);
-};
+#include <scientificspinbox.h>
+#include <spinboxwithslider.h>
 
 
 class LevelsWidget: public QWidget {

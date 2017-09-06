@@ -116,7 +116,7 @@ void OpenGLWidget::initializeGL() {
 		x->initialize();
 	}
 
-	// Should be after vbo_ and colormaps_ initializing
+	// Should be after colormaps_ initialization
 	initializeGLObjects();
 }
 
@@ -389,7 +389,7 @@ bool OpenGLWidget::alignViewrect() {
 void OpenGLWidget::changeRotationAngle(double angle) {
 	if (angle_ != angle) {
 		angle_ = angle;
-		// TODO: translate viewrect_
+		update(); // TODO: translate viewrect_ instead
 		emit rotationAngleChanged(angle_);
 	}
 }

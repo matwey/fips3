@@ -170,7 +170,7 @@ signals:
 	void pixelViewrectChanged(const QRect& pixel_viewrect);
 
 private:
-	double angle_ = 30; // degrees
+	double angle_ = 0; // degrees
 public slots:
 	void changeRotationAngle(double angle);
 signals:
