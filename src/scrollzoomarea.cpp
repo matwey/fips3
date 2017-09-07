@@ -35,20 +35,21 @@ ScrollZoomArea::ScrollZoomArea(QWidget *parent, const FITS::HeaderDataUnit& hdu)
 }
 
 void ScrollZoomArea::zoomViewport(double zoom_factor) {
-	zoomViewport(ZoomParam(viewport()->rect().center(), zoom_factor));
+	zoomViewport(zoom_factor, viewport()->rect().center());
 }
 
-void ScrollZoomArea::zoomViewport(const ZoomParam& zoom) {
+void ScrollZoomArea::zoomViewport(double zoom_factor, const QPoint& fixed_point) {
+	const QPointF fixed_point4{
+		static_cast<double>(fixed_point.x()) / (viewport()->width() - 1),
+		static_cast<double>(fixed_point.y()) / (viewport()->height() - 1)};
 	const auto old_viewrect = viewport()->viewrect();
-	const auto new_size = old_viewrect.size() / zoom.factor;
-	const auto new_top_left =
-			old_viewrect.topLeft()
-			+ QPointF(
-				(old_viewrect.width() - new_size.width()) / 2,
-				(old_viewrect.height() - new_size.height()) / 2
-			);
-	const QRectF new_viewrect(new_top_left, new_size);
-	viewport()->setViewrect(new_viewrect);
+	const auto new_size = old_viewrect.size() / zoom_factor;
+	const QPointF new_top_left{
+		old_viewrect.topLeft().x() +
+			fixed_point4.x() * (old_viewrect.width() - new_size.width()),
+		old_viewrect.topLeft().y() +
+			fixed_point4.y() * (old_viewrect.height() - new_size.height())};
+	viewport()->setViewrect(QRectF{new_top_left, new_size});
 }
 
 void ScrollZoomArea::fitToViewport() {
@@ -75,6 +76,13 @@ void ScrollZoomArea::updateBars() {
 	verticalScrollBar()  ->setRange(0, viewport()->image_size().height() - viewport()->pixelViewrect().height() - 1);
 	horizontalScrollBar()->setValue(viewport()->pixelViewrect().left());
 	verticalScrollBar()  ->setValue(viewport()->pixelViewrect().top());
+}
+
+void ScrollZoomArea::wheelEvent(QWheelEvent* event) {
+	/* One wheel tick is 120 eighths of degree */
+	const double factor_per_eighth = 1.0 + 0.05 / 120;
+
+	zoomViewport(std::pow(factor_per_eighth, event->delta()), event->pos());
 }
 
 bool ScrollZoomArea::viewportEvent(QEvent* event) {
