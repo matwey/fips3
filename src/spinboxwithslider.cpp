@@ -41,6 +41,7 @@ SpinboxWithSlider::SpinboxWithSlider(Qt::Orientation orientation, QWidget* paren
 	setLayout(widget_layout.release());
 
 	connect(spinbox_, SIGNAL(valueChanged(double)), this, SLOT(notifySpinboxValueChanged(double)));
+	connect(spinbox_, SIGNAL(rangeChanged(double, double)), this, SLOT(notifySpinboxRangeChanged(double, double)));
 	connect(slider_, SIGNAL(valueChanged(int)), this, SLOT(notifySliderValueChanged(int)));
 }
 
@@ -48,10 +49,6 @@ int SpinboxWithSlider::spinboxValueToSlider(double value) const {
 	return qRound((value - spinbox_->minimum()) / (spinbox_->maximum() - spinbox_->minimum())
 		   * (slider_->maximum() - slider_->minimum()))
 		   + slider_->minimum();
-}
-
-void SpinboxWithSlider::notifySpinboxValueChanged(double value) {
-	slider_->setValue(spinboxValueToSlider(value));
 }
 
 void SpinboxWithSlider::notifySliderValueChanged(int value) {
@@ -62,4 +59,12 @@ void SpinboxWithSlider::notifySliderValueChanged(int value) {
 				+ spinbox_->minimum();
 		spinbox_->setValue(spinbox_value);
 	}
+}
+
+void SpinboxWithSlider::notifySpinboxValueChanged(double value) {
+	slider_->setValue(spinboxValueToSlider(value));
+}
+
+void SpinboxWithSlider::notifySpinboxRangeChanged(double min, double max) {
+	notifySpinboxValueChanged(spinbox_->value());
 }

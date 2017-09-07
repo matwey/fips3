@@ -22,9 +22,11 @@
 #include <QDoubleSpinBox>
 
 class ScientificSpinBox: public QDoubleSpinBox {
+	Q_OBJECT
 private:
 	static constexpr const char text_format_ = 'g';
 	static constexpr const int log10_steps_in_range_ = 2;
+
 public:
 	ScientificSpinBox(QWidget* parent=Q_NULLPTR, int decimals=5);
 
@@ -34,6 +36,9 @@ public:
 	inline void setMaximum(double max) { setRange(minimum(), max); }
 	inline void setMinimum(double min) { setRange(min, maximum()); }
 	void setRange(double min, double max);
+
+signals:
+	void rangeChanged(double min, double max);
 };
 
 #endif //_SCIENTIFICSPINBOX_H

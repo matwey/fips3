@@ -16,33 +16,19 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _SPINBOXWITHSLIDER_H
-#define _SPINBOXWITHSLIDER_H
+#ifndef _ROTATIONWIDGET_H
+#define _ROTATIONWIDGET_H
 
 #include <QWidget>
-#include <QSlider>
 
-#include <scientificspinbox.h>
+#include <spinboxwithslider.h>
 
-class SpinboxWithSlider: public QWidget {
-	Q_OBJECT
+class RotationWidget: public QWidget {
 private:
-	static constexpr int slider_range_ = 10000;
-	ScientificSpinBox* spinbox_;
-	QSlider* slider_;
-
+	SpinboxWithSlider* spinbox_with_slider_;
 public:
-	SpinboxWithSlider(Qt::Orientation orientation, QWidget* parent=Q_NULLPTR);
-
-	inline ScientificSpinBox* spinbox() const { return spinbox_; }
-
-protected:
-	int spinboxValueToSlider(double value) const;
-
-private slots:
-	void notifySliderValueChanged(int value);
-	void notifySpinboxValueChanged(double value);
-	void notifySpinboxRangeChanged(double min, double max);
+	explicit RotationWidget(QWidget *parent = Q_NULLPTR);
+	inline ScientificSpinBox* spinbox() { return spinbox_with_slider_->spinbox(); }
 };
 
-#endif //_SPINBOXWITHSLIDER_H
+#endif //_ROTATIONWIDGET_H

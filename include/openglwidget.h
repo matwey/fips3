@@ -34,13 +34,13 @@
 
 #include <array>
 #include <cmath>
-#include <memory>
 
 #include <fits.h>
 #include <openglcolormap.h>
 #include <openglerrors.h>
 #include <openglshaderunifroms.h>
 #include <opengltexture.h>
+#include <viewrect.h>
 #include <pixel.h>
 
 class OpenGLWidget: public QOpenGLWidget, protected QOpenGLFunctions {
@@ -79,17 +79,17 @@ public:
 		VertexCoordinates(const QSize &image_size, GLfloat factor);
 		VertexCoordinates(const QSize &image_size);
 
-		inline GLfloat factor() { return factor_; }
-		inline const GLfloat* data() { return data_.data(); }
-		QRectF borderRect(GLfloat angle);
-		inline GLfloat left()   { return data_[0]; }
-		inline GLfloat right()  { return data_[4]; }
-		inline GLfloat bottom() { return data_[1]; }
-		inline GLfloat top()    { return data_[5]; }
-		inline GLfloat width()  { return right() - left(); }
-		inline GLfloat height() { return top() - bottom(); }
-		inline QSizeF size() { return {width(), height()}; }
-		inline QPointF center() { return {0, 0}; } // Always should be zero
+		inline GLfloat factor() const { return factor_; }
+		inline const GLfloat* data() const { return data_.data(); }
+		QRectF borderRect(GLfloat angle) const;
+		inline GLfloat left()   const { return data_[0]; }
+		inline GLfloat right()  const { return data_[4]; }
+		inline GLfloat bottom() const { return data_[1]; }
+		inline GLfloat top()    const { return data_[5]; }
+		inline GLfloat width()  const { return right() - left(); }
+		inline GLfloat height() const { return top() - bottom(); }
+		inline QSizeF size() const { return {width(), height()}; }
+		inline QPointF center() const { return {0, 0}; } // Always should be zero
 	};
 
 	template<class T> class OpenGLDeleter {
@@ -154,25 +154,15 @@ private:
 	std::unique_ptr<VertexCoordinates> vertex_coords_;
 
 private:
-	QRectF viewrect_;
-	QRect pixel_viewrect_;
-	// Returns true if viewrect has been corrected
-	bool alignViewrect();
-protected:
-	QRect viewrectToPixelViewrect (const QRectF& viewrect) const;
+	Viewrect viewrect_;
 public:
-	void setViewrect(const QRectF &viewrect);
-	inline const QRectF& viewrect() const { return viewrect_; }
-	void setPixelViewrect(const QRect& pixel_viewrect);
-	inline const QRect& pixelViewrect() const { return pixel_viewrect_; }
-	void fitViewrect();
-signals:
-	void pixelViewrectChanged(const QRect& pixel_viewrect);
+	inline Viewrect& viewrect() { return viewrect_; }
+	inline void fitViewrect() { viewrect_.fitToBorder(size()); };
 
 private:
 	double angle_ = 0; // degrees
 public slots:
-	void changeRotationAngle(double angle);
+	void setRotationAngle(double angle);
 signals:
 	void rotationAngleChanged(double angle);
 

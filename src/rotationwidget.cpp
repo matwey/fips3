@@ -16,33 +16,23 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _SPINBOXWITHSLIDER_H
-#define _SPINBOXWITHSLIDER_H
+#include <QGridLayout>
+#include <QLabel>
 
-#include <QWidget>
-#include <QSlider>
+#include <memory>
 
-#include <scientificspinbox.h>
+#include <rotationwidget.h>
 
-class SpinboxWithSlider: public QWidget {
-	Q_OBJECT
-private:
-	static constexpr int slider_range_ = 10000;
-	ScientificSpinBox* spinbox_;
-	QSlider* slider_;
+RotationWidget::RotationWidget(QWidget* parent):
+	spinbox_with_slider_(new SpinboxWithSlider(Qt::Horizontal, this)),
+	QWidget(parent) {
 
-public:
-	SpinboxWithSlider(Qt::Orientation orientation, QWidget* parent=Q_NULLPTR);
+	std::unique_ptr<QGridLayout> widget_layout{new QGridLayout(this)};
+	widget_layout->addWidget(spinbox_with_slider_, 0, 0);
+	widget_layout->addWidget(new QLabel(tr("Deg"), this), 0, 1);
+	widget_layout->setRowStretch(1, 1);
+	setLayout(widget_layout.release());
 
-	inline ScientificSpinBox* spinbox() const { return spinbox_; }
-
-protected:
-	int spinboxValueToSlider(double value) const;
-
-private slots:
-	void notifySliderValueChanged(int value);
-	void notifySpinboxValueChanged(double value);
-	void notifySpinboxRangeChanged(double min, double max);
-};
-
-#endif //_SPINBOXWITHSLIDER_H
+	spinbox()->setRange(-180, 180);
+	spinbox()->setValue(0);
+}
