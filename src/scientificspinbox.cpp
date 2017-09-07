@@ -78,4 +78,5 @@ void ScientificSpinBox::setRange(double min, double max) {
 	// This is the maximum value of the form 1eN that smaller than (max - min) / 10**log10_steps_in_range_
 	const auto step_size = std::pow(10.0, std::floor(std::log10(max - min)) - log10_steps_in_range_);
 	setSingleStep(step_size);
+	emit rangeChanged(min, max);
 }

@@ -82,7 +82,7 @@ OpenGLWidget::VertexCoordinates::VertexCoordinates(const QSize &image_size, GLfl
 }
 OpenGLWidget::VertexCoordinates::VertexCoordinates(const QSize &image_size):
 	VertexCoordinates(image_size, image_size.width() - 1) {}
-QRectF OpenGLWidget::VertexCoordinates::borderRect(GLfloat angle) {
+QRectF OpenGLWidget::VertexCoordinates::borderRect(GLfloat angle) const {
 	QMatrix4x4 rotation_matrix;
 	// Rotation in viewrect coordinates is clockwise, but it doesn't matter in
 	// the case of rectangle with the center in (0,0)
@@ -95,14 +95,14 @@ QRectF OpenGLWidget::VertexCoordinates::borderRect(GLfloat angle) {
 OpenGLWidget::OpenGLWidget(QWidget *parent, const FITS::HeaderDataUnit& hdu):
 	QOpenGLWidget(parent),
 	hdu_(&hdu),
-	viewrect_(0, 0, 1, 1),
-	pixel_viewrect_(QPoint(0, 0), image_size()),
 	shader_uniforms_(new OpenGLShaderUniforms(1, 1, 0, 1)),
 	colormaps_{{
 		openGL_unique_ptr<OpenGLColorMap>(new GrayscaleColorMap() , colormap_deleter_type(this)),
 		openGL_unique_ptr<OpenGLColorMap>(new PurpleBlueColorMap(), colormap_deleter_type(this)),
 	}},
 	colormap_index_(0) {
+
+	connect(&viewrect_, SIGNAL(scrollRectChanged(const QRect&)), this, SLOT(update()));
 	setMouseTracking(true); // We need it to catch mouseEvent when mouse buttons aren't pressed
 }
 
@@ -234,6 +234,7 @@ void OpenGLWidget::initializeGLObjects() {
 
 	// If no exceptions were thrown then we can put new objects to object's member pointers
 	vertex_coords_ = std::move(new_vertex_coords);
+	viewrect_.setBorder(vertex_coords_->borderRect(angle_));
 
 	if (program_) program_->release();
 	program_ = std::move(new_program);
@@ -258,11 +259,11 @@ void OpenGLWidget::resizeEvent(QResizeEvent* event) {
 	if (old_widget_size.width() < 0 || old_widget_size.height() < 0) {
 		fitViewrect();
 	} else {
-		const auto new_viewrect_width  = viewrect_.width()  * (new_widget_size.width()  - 1.0) / (old_widget_size.width()  - 1.0);
-		const auto new_viewrect_height = viewrect_.height() * (new_widget_size.height() - 1.0) / (old_widget_size.height() - 1.0);
-		QRectF new_viewrect(viewrect_);
-		new_viewrect.setSize({new_viewrect_width, new_viewrect_height});
-		setViewrect(new_viewrect);
+		const auto new_viewrect_width  = viewrect_.view().width()  * (new_widget_size.width()  - 1.0) / (old_widget_size.width()  - 1.0);
+		const auto new_viewrect_height = viewrect_.view().height() * (new_widget_size.height() - 1.0) / (old_widget_size.height() - 1.0);
+		QRectF new_view(viewrect_.view());
+		new_view.setSize({new_viewrect_width, new_viewrect_height});
+		viewrect_.set(new_view);
 	}
 }
 
@@ -271,9 +272,12 @@ void OpenGLWidget::paintGL() {
 
 	program_->bind();
 
+	program_->setAttributeArray(program_vertex_coord_attribute_, vertex_coords_->data(), 2);
+
 	QMatrix4x4 mvp(base_mvp_);
 	// QT and OpenGL have different coordinate systems, we should change y-axes direction
-	mvp.ortho(viewrect_.left(), viewrect_.right(), -viewrect_.bottom(), -viewrect_.top(), -1.0f, 1.0f);
+	mvp.ortho(viewrect_.openGLprojection());
+//	mvp.ortho(viewrect_.view().left(), viewrect_.view().right(), -viewrect_.view().bottom(), -viewrect_.view().top(), -1.0f, 1.0f);
 	mvp.rotate(angle_, 0, 0, 1);
 	program_->setUniformValue("MVP", mvp);
 
@@ -321,84 +325,40 @@ QSize OpenGLWidget::sizeHint() const {
 	return image_size();
 }
 
-void OpenGLWidget::setViewrect(const QRectF &viewrect) {
-	viewrect_ = viewrect;
-	alignViewrect();
-	const QRect old_pixel_viewrect(pixel_viewrect_);
-	pixel_viewrect_ = viewrectToPixelViewrect(viewrect_);
-	if (pixel_viewrect_ != old_pixel_viewrect) {
-		update();
-		emit pixelViewrectChanged(pixel_viewrect_);
-	}
-}
-
-QRect OpenGLWidget::viewrectToPixelViewrect(const QRectF& viewrect) const {
-	const int left =   qRound(viewrect.left()   * (image_size().width()  - 1));
-	const int top  =   qRound(viewrect.top()    * (image_size().height() - 1));
-	const int width =  qRound(viewrect.width()  * image_size().width());
-	const int height = qRound(viewrect.height() * image_size().height());
-	return {left, top, width, height};
-}
-
-void OpenGLWidget::setPixelViewrect(const QRect& pixel_viewrect) {
-	const auto left   = static_cast<double>(pixel_viewrect.left()  ) / (image_size().width()  - 1);
-	const auto top    = static_cast<double>(pixel_viewrect.top()   ) / (image_size().height() - 1);
-	const auto width  = static_cast<double>(pixel_viewrect.width() ) / image_size().width();
-	const auto height = static_cast<double>(pixel_viewrect.height()) / image_size().height();
-	setViewrect({left, top, width, height});
-}
-
-void OpenGLWidget::fitViewrect() {
-	QSizeF new_size(size().width() - 1.0, size().height() - 1.0);
-	new_size.scale(vertex_coords_->borderRect(angle_).size(), Qt::KeepAspectRatioByExpanding);
-	// It will be aligned in alignViewrect(), so top left corner value doesn't matter
-	const QRectF new_viewrect(QPointF(0, 0), new_size);
-	setViewrect(new_viewrect);
-}
-
-bool OpenGLWidget::alignViewrect() {
-	const auto border_rect = vertex_coords_->borderRect(angle_);
-	auto viewrect = viewrect_;
-	if (viewrect.size().width() > border_rect.width()) {
-		viewrect.moveCenter({border_rect.center().x(), viewrect.center().y()});
-	} else {
-		if (viewrect.left() < border_rect.left()) {
-			viewrect.moveLeft(border_rect.left());
-		}
-		if (viewrect.right() > border_rect.right()) {
-			viewrect.moveRight(border_rect.right());
-		}
-	}
-	if (viewrect.size().height() > border_rect.height()) {
-		viewrect.moveCenter({viewrect.center().x(), border_rect.center().y()});
-	} else {
-		if (viewrect.top() < border_rect.top()) {
-			viewrect.moveTop(border_rect.top());
-		}
-		if (viewrect.bottom() > border_rect.bottom()) {
-			viewrect.moveBottom(border_rect.bottom());
-		}
-	}
-	if (viewrect != viewrect_) {
-		viewrect_ = viewrect;
-		return true;
-	}
-	return false;
-}
-
-void OpenGLWidget::changeRotationAngle(double angle) {
+void OpenGLWidget::setRotationAngle(double angle) {
 	if (angle_ != angle) {
+		QMatrix4x4 rotate_matrix;
+		rotate_matrix.rotate(angle_-angle, 0, 0, 1); // Rotation in viewrect coordinates is clockwise
+		const auto new_view_center = rotate_matrix.map(viewrect_.view().center());
+		auto new_view_rect = viewrect_.view();
+		new_view_rect.moveCenter(new_view_center);
+
 		angle_ = angle;
-		update(); // TODO: translate viewrect_ instead
+
+		viewrect_.setBorder(vertex_coords_->borderRect(angle_));
+		viewrect_.set(new_view_rect);
+
 		emit rotationAngleChanged(angle_);
 	}
 }
 
 Pixel OpenGLWidget::pixelFromWidgetCoordinate(const QPoint &widget_coord) const {
+	const auto world_coord =
+		QPointF(viewrect_.view().left(), -viewrect_.view().top())
+		+ QPointF(
+			 viewrect_.view().width()  / (size().width()  - 1.0) * widget_coord.x(),
+			-viewrect_.view().height() / (size().height() - 1.0) * widget_coord.y()
+		);
+
+	QMatrix4x4 rotate_matrix;
+	rotate_matrix.rotate(-angle_, 0, 0, 1);
+	const auto model_coord = rotate_matrix.map(world_coord);
+
 	const QPoint position(
-			static_cast<int>(image_size().width()  * (viewrect_.left()      + widget_coord.x() * viewrect_.width()  / (size().width()  - 1.0))),
-			static_cast<int>(image_size().height() * (1.0 - viewrect_.top() - widget_coord.y() * viewrect_.height() / (size().height() - 1.0)))
+		static_cast<int>(0.5 * image_size().width()  * (1.0 + vertex_coords_->factor() * model_coord.x() / (image_size().width()  - 1.0))),
+		static_cast<int>(0.5 * image_size().height() * (1.0 + vertex_coords_->factor() * model_coord.y() / (image_size().height() - 1.0)))
 	);
+
 	const bool inside_image = QRect({0, 0}, image_size()).contains(position);
 	if (inside_image) {
 		double value;

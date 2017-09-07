@@ -24,9 +24,10 @@
 #include <levelswidget.h>
 
 LevelsWidget::LevelsWidget(QWidget* parent):
-			QWidget(parent),
-			min_level_(new SpinboxWithSlider(Qt::Horizontal, this)),
-			max_level_(new SpinboxWithSlider(Qt::Horizontal, this)) {
+	QWidget(parent),
+	min_level_(new SpinboxWithSlider(Qt::Horizontal, this)),
+	max_level_(new SpinboxWithSlider(Qt::Horizontal, this)) {
+
 	connect(min_level_->spinbox(), SIGNAL(valueChanged(double)), this, SLOT(notifyMinValueChanged(double)));
 	connect(max_level_->spinbox(), SIGNAL(valueChanged(double)), this, SLOT(notifyMaxValueChanged(double)));
 

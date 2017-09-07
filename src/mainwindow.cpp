@@ -29,6 +29,7 @@
 
 #include <application.h>
 #include <mainwindow.h>
+#include <rotationwidget.h>
 
 MouseMoveEventFilter::MouseMoveEventFilter(MousePositionWidget *mouse_position_widget, QObject* parent):
 		QObject(parent),
@@ -179,6 +180,22 @@ MainWindow::MainWindow(const QString& fits_filename, QWidget *parent):
 	);
 	levels_dock->setWidget(levels_widget.release());
 	addDockWidget(Qt::RightDockWidgetArea, levels_dock.release());
+
+	std::unique_ptr<QDockWidget> rotation_dock{new QDockWidget(tr("Rotation"), this)};
+	rotation_dock->setAllowedAreas(Qt::AllDockWidgetAreas);
+	view_menu->addAction(rotation_dock->toggleViewAction());
+	rotation_dock->toggleViewAction()->setShortcut(tr("Ctrl+I"));
+	std::unique_ptr<RotationWidget> rotation_widget{new RotationWidget(this)};
+	connect(
+			scrollZoomArea()->viewport(), SIGNAL(rotationAngleChanged(double)),
+			rotation_widget->spinbox(), SLOT(setValue(double))
+	);
+	connect(
+			rotation_widget->spinbox(), SIGNAL(valueChanged(double)),
+			scrollZoomArea()->viewport(), SLOT(setRotationAngle(double))
+	);
+	rotation_dock->setWidget(rotation_widget.release());
+	addDockWidget(Qt::RightDockWidgetArea, rotation_dock.release());
 
 	std::unique_ptr<QDockWidget> colormap_dock{new QDockWidget(tr("Color map"), this)};
 	colormap_dock->setAllowedAreas(Qt::AllDockWidgetAreas);
