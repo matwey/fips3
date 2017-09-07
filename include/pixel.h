@@ -16,28 +16,21 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _OPENGLERRORS_H
-#define _OPENGLERRORS_H
+#ifndef _PIXEL_H
+#define _PIXEL_H
 
-#include <QOpenGLContext>
-#include <QOpenGLFunctions>
+#include <QPoint>
 
-#include <utils/exception.h>
+#include <utils/optional.h>
 
-class OpenGLException: public Utils::Exception {
-public:
-	OpenGLException(const QString &reason, GLenum gl_error_code);
+struct Pixel {
+	QPoint position;
+	Utils::Optional<double> value;
 
-	virtual void raise() const override;
-	virtual QException* clone() const override;
-	static QString glErrorString(GLenum gl_error_code);
+	Pixel(const QPoint& position, const Utils::Optional<double>& value);
+	Pixel(const QPoint& position, double value, bool inside_image);
+	Pixel(const QPoint& position, double value);
+	Pixel(const QPoint& position);
 };
 
-template<class T> void throwIfGLError() {
-	const auto gl_error_code = QOpenGLContext::currentContext()->functions()->glGetError();
-	if (gl_error_code) {
-		throw T(gl_error_code);
-	}
-}
-
-#endif //_OPENGLERRORS_H
+#endif //_PIXEL_H

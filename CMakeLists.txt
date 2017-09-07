@@ -149,7 +149,7 @@ elseif(UNIX)
 endif(APPLE)
 
 enable_testing()
-add_executable(test_fits test/fits.cpp src/fits.cpp src/exception.cpp src/abstractfitsstorage.cpp src/mmapfitsstorage.cpp)
+add_executable(test_fits test/fits.cpp src/fits.cpp src/utils/exception.cpp src/abstractfitsstorage.cpp src/mmapfitsstorage.cpp)
 target_compile_definitions(test_fits PUBLIC PROJECT_ROOT="${PROJECT_SOURCE_DIR}")
 # Linked libraries affect ability to run without X11 display.
 #
@@ -172,3 +172,7 @@ add_test(test_utils_openglrowalign test_utils_openglrowalign)
 add_executable(test_utils_swapbytes test/utils/swapbytes.cpp)
 target_link_libraries(test_utils_swapbytes Qt5::Test)
 add_test(test_utils_swapbytes test_utils_swapbytes)
+
+add_executable(test_utils_optional test/utils/optional.cpp src/utils/exception.cpp)
+target_link_libraries(test_utils_optional Qt5::Test)
+add_test(test_utils_optional test_utils_optional)

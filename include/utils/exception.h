@@ -16,28 +16,27 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _OPENGLERRORS_H
-#define _OPENGLERRORS_H
+#ifndef _EXCEPTION_H_
+#define _EXCEPTION_H_
 
-#include <QOpenGLContext>
-#include <QOpenGLFunctions>
+#include <QException>
+#include <QString>
 
-#include <utils/exception.h>
+namespace Utils {
 
-class OpenGLException: public Utils::Exception {
+class Exception : public QException {
+private:
+	QString what_;
 public:
-	OpenGLException(const QString &reason, GLenum gl_error_code);
+	explicit Exception(const QString& what);
 
 	virtual void raise() const override;
+
 	virtual QException* clone() const override;
-	static QString glErrorString(GLenum gl_error_code);
+
+	virtual const char* what() const noexcept override;
 };
 
-template<class T> void throwIfGLError() {
-	const auto gl_error_code = QOpenGLContext::currentContext()->functions()->glGetError();
-	if (gl_error_code) {
-		throw T(gl_error_code);
-	}
-}
+} // Utils
 
-#endif //_OPENGLERRORS_H
+#endif // _EXCEPTION_H_

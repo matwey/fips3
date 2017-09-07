@@ -24,14 +24,14 @@
 #include <QVariant>
 
 #include <abstractfitsstorage.h>
-#include <exception.h>
+#include <utils/exception.h>
 
 #include <map>
 #include <memory>
 
 class FITS {
 public:
-	class Exception: public ::Exception {
+	class Exception: public Utils::Exception {
 	public:
 		explicit Exception(const QString& what);
 

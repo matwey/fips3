@@ -16,22 +16,32 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _EXCEPTION_H_
-#define _EXCEPTION_H_
+#ifndef _MOUSEPOSITIONWIDGET_H
+#define _MOUSEPOSITIONWIDGET_H
 
-#include <QException>
-#include <QString>
+#include <QHBoxLayout>
+#include <QLabel>
+#include <QLocale>
+#include <QPoint>
+#include <QWidget>
 
-class Exception: public QException {
+#include <algorithm>
+#include <memory>
+
+#include <pixel.h>
+
+class MousePositionWidget: public QWidget {
 private:
-	QString what_;
+	static constexpr const int max_number_of_digits_image_size_ = 5;
+	static constexpr const char text_format_ = 'g';
+	static constexpr const int decimals_ = 5;
+	QLabel* x_position_;
+	QLabel* y_position_;
+	QLabel* value_;
 public:
-	explicit Exception(const QString& what);
+	MousePositionWidget(QWidget* parent = Q_NULLPTR);
 
-	virtual void raise() const override;
-	virtual QException* clone() const override;
-
-	virtual const char* what() const noexcept override;
+	void setPositionAndValue(const Pixel &pixel);
 };
 
-#endif // _EXCEPTION_H_
+#endif //_MOUSEPOSITIONWIDGET_H

@@ -30,8 +30,26 @@
 #include <application.h>
 #include <mainwindow.h>
 
+MouseMoveEventFilter::MouseMoveEventFilter(MousePositionWidget *mouse_position_widget, QObject* parent):
+		QObject(parent),
+		mouse_position_widget_(mouse_position_widget) {}
+
+bool MouseMoveEventFilter::eventFilter(QObject* open_gl_widget, QEvent* event) {
+	auto watched = static_cast<OpenGLWidget*>(open_gl_widget);
+	switch (event->type()) {
+		case QEvent::MouseMove: {
+			auto mouse_event = static_cast<QMouseEvent *>(event);
+			mouse_position_widget_->setPositionAndValue(watched->pixelFromWidgetCoordinate(mouse_event->pos()));
+			return true;
+		}
+		default:
+			return false;
+	}
+}
+
+
 MainWindow::Exception::Exception(const QString& what):
-	::Exception(what) {
+	Utils::Exception(what) {
 }
 void MainWindow::Exception::raise() const {
 	throw *this;
@@ -137,6 +155,13 @@ MainWindow::MainWindow(const QString& fits_filename, QWidget *parent):
 	);
 	colormap_dock->setWidget(colormap_widget.release());
 	addDockWidget(Qt::RightDockWidgetArea, colormap_dock.release());
+
+	std::unique_ptr<QStatusBar> status_bar{new QStatusBar(this)};
+	std::unique_ptr<MousePositionWidget> mouse_position_widget{new MousePositionWidget(this)};
+	mouse_move_event_filter_.reset(new MouseMoveEventFilter(mouse_position_widget.get(), this));
+	scrollZoomArea()->viewport()->installEventFilter(mouse_move_event_filter_.get());
+	status_bar->addWidget(mouse_position_widget.release());
+	setStatusBar(status_bar.release());
 }
 
 void MainWindow::updateWindowTitle() {
