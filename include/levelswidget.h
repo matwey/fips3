@@ -31,6 +31,7 @@ class LevelsWidget: public QWidget {
 private:
 	SpinboxWithSlider* min_level_;
 	SpinboxWithSlider* max_level_;
+	std::pair<double, double> image_minmax_;
 
 public:
 	explicit LevelsWidget(QWidget* parent);
@@ -49,6 +50,8 @@ private slots:
 	inline void notifyValuesChanged(const std::pair<double, double>& minmax) { emit valuesChanged(minmax); }
 	inline void notifyMinValueChanged(double min) { notifyValuesChanged(std::make_pair(min, max_level_->spinbox()->value())); }
 	inline void notifyMaxValueChanged(double max) { notifyValuesChanged(std::make_pair(min_level_->spinbox()->value(), max)); }
+	inline void setValuesToImageMinMax() { setValues(image_minmax_); }
+	inline void setValuesToBoundaries() { setValues(min_level_->spinbox()->minimum(), max_level_->spinbox()->maximum()); }
 };
 
 

@@ -16,8 +16,10 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <QHBoxLayout>
 #include <QGridLayout>
 #include <QLabel>
+#include <QPushButton>
 
 #include <memory>
 
@@ -26,17 +28,36 @@
 LevelsWidget::LevelsWidget(QWidget* parent):
 	QWidget(parent),
 	min_level_(new SpinboxWithSlider(Qt::Horizontal, this)),
-	max_level_(new SpinboxWithSlider(Qt::Horizontal, this)) {
+	max_level_(new SpinboxWithSlider(Qt::Horizontal, this)),
+	image_minmax_(min_level_->spinbox()->value(), max_level_->spinbox()->value()) {
+
+	std::unique_ptr<QVBoxLayout> widget_layout{new QVBoxLayout(this)};
 
 	connect(min_level_->spinbox(), SIGNAL(valueChanged(double)), this, SLOT(notifyMinValueChanged(double)));
 	connect(max_level_->spinbox(), SIGNAL(valueChanged(double)), this, SLOT(notifyMaxValueChanged(double)));
 
-	std::unique_ptr<QGridLayout> widget_layout{new QGridLayout(this)};
-	widget_layout->addWidget(new QLabel(tr("Min"), this), 0, 0);
-	widget_layout->addWidget(min_level_, 0, 1);
-	widget_layout->addWidget(new QLabel(tr("Max"), this), 1, 0);
-	widget_layout->addWidget(max_level_, 1, 1);
-	widget_layout->setRowStretch(2, 1);
+	std::unique_ptr<QWidget> sliders_spinboxes_widget{new QWidget(this)};
+	std::unique_ptr<QGridLayout> sliders_spinboxes_layout{new QGridLayout(sliders_spinboxes_widget.get())};
+	sliders_spinboxes_layout->addWidget(new QLabel(tr("Min"), this), 0, 0);
+	sliders_spinboxes_layout->addWidget(min_level_, 0, 1);
+	sliders_spinboxes_layout->addWidget(new QLabel(tr("Max"), this), 1, 0);
+	sliders_spinboxes_layout->addWidget(max_level_, 1, 1);
+	sliders_spinboxes_widget->setLayout(sliders_spinboxes_layout.release());
+
+	std::unique_ptr<QWidget> buttons_widget{new QWidget(this)};
+	std::unique_ptr<QHBoxLayout> buttons_layout{new QHBoxLayout(buttons_widget.get())};
+	std::unique_ptr<QPushButton> auto_button{new QPushButton(tr("Auto"), this)};
+	connect(auto_button.get(), SIGNAL(clicked()), this, SLOT(setValuesToImageMinMax()));
+	buttons_layout->addWidget(auto_button.release());
+	std::unique_ptr<QPushButton> boundaries_button{new QPushButton(tr("Boundaries"), this)};
+	connect(boundaries_button.get(), SIGNAL(clicked()), this, SLOT(setValuesToBoundaries()));
+	buttons_layout->addWidget(boundaries_button.release());
+	buttons_widget->setLayout(buttons_layout.release());
+
+
+	widget_layout->addWidget(sliders_spinboxes_widget.release());
+	widget_layout->addWidget(buttons_widget.release());
+	widget_layout->addStretch(1);
 	setLayout(widget_layout.release());
 }
 
@@ -53,5 +74,6 @@ void LevelsWidget::setValues(double minimum, double maximum) {
 
 void LevelsWidget::notifyTextureInitialized(const OpenGLTexture *texture) {
 	setRange(texture->instrumental_minmax());
-	setValues(texture->hdu_minmax());
+	image_minmax_ = texture->hdu_minmax();
+	setValues(image_minmax_);
 }
