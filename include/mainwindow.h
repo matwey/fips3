@@ -20,6 +20,7 @@
 #define _MAINWINDOW_H_
 
 #include <QDockWidget>
+#include <QFileSystemWatcher>
 #include <QMainWindow>
 #include <QMouseEvent>
 #include <QMenuBar>
@@ -28,9 +29,9 @@
 
 #include <memory>
 
+#include <colormapwidget.h>
 #include <levelswidget.h>
 #include <mousepositionwidget.h>
-#include <colormapwidget.h>
 #include <scrollzoomarea.h>
 #include <utils/exception.h>
 
@@ -41,6 +42,28 @@ public:
 	MouseMoveEventFilter(MousePositionWidget* mouse_position_widget, QObject* parent = Q_NULLPTR);
 protected:
 	virtual bool eventFilter(QObject* open_gl_widget, QEvent* event) override;
+};
+
+class MainWindowState:
+	public QObject {
+	Q_OBJECT
+private:
+	QString               filename_;
+	std::unique_ptr<FITS> fits_;
+	QFileSystemWatcher*   watcher_;
+
+public:
+	MainWindowState(const QString& filename, bool watch);
+
+	bool isWatched() const;
+	bool setWatch(bool watch);
+
+	inline const QString& filename() const { return filename_; }
+	inline const FITS&    fits()     const { return *fits_; }
+public slots:
+	void fileChanged(const QString& path);
+signals:
+	void fileChanged();
 };
 
 class MainWindow:
@@ -75,12 +98,13 @@ private:
 	static constexpr double zoomOut_factor_ = 0.8;
 	static constexpr const char homepage_url_[] = "http://fips.space";
 
-	QString fits_filename_;
-	std::unique_ptr<FITS> fits_;
-	std::unique_ptr<FITS> loadFITS(const QString& fits_filename) const;
-	void openInThisWindow(const QString& fits_filename);
-	void updateWindowTitle();
+	std::unique_ptr<MainWindowState> state_;
 	std::unique_ptr<MouseMoveEventFilter> mouse_move_event_filter_;
+private:
+	void setState(MainWindowState* state);
+	void setState(std::unique_ptr<MainWindowState>&& state);
+
+	void setWindowTitle(const QString& filename);
 protected:
 	virtual void resizeEvent(QResizeEvent* event) override;
 	virtual void closeEvent(QCloseEvent *event) override;
@@ -94,6 +118,7 @@ public:
 public slots:
 	void openFileHere();
 	void refresh();
+	void setAutoRefresh(bool autorefresh);
 	void zoomIn();
 	void zoomOut();
 	void fitToWindow();
