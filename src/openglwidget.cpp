@@ -100,7 +100,6 @@ void RotationTransform::setRotationAngle(double angle) {
 OpenGLTransform::OpenGLTransform(OpenGLWidget *parent):
 	CoordinateSystemTransform(parent) {
 	connect(&parent_->viewrect(), SIGNAL(scrollRectChanged(const QRect&)), this, SLOT(scrollRectChanged()));
-	connect(&parent_->rotationTransform(), SIGNAL(rotationAngleChanged(double)), this, SLOT(angleChanged()));
 }
 const QMatrix4x4& OpenGLTransform::matrix() {
 	if (projection_to_be_changed_) {
