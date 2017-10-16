@@ -187,12 +187,12 @@ MainWindow::MainWindow(const QString& fits_filename, QWidget *parent):
 	rotation_dock->toggleViewAction()->setShortcut(tr("Ctrl+I"));
 	std::unique_ptr<RotationWidget> rotation_widget{new RotationWidget(this)};
 	connect(
-			scrollZoomArea()->viewport(), SIGNAL(rotationAngleChanged(double)),
+			scrollZoomArea()->viewport(), SIGNAL(rotationChanged(double)),
 			rotation_widget->spinbox(), SLOT(setValue(double))
 	);
 	connect(
 			rotation_widget->spinbox(), SIGNAL(valueChanged(double)),
-			scrollZoomArea()->viewport(), SLOT(setRotationAngle(double))
+			scrollZoomArea()->viewport(), SLOT(setRotation(double))
 	);
 	rotation_dock->setWidget(rotation_widget.release());
 	addDockWidget(Qt::RightDockWidgetArea, rotation_dock.release());

@@ -31,6 +31,7 @@
 #include <QMatrix4x4>
 #include <QMessageBox>
 #include <QResizeEvent>
+#include <QTransform>
 
 #include <array>
 #include <cmath>
@@ -40,6 +41,7 @@
 #include <openglerrors.h>
 #include <openglshaderunifroms.h>
 #include <opengltexture.h>
+#include <opengltransform.h>
 #include <viewrect.h>
 #include <pixel.h>
 
@@ -131,13 +133,12 @@ protected:
 public:
 	inline QSize image_size() const { return hdu_->data().imageDataUnit()->size(); }
 	void setHDU(const FITS::HeaderDataUnit& hdu);
-	Pixel pixelFromWidgetCoordinate(const QPoint &widget_coord) const;
+	Pixel pixelFromWidgetCoordinate(const QPoint &widget_coord);
 
 private:
 	const FITS::HeaderDataUnit* hdu_;
 	openGL_unique_ptr<OpenGLTexture> texture_;
 	openGL_unique_ptr<QOpenGLShaderProgram> program_;
-	QMatrix4x4 base_mvp_;
 
 private:
 	static const int program_vertex_coord_attribute_ = 0;
@@ -152,19 +153,26 @@ private:
 			1.0f, 0.0f
 	};
 	std::unique_ptr<VertexCoordinates> vertex_coords_;
+public:
+	inline const VertexCoordinates* vertexCoords() const { return vertex_coords_.get(); }
 
 private:
 	Viewrect viewrect_;
 public:
 	inline Viewrect& viewrect() { return viewrect_; }
 	inline void fitViewrect() { viewrect_.fitToBorder(size()); };
+private slots:
+	void viewChanged(const QRectF& view_rect);
 
 private:
-	double angle_ = 0; // degrees
+	OpenGLTransform opengl_transform_;
+	WidgetToFitsOpenGLTransform widget_to_fits_;
+public:
+	inline double rotation() const { return opengl_transform_.rotation(); }
 public slots:
-	void setRotationAngle(double angle);
+	void setRotation(double angle);
 signals:
-	void rotationAngleChanged(double angle);
+	void rotationChanged(double angle);
 
 private:
 	std::unique_ptr<OpenGLShaderUniforms> shader_uniforms_;

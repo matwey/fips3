@@ -72,7 +72,7 @@ OpenGLWidget::VertexCoordinates::VertexCoordinates(const QSize &image_size, GLfl
 	factor_(factor) {
 	const auto semi_width  = (image_size_.width()  - 1.0f) / factor;
 	const auto semi_height = (image_size_.height() - 1.0f) / factor;
-	// Center of the rectangle should be in (0,0)
+	// Center of the rectangle should be at (0,0)
 	data_ = {
 			-semi_width, -semi_height,
 			-semi_width,  semi_height,
@@ -95,6 +95,8 @@ QRectF OpenGLWidget::VertexCoordinates::borderRect(GLfloat angle) const {
 OpenGLWidget::OpenGLWidget(QWidget *parent, const FITS::HeaderDataUnit& hdu):
 	QOpenGLWidget(parent),
 	hdu_(&hdu),
+	opengl_transform_(this),
+	widget_to_fits_(this),
 	shader_uniforms_(new OpenGLShaderUniforms(1, 1, 0, 1)),
 	colormaps_{{
 		openGL_unique_ptr<OpenGLColorMap>(new GrayscaleColorMap() , colormap_deleter_type(this)),
@@ -102,7 +104,9 @@ OpenGLWidget::OpenGLWidget(QWidget *parent, const FITS::HeaderDataUnit& hdu):
 	}},
 	colormap_index_(0) {
 
+	connect(&viewrect_, SIGNAL(viewChanged(const QRectF&)), this, SLOT(viewChanged(const QRectF&)));
 	connect(&viewrect_, SIGNAL(scrollChanged(const QRect&)), this, SLOT(update()));
+	connect(this, SIGNAL(rotationChanged(double)), this, SLOT(update()));
 	setMouseTracking(true); // We need it to catch mouseEvent when mouse buttons aren't pressed
 }
 
@@ -234,7 +238,9 @@ void OpenGLWidget::initializeGLObjects() {
 
 	// If no exceptions were thrown then we can put new objects to object's member pointers
 	vertex_coords_ = std::move(new_vertex_coords);
-	viewrect_.setBorder(vertex_coords_->borderRect(angle_));
+	viewrect_.setBorder(vertex_coords_->borderRect(rotation()));
+	widget_to_fits_.setScale(1.0/vertex_coords_->factor());
+	widget_to_fits_.setImageSize(image_size());
 
 	if (program_) program_->release();
 	program_ = std::move(new_program);
@@ -265,6 +271,8 @@ void OpenGLWidget::resizeEvent(QResizeEvent* event) {
 		new_view.setSize({new_viewrect_width, new_viewrect_height});
 		viewrect_.setView(new_view);
 	}
+
+	widget_to_fits_.setWidgetSize(new_widget_size);
 }
 
 void OpenGLWidget::paintGL() {
@@ -274,12 +282,7 @@ void OpenGLWidget::paintGL() {
 
 	program_->setAttributeArray(program_vertex_coord_attribute_, vertex_coords_->data(), 2);
 
-	QMatrix4x4 mvp(base_mvp_);
-	// QT and OpenGL have different coordinate systems, we should change y-axes direction
-	mvp.ortho(viewrect_.openGLprojection());
-//	mvp.ortho(viewrect_.view().left(), viewrect_.view().right(), -viewrect_.view().bottom(), -viewrect_.view().top(), -1.0f, 1.0f);
-	mvp.rotate(angle_, 0, 0, 1);
-	program_->setUniformValue("MVP", mvp);
+	program_->setUniformValue("MVP", opengl_transform_.transformMatrix());
 
 	program_->setUniformValueArray("c", shader_uniforms_->get_c().data(), 1, shader_uniforms_->channels);
 	program_->setUniformValueArray("z", shader_uniforms_->get_z().data(), 1, shader_uniforms_->channels);
@@ -325,39 +328,9 @@ QSize OpenGLWidget::sizeHint() const {
 	return image_size();
 }
 
-void OpenGLWidget::setRotationAngle(double angle) {
-	if (angle_ != angle) {
-		QMatrix4x4 rotate_matrix;
-		rotate_matrix.rotate(angle_-angle, 0, 0, 1); // Rotation in viewrect coordinates is clockwise
-		const auto new_view_center = rotate_matrix.map(viewrect_.view().center());
-		auto new_view_rect = viewrect_.view();
-		new_view_rect.moveCenter(new_view_center);
-
-		angle_ = angle;
-
-		viewrect_.setBorder(vertex_coords_->borderRect(angle_));
-		viewrect_.setView(new_view_rect);
-
-		emit rotationAngleChanged(angle_);
-	}
-}
-
-Pixel OpenGLWidget::pixelFromWidgetCoordinate(const QPoint &widget_coord) const {
-	const auto world_coord =
-		QPointF(viewrect_.view().left(), -viewrect_.view().top())
-		+ QPointF(
-			 viewrect_.view().width()  / (size().width()  - 1.0) * widget_coord.x(),
-			-viewrect_.view().height() / (size().height() - 1.0) * widget_coord.y()
-		);
-
-	QMatrix4x4 rotate_matrix;
-	rotate_matrix.rotate(-angle_, 0, 0, 1);
-	const auto model_coord = rotate_matrix.map(world_coord);
-
-	const QPoint position(
-		static_cast<int>(0.5 * image_size().width()  * (1.0 + vertex_coords_->factor() * model_coord.x() / (image_size().width()  - 1.0))),
-		static_cast<int>(0.5 * image_size().height() * (1.0 + vertex_coords_->factor() * model_coord.y() / (image_size().height() - 1.0)))
-	);
+Pixel OpenGLWidget::pixelFromWidgetCoordinate(const QPoint &widget_coord) {
+	const auto p = widget_to_fits_.transform(widget_coord.x(), widget_coord.y());
+	const QPoint position(p.x(), p.y());
 
 	const bool inside_image = QRect({0, 0}, image_size()).contains(position);
 	if (inside_image) {
@@ -366,6 +339,20 @@ Pixel OpenGLWidget::pixelFromWidgetCoordinate(const QPoint &widget_coord) const 
 		return Pixel(position, value);
 	}
 	return Pixel(position);
+}
+
+void OpenGLWidget::viewChanged(const QRectF& view_rect) {
+	opengl_transform_.setViewrect(view_rect);
+	widget_to_fits_.setViewrect(view_rect);
+}
+
+void OpenGLWidget::setRotation(double angle) {
+	if (rotation() == angle) return;
+
+	opengl_transform_.setRotation(angle);
+	widget_to_fits_.setRotation(angle);
+
+	emit rotationChanged(rotation());
 }
 
 constexpr const GLfloat OpenGLWidget::uv_data[];
