@@ -107,6 +107,7 @@ PixelTransform::PixelTransform(OpenGLWidget *parent):
 }
 const QMatrix4x4& PixelTransform::matrix() {
 	if (widget_to_world_to_be_changed_ || world_to_model_to_be_changed_ || model_to_image_to_be_changed_) {
+		const bool widget_to_model_to_be_changed = widget_to_world_to_be_changed_ || world_to_model_to_be_changed_;
 		if (widget_to_world_to_be_changed_) {
 			const auto view = parent_->viewrect().view();
 			const auto widget = parent_->size();
@@ -117,24 +118,27 @@ const QMatrix4x4& PixelTransform::matrix() {
 			data[12] = view.left();
 			data[13] = -view.top();
 			widget_to_world_ = m;
+			widget_to_world_to_be_changed_ = false;
 		}
 		if (world_to_model_to_be_changed_) {
 			QMatrix4x4 m;
 			m.rotate(-parent_->angle(), 0, 0, 1);
 			world_to_model_ = m;
+			world_to_model_to_be_changed_ = false;
 		}
-		if (widget_to_world_to_be_changed_ || world_to_model_to_be_changed_) {
+		if (widget_to_model_to_be_changed) {
 			widget_to_model_ = world_to_model_ * widget_to_world_;
 		}
 		if (model_to_image_to_be_changed_) {
 			const auto image = parent_->image_size();
 			QMatrix4x4 m;
 			auto data = m.data();
-			data[12] = 0.5 * (image.width() - 1.0);
-			data[13] = 0.5 * (image.height() - 1.0);
 			data[0] = 0.5 * image.width()  * parent_->vertexCoords()->factor() / (image.width()  - 1.0);
 			data[5] = 0.5 * image.height() * parent_->vertexCoords()->factor() / (image.height() - 1.0);
+			data[12] = 0.5 * (image.width() - 1.0);
+			data[13] = 0.5 * (image.height() - 1.0);
 			model_to_image_ = m;
+			model_to_image_to_be_changed_ = false;
 		}
 		matrix_ = model_to_image_ * widget_to_model_;
 	}
