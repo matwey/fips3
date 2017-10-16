@@ -74,26 +74,41 @@ const QMatrix4x4& CoordinateSystemTransform::matrix() {
 	return matrix_;
 }
 
+RotationTransform::RotationTransform(OpenGLWidget *parent):
+	CoordinateSystemTransform(parent) {}
+void RotationTransform::setRotationAngle(double angle) {
+	if (angle_ != angle) {
+		QMatrix4x4 viewrect_rotation_matrix;
+		viewrect_rotation_matrix.rotate(angle_-angle, 0, 0, 1); // Rotation in viewrect coordinates is clockwise
+		auto &viewrect = parent_->viewrect();
+		const auto new_view_center = viewrect_rotation_matrix.map(viewrect.view().center());
+		auto new_view_rect = viewrect.view();
+		new_view_rect.moveCenter(new_view_center);
+
+		angle_ = angle;
+		QMatrix4x4 m;
+		m.rotate(angle_, 0, 0, 1);
+		matrix_ = m;
+
+		viewrect.setBorder(parent_->vertexCoords()->borderRect(angle_));
+		viewrect.set(new_view_rect);
+
+		emit rotationAngleChanged(angle_);
+	}
+}
+
 OpenGLTransform::OpenGLTransform(OpenGLWidget *parent):
 	CoordinateSystemTransform(parent) {
 	connect(&parent_->viewrect(), SIGNAL(scrollRectChanged(const QRect&)), this, SLOT(scrollRectChanged()));
-	connect(parent_, SIGNAL(rotationAngleChanged(double)), this, SLOT(angleChanged()));
+	connect(&parent_->rotationTransform(), SIGNAL(rotationAngleChanged(double)), this, SLOT(angleChanged()));
 }
 const QMatrix4x4& OpenGLTransform::matrix() {
-	if (projection_to_be_changed_ || rotation_to_be_changed_) {
-		if (projection_to_be_changed_) {
-			QMatrix4x4 m;
-			m.ortho(parent_->viewrect().openGLprojection());
-			projection_ = m;
-			projection_to_be_changed_ = false;
-		}
-		if (rotation_to_be_changed_) {
-			QMatrix4x4 m;
-			m.rotate(parent_->angle(), 0, 0, 1);
-			rotation_ = m;
-			rotation_to_be_changed_ = false;
-		}
-		matrix_ = projection_* rotation_;
+	if (projection_to_be_changed_) {
+		QMatrix4x4 m;
+		m.ortho(parent_->viewrect().openGLprojection());
+		projection_ = m;
+		projection_to_be_changed_ = false;
+		matrix_ = projection_* parent_->rotationTransform().matrix();
 	}
 	return CoordinateSystemTransform::matrix();
 }
@@ -102,7 +117,7 @@ PixelTransform::PixelTransform(OpenGLWidget *parent):
 	CoordinateSystemTransform(parent) {
 	connect(&parent_->viewrect(), SIGNAL(scrollRectChanged(const QRect&)), this, SLOT(scrollRectChanged()));
 	connect(parent_, SIGNAL(resized()), this, SLOT(widgetResized()));
-	connect(parent_, SIGNAL(rotationAngleChanged(double)), this, SLOT(angleChanged()));
+	connect(&parent_->rotationTransform(), SIGNAL(rotationAngleChanged(double)), this, SLOT(angleChanged()));
 	connect(parent_, SIGNAL(textureInitialized(const OpenGLTexture*)), this, SLOT(imageReloaded()));
 }
 const QMatrix4x4& PixelTransform::matrix() {
@@ -121,9 +136,7 @@ const QMatrix4x4& PixelTransform::matrix() {
 			widget_to_world_to_be_changed_ = false;
 		}
 		if (world_to_model_to_be_changed_) {
-			QMatrix4x4 m;
-			m.rotate(-parent_->angle(), 0, 0, 1);
-			world_to_model_ = m;
+			world_to_model_ = parent_->rotationTransform().matrix().transposed();
 			world_to_model_to_be_changed_ = false;
 		}
 		if (widget_to_model_to_be_changed) {
@@ -173,6 +186,7 @@ QRectF OpenGLWidget::VertexCoordinates::borderRect(GLfloat angle) const {
 OpenGLWidget::OpenGLWidget(QWidget *parent, const FITS::HeaderDataUnit& hdu):
 	QOpenGLWidget(parent),
 	hdu_(&hdu),
+	rotation_transform_(this),
 	open_gl_transform_(this),
 	pixel_transform_(this),
 	shader_uniforms_(new OpenGLShaderUniforms(1, 1, 0, 1)),
@@ -314,7 +328,7 @@ void OpenGLWidget::initializeGLObjects() {
 
 	// If no exceptions were thrown then we can put new objects to object's member pointers
 	vertex_coords_ = std::move(new_vertex_coords);
-	viewrect_.setBorder(vertex_coords_->borderRect(angle_));
+	viewrect_.setBorder(vertex_coords_->borderRect(angle()));
 
 	if (program_) program_->release();
 	program_ = std::move(new_program);
@@ -398,23 +412,6 @@ void OpenGLWidget::changeColorMap(int colormap_index) {
 
 QSize OpenGLWidget::sizeHint() const {
 	return image_size();
-}
-
-void OpenGLWidget::setRotationAngle(double angle) {
-	if (angle_ != angle) {
-		QMatrix4x4 rotate_matrix;
-		rotate_matrix.rotate(angle_-angle, 0, 0, 1); // Rotation in viewrect coordinates is clockwise
-		const auto new_view_center = rotate_matrix.map(viewrect_.view().center());
-		auto new_view_rect = viewrect_.view();
-		new_view_rect.moveCenter(new_view_center);
-
-		angle_ = angle;
-
-		viewrect_.setBorder(vertex_coords_->borderRect(angle_));
-		viewrect_.set(new_view_rect);
-
-		emit rotationAngleChanged(angle_);
-	}
 }
 
 Pixel OpenGLWidget::pixelFromWidgetCoordinate(const QPoint &widget_coord) {

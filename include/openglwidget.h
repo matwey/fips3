@@ -55,6 +55,19 @@ public:
 	virtual const QMatrix4x4& matrix();
 };
 
+class RotationTransform: public CoordinateSystemTransform {
+Q_OBJECT
+public:
+	explicit RotationTransform(OpenGLWidget *parent);
+	inline double angle() const { return angle_; }
+public slots:
+	void setRotationAngle(double angle);
+private:
+	double angle_ = 0;  // degrees
+signals:
+	void rotationAngleChanged(double angle);
+};
+
 class OpenGLTransform: public CoordinateSystemTransform {
 Q_OBJECT
 public:
@@ -62,12 +75,9 @@ public:
 	virtual const QMatrix4x4& matrix() override;
 private:
 	QMatrix4x4 projection_;
-	QMatrix4x4 rotation_;
 	bool projection_to_be_changed_ = true;
-	bool rotation_to_be_changed_ = true;
 private slots:
 	inline void scrollRectChanged() { projection_to_be_changed_ = true; };
-	inline void angleChanged() { rotation_to_be_changed_ = true; }
 };
 
 class PixelTransform: public CoordinateSystemTransform {
@@ -86,7 +96,7 @@ private:
 private slots:
 	inline void scrollRectChanged() { widget_to_world_to_be_changed_ = true; };
 	inline void widgetResized() { widget_to_world_to_be_changed_ = true; }
-	inline void angleChanged() { world_to_model_to_be_changed_ = true; model_to_image_to_be_changed_ = true; }
+	inline void angleChanged() { world_to_model_to_be_changed_ = true; }
 	inline void imageReloaded() { model_to_image_to_be_changed_ = true; }
 };
 
@@ -208,17 +218,12 @@ public:
 	inline void fitViewrect() { viewrect_.fitToBorder(size()); };
 
 private:
+	RotationTransform rotation_transform_;
 	OpenGLTransform open_gl_transform_;
 	PixelTransform pixel_transform_;
-
-private:
-	double angle_ = 0; // degrees
 public:
-	inline double angle() { return angle_; }
-public slots:
-	void setRotationAngle(double angle);
-signals:
-	void rotationAngleChanged(double angle);
+	inline double angle() { return rotation_transform_.angle(); }
+	inline RotationTransform& rotationTransform() { return rotation_transform_; }
 
 private:
 	std::unique_ptr<OpenGLShaderUniforms> shader_uniforms_;
