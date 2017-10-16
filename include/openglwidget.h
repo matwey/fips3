@@ -31,6 +31,7 @@
 #include <QMatrix4x4>
 #include <QMessageBox>
 #include <QResizeEvent>
+#include <QTransform>
 
 #include <array>
 #include <cmath>
@@ -42,6 +43,52 @@
 #include <opengltexture.h>
 #include <viewrect.h>
 #include <pixel.h>
+
+class OpenGLWidget;
+
+class CoordinateSystemTransform: public QObject {
+protected:
+	OpenGLWidget *parent_;
+	QMatrix4x4 matrix_;
+public:
+	CoordinateSystemTransform(OpenGLWidget *parent);
+	virtual const QMatrix4x4& matrix();
+};
+
+class OpenGLTransform: public CoordinateSystemTransform {
+Q_OBJECT
+public:
+	explicit OpenGLTransform(OpenGLWidget *parent);
+	virtual const QMatrix4x4& matrix() override;
+private:
+	QMatrix4x4 projection_;
+	QMatrix4x4 rotation_;
+	bool projection_to_be_changed_ = true;
+	bool rotation_to_be_changed_ = true;
+private slots:
+	inline void scrollRectChanged() { projection_to_be_changed_ = true; };
+	inline void angleChanged() { rotation_to_be_changed_ = true; }
+};
+
+class PixelTransform: public CoordinateSystemTransform {
+Q_OBJECT
+public:
+	explicit PixelTransform(OpenGLWidget *parent);
+	virtual const QMatrix4x4& matrix() override;
+private:
+	QMatrix4x4 widget_to_world_;
+	QMatrix4x4 world_to_model_;
+	QMatrix4x4 model_to_image_;
+	QMatrix4x4 widget_to_model_;
+	bool widget_to_world_to_be_changed_ = true;
+	bool world_to_model_to_be_changed_ = true;
+	bool model_to_image_to_be_changed_ = true;
+private slots:
+	inline void scrollRectChanged() { widget_to_world_to_be_changed_ = true; };
+	inline void widgetResized() { widget_to_world_to_be_changed_ = true; }
+	inline void angleChanged() { world_to_model_to_be_changed_ = true; model_to_image_to_be_changed_ = true; }
+	inline void imageReloaded() { model_to_image_to_be_changed_ = true; }
+};
 
 class OpenGLWidget: public QOpenGLWidget, protected QOpenGLFunctions {
 	Q_OBJECT
@@ -131,13 +178,12 @@ protected:
 public:
 	inline QSize image_size() const { return hdu_->data().imageDataUnit()->size(); }
 	void setHDU(const FITS::HeaderDataUnit& hdu);
-	Pixel pixelFromWidgetCoordinate(const QPoint &widget_coord) const;
+	Pixel pixelFromWidgetCoordinate(const QPoint &widget_coord);
 
 private:
 	const FITS::HeaderDataUnit* hdu_;
 	openGL_unique_ptr<OpenGLTexture> texture_;
 	openGL_unique_ptr<QOpenGLShaderProgram> program_;
-	QMatrix4x4 base_mvp_;
 
 private:
 	static const int program_vertex_coord_attribute_ = 0;
@@ -152,6 +198,8 @@ private:
 			1.0f, 0.0f
 	};
 	std::unique_ptr<VertexCoordinates> vertex_coords_;
+public:
+	inline const VertexCoordinates* vertexCoords() const { return vertex_coords_.get(); }
 
 private:
 	Viewrect viewrect_;
@@ -160,7 +208,13 @@ public:
 	inline void fitViewrect() { viewrect_.fitToBorder(size()); };
 
 private:
+	OpenGLTransform open_gl_transform_;
+	PixelTransform pixel_transform_;
+
+private:
 	double angle_ = 0; // degrees
+public:
+	inline double angle() { return angle_; }
 public slots:
 	void setRotationAngle(double angle);
 signals:

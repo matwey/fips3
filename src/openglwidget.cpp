@@ -67,12 +67,86 @@ QException* OpenGLWidget::ShaderCompileError::clone() const {
 	return new OpenGLWidget::ShaderCompileError(*this);
 }
 
+CoordinateSystemTransform::CoordinateSystemTransform(OpenGLWidget *parent):
+	QObject(parent),
+	parent_(parent) {}
+const QMatrix4x4& CoordinateSystemTransform::matrix() {
+	return matrix_;
+}
+
+OpenGLTransform::OpenGLTransform(OpenGLWidget *parent):
+	CoordinateSystemTransform(parent) {
+	connect(&parent_->viewrect(), SIGNAL(scrollRectChanged(const QRect&)), this, SLOT(scrollRectChanged()));
+	connect(parent_, SIGNAL(rotationAngleChanged(double)), this, SLOT(angleChanged()));
+}
+const QMatrix4x4& OpenGLTransform::matrix() {
+	if (projection_to_be_changed_ || rotation_to_be_changed_) {
+		if (projection_to_be_changed_) {
+			QMatrix4x4 m;
+			m.ortho(parent_->viewrect().openGLprojection());
+			projection_ = m;
+			projection_to_be_changed_ = false;
+		}
+		if (rotation_to_be_changed_) {
+			QMatrix4x4 m;
+			m.rotate(parent_->angle(), 0, 0, 1);
+			rotation_ = m;
+			rotation_to_be_changed_ = false;
+		}
+		matrix_ = projection_* rotation_;
+	}
+	return CoordinateSystemTransform::matrix();
+}
+
+PixelTransform::PixelTransform(OpenGLWidget *parent):
+	CoordinateSystemTransform(parent) {
+	connect(&parent_->viewrect(), SIGNAL(scrollRectChanged(const QRect&)), this, SLOT(scrollRectChanged()));
+	connect(parent_, SIGNAL(resized()), this, SLOT(widgetResized()));
+	connect(parent_, SIGNAL(rotationAngleChanged(double)), this, SLOT(angleChanged()));
+	connect(parent_, SIGNAL(textureInitialized(const OpenGLTexture*)), this, SLOT(imageReloaded()));
+}
+const QMatrix4x4& PixelTransform::matrix() {
+	if (widget_to_world_to_be_changed_ || world_to_model_to_be_changed_ || model_to_image_to_be_changed_) {
+		if (widget_to_world_to_be_changed_) {
+			const auto view = parent_->viewrect().view();
+			const auto widget = parent_->size();
+			QMatrix4x4 m;
+			auto data = m.data();
+			data[0] = view.width() / (widget.width() - 1.0);
+			data[5] = -view.height() / (widget.height() - 1.0);
+			data[12] = view.left();
+			data[13] = -view.top();
+			widget_to_world_ = m;
+		}
+		if (world_to_model_to_be_changed_) {
+			QMatrix4x4 m;
+			m.rotate(-parent_->angle(), 0, 0, 1);
+			world_to_model_ = m;
+		}
+		if (widget_to_world_to_be_changed_ || world_to_model_to_be_changed_) {
+			widget_to_model_ = world_to_model_ * widget_to_world_;
+		}
+		if (model_to_image_to_be_changed_) {
+			const auto image = parent_->image_size();
+			QMatrix4x4 m;
+			auto data = m.data();
+			data[12] = 0.5 * (image.width() - 1.0);
+			data[13] = 0.5 * (image.height() - 1.0);
+			data[0] = 0.5 * image.width()  * parent_->vertexCoords()->factor() / (image.width()  - 1.0);
+			data[5] = 0.5 * image.height() * parent_->vertexCoords()->factor() / (image.height() - 1.0);
+			model_to_image_ = m;
+		}
+		matrix_ = model_to_image_ * widget_to_model_;
+	}
+	return CoordinateSystemTransform::matrix();
+}
+
 OpenGLWidget::VertexCoordinates::VertexCoordinates(const QSize &image_size, GLfloat factor):
 	image_size_(image_size),
 	factor_(factor) {
 	const auto semi_width  = (image_size_.width()  - 1.0f) / factor;
 	const auto semi_height = (image_size_.height() - 1.0f) / factor;
-	// Center of the rectangle should be in (0,0)
+	// Center of the rectangle should be at (0,0)
 	data_ = {
 			-semi_width, -semi_height,
 			-semi_width,  semi_height,
@@ -95,6 +169,8 @@ QRectF OpenGLWidget::VertexCoordinates::borderRect(GLfloat angle) const {
 OpenGLWidget::OpenGLWidget(QWidget *parent, const FITS::HeaderDataUnit& hdu):
 	QOpenGLWidget(parent),
 	hdu_(&hdu),
+	open_gl_transform_(this),
+	pixel_transform_(this),
 	shader_uniforms_(new OpenGLShaderUniforms(1, 1, 0, 1)),
 	colormaps_{{
 		openGL_unique_ptr<OpenGLColorMap>(new GrayscaleColorMap() , colormap_deleter_type(this)),
@@ -274,12 +350,7 @@ void OpenGLWidget::paintGL() {
 
 	program_->setAttributeArray(program_vertex_coord_attribute_, vertex_coords_->data(), 2);
 
-	QMatrix4x4 mvp(base_mvp_);
-	// QT and OpenGL have different coordinate systems, we should change y-axes direction
-	mvp.ortho(viewrect_.openGLprojection());
-//	mvp.ortho(viewrect_.view().left(), viewrect_.view().right(), -viewrect_.view().bottom(), -viewrect_.view().top(), -1.0f, 1.0f);
-	mvp.rotate(angle_, 0, 0, 1);
-	program_->setUniformValue("MVP", mvp);
+	program_->setUniformValue("MVP", open_gl_transform_.matrix());
 
 	program_->setUniformValueArray("c", shader_uniforms_->get_c().data(), 1, shader_uniforms_->channels);
 	program_->setUniformValueArray("z", shader_uniforms_->get_z().data(), 1, shader_uniforms_->channels);
@@ -342,22 +413,8 @@ void OpenGLWidget::setRotationAngle(double angle) {
 	}
 }
 
-Pixel OpenGLWidget::pixelFromWidgetCoordinate(const QPoint &widget_coord) const {
-	const auto world_coord =
-		QPointF(viewrect_.view().left(), -viewrect_.view().top())
-		+ QPointF(
-			 viewrect_.view().width()  / (size().width()  - 1.0) * widget_coord.x(),
-			-viewrect_.view().height() / (size().height() - 1.0) * widget_coord.y()
-		);
-
-	QMatrix4x4 rotate_matrix;
-	rotate_matrix.rotate(-angle_, 0, 0, 1);
-	const auto model_coord = rotate_matrix.map(world_coord);
-
-	const QPoint position(
-		static_cast<int>(0.5 * image_size().width()  * (1.0 + vertex_coords_->factor() * model_coord.x() / (image_size().width()  - 1.0))),
-		static_cast<int>(0.5 * image_size().height() * (1.0 + vertex_coords_->factor() * model_coord.y() / (image_size().height() - 1.0)))
-	);
+Pixel OpenGLWidget::pixelFromWidgetCoordinate(const QPoint &widget_coord) {
+	const auto position = pixel_transform_.matrix().map(QPointF(widget_coord)).toPoint();
 
 	const bool inside_image = QRect({0, 0}, image_size()).contains(position);
 	if (inside_image) {
