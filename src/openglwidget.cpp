@@ -125,7 +125,7 @@ void OpenGLWidget::initializeGL() {
 }
 
 void OpenGLWidget::initializeGLObjects() {
-	std::unique_ptr<VertexCoordinates> new_vertex_coords{new VertexCoordinates(image_size())};
+	std::unique_ptr<OpenGLPlane> new_plane{new OpenGLPlane(image_size())};
 
 	struct ShaderLoader {
 		QString* fragment_shader_source_main_;
@@ -228,7 +228,7 @@ void OpenGLWidget::initializeGLObjects() {
 	if (! new_program->bind()) throw ShaderBindError(glGetError());
 	new_program->enableAttributeArray(program_vertex_coord_attribute_);
 	new_program->enableAttributeArray(program_vertex_uv_attribute_);
-	new_program->setAttributeArray(program_vertex_coord_attribute_, new_vertex_coords->data(), 2);
+	new_program->setAttributeArray(program_vertex_coord_attribute_, new_plane->vertexArray(), 2);
 	new_program->setAttributeArray(program_vertex_uv_attribute_, uv_data, 2);
 	new_program->setUniformValue("texture",  program_texture_uniform_);
 	new_program->setUniformValue("colormap", program_colormap_uniform_);
@@ -237,9 +237,9 @@ void OpenGLWidget::initializeGLObjects() {
 	new_texture->initialize(hdu_);
 
 	// If no exceptions were thrown then we can put new objects to object's member pointers
-	vertex_coords_ = std::move(new_vertex_coords);
-	viewrect_.setBorder(vertex_coords_->borderRect(rotation()));
-	widget_to_fits_.setScale(1.0/vertex_coords_->factor());
+	plane_ = std::move(new_plane);
+	viewrect_.setBorder(plane_->borderRect(rotation()));
+	widget_to_fits_.setScale(plane_->scale());
 	widget_to_fits_.setImageSize(image_size());
 
 	if (program_) program_->release();
@@ -280,7 +280,7 @@ void OpenGLWidget::paintGL() {
 
 	program_->bind();
 
-	program_->setAttributeArray(program_vertex_coord_attribute_, vertex_coords_->data(), 2);
+	program_->setAttributeArray(program_vertex_coord_attribute_, plane_->vertexArray(), 2);
 
 	program_->setUniformValue("MVP", opengl_transform_.transformMatrix());
 

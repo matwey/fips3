@@ -39,6 +39,7 @@
 #include <fits.h>
 #include <openglcolormap.h>
 #include <openglerrors.h>
+#include <openglplane.h>
 #include <openglshaderunifroms.h>
 #include <opengltexture.h>
 #include <opengltransform.h>
@@ -152,10 +153,7 @@ private:
 			1.0f, 1.0f,
 			1.0f, 0.0f
 	};
-	std::unique_ptr<VertexCoordinates> vertex_coords_;
-public:
-	inline const VertexCoordinates* vertexCoords() const { return vertex_coords_.get(); }
-
+	std::unique_ptr<OpenGLPlane> plane_;
 private:
 	Viewrect viewrect_;
 public:
