@@ -73,28 +73,6 @@ public:
 		virtual QException* clone() const override;
 	};
 
-	class VertexCoordinates {
-	private:
-		const QSize image_size_;
-		const GLfloat factor_;
-		std::array<GLfloat, 8> data_;
-	public:
-		VertexCoordinates(const QSize &image_size, GLfloat factor);
-		VertexCoordinates(const QSize &image_size);
-
-		inline GLfloat factor() const { return factor_; }
-		inline const GLfloat* data() const { return data_.data(); }
-		QRectF borderRect(GLfloat angle) const;
-		inline GLfloat left()   const { return data_[0]; }
-		inline GLfloat right()  const { return data_[4]; }
-		inline GLfloat bottom() const { return data_[1]; }
-		inline GLfloat top()    const { return data_[5]; }
-		inline GLfloat width()  const { return right() - left(); }
-		inline GLfloat height() const { return top() - bottom(); }
-		inline QSizeF size() const { return {width(), height()}; }
-		inline QPointF center() const { return {0, 0}; } // Always should be zero
-	};
-
 	template<class T> class OpenGLDeleter {
 	private:
 		QOpenGLWidget *openGL_widget_;

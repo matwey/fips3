@@ -67,31 +67,6 @@ QException* OpenGLWidget::ShaderCompileError::clone() const {
 	return new OpenGLWidget::ShaderCompileError(*this);
 }
 
-OpenGLWidget::VertexCoordinates::VertexCoordinates(const QSize &image_size, GLfloat factor):
-	image_size_(image_size),
-	factor_(factor) {
-	const auto semi_width  = (image_size_.width()  - 1.0f) / factor;
-	const auto semi_height = (image_size_.height() - 1.0f) / factor;
-	// Center of the rectangle should be at (0,0)
-	data_ = {
-			-semi_width, -semi_height,
-			-semi_width,  semi_height,
-			 semi_width,  semi_height,
-			 semi_width, -semi_height,
-	};
-}
-OpenGLWidget::VertexCoordinates::VertexCoordinates(const QSize &image_size):
-	VertexCoordinates(image_size, image_size.width() - 1) {}
-QRectF OpenGLWidget::VertexCoordinates::borderRect(GLfloat angle) const {
-	QMatrix4x4 rotation_matrix;
-	// Rotation in viewrect coordinates is clockwise, but it doesn't matter in
-	// the case of rectangle with the center in (0,0)
-	rotation_matrix.rotate(-angle, 0, 0, 1);
-	// Arguments are top left and bottom right corners in viewrect coordinates:
-	QRectF non_rotated_image(QPointF(data_[2], -data_[3]), QPointF(data_[6], -data_[7]));
-	return rotation_matrix.mapRect(non_rotated_image);
-}
-
 OpenGLWidget::OpenGLWidget(QWidget *parent, const FITS::HeaderDataUnit& hdu):
 	QOpenGLWidget(parent),
 	hdu_(&hdu),
