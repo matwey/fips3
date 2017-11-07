@@ -69,8 +69,8 @@ void OpenGLPlane::setImageSize(const QSize& image_size) {
 }
 
 QRectF OpenGLPlane::planeRect() const {
-	const auto w = image_size_.width() - 1;
-	const auto h = image_size_.height() - 1;
+	const auto w = image_size_.width();
+	const auto h = image_size_.height();
 	const QRectF p{-w*scale_, -h*scale_, w*scale_*static_cast<float>(2), h*scale_*static_cast<float>(2)};
 
 	return p;
