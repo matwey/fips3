@@ -29,18 +29,21 @@
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLWidget>
 #include <QMatrix4x4>
-#include <QMouseEvent>
 #include <QMessageBox>
 #include <QResizeEvent>
+#include <QTransform>
 
+#include <array>
 #include <cmath>
-#include <memory>
 
 #include <fits.h>
 #include <openglcolormap.h>
 #include <openglerrors.h>
+#include <openglplane.h>
 #include <openglshaderunifroms.h>
 #include <opengltexture.h>
+#include <opengltransform.h>
+#include <viewrect.h>
 #include <pixel.h>
 
 class OpenGLWidget: public QOpenGLWidget, protected QOpenGLFunctions {
@@ -93,31 +96,12 @@ public:
 
 public:
 	OpenGLWidget(QWidget *parent, const FITS::HeaderDataUnit& hdu);
-	~OpenGLWidget() override;
 
 private:
-	void initializeTextureAndShaders();
-
-public:
-	void setViewrect(const QRectF &viewrect);
-	inline const QRectF& viewrect() const { return viewrect_; }
-	void setPixelViewrect(const QRect& pixel_viewrect);
-	inline const QRect& pixelViewrect() const { return pixel_viewrect_; }
-	Pixel pixelFromWidgetCoordinate(const QPoint &widget_coord) const;
-	void fitViewrect();
-	inline QSize image_size() const { return hdu_->data().imageDataUnit()->size(); }
-	QRect viewrectToPixelViewrect (const QRectF& viewrect) const;
-	inline const colormaps_type& colormaps() const { return colormaps_; }
-	inline int colorMapIndex() const {return colormap_index_; }
-	void setHDU(const FITS::HeaderDataUnit& hdu);
+	void initializeGLObjects();
 
 signals:
-	void pixelViewrectChanged(const QRect& pixel_viewrect);
 	void textureInitialized(const OpenGLTexture* texture);
-
-public slots:
-	void changeLevels(const std::pair<double, double>& minmax);
-	void changeColorMap(int colormap_index);
 
 protected:
 	virtual void initializeGL() override;
@@ -125,38 +109,60 @@ protected:
 	virtual QSize sizeHint() const override;
 	virtual void resizeEvent(QResizeEvent* event) override;
 
+public:
+	inline QSize image_size() const { return hdu_->data().imageDataUnit()->size(); }
+	void setHDU(const FITS::HeaderDataUnit& hdu);
+	Pixel pixelFromWidgetCoordinate(const QPoint &widget_coord);
+
 private:
 	const FITS::HeaderDataUnit* hdu_;
 	openGL_unique_ptr<OpenGLTexture> texture_;
 	openGL_unique_ptr<QOpenGLShaderProgram> program_;
-	QOpenGLBuffer vbo_;
-	QMatrix4x4 base_mvp_;
 
+private:
 	static const int program_vertex_coord_attribute_ = 0;
 	static const int program_vertex_uv_attribute_    = 1;
 	static const int program_texture_uniform_  = 0;
 	static const int program_colormap_uniform_ = 1;
-	// Square which is made from two triangles. Each line is xyz coordinates of triangle vertex (0-2 - first triangle,
-	// 3-5 - second triangle). First and seconds columns are used as corresponding UV-coordinates.
-	static constexpr const GLfloat vbo_data[] = {
-			0.0f, 0.0f, 0.0f,
-			1.0f, 0.0f, 0.0f,
-			0.0f, 1.0f, 0.0f,
-			0.0f, 1.0f, 0.0f,
-			1.0f, 0.0f, 0.0f,
-			1.0f, 1.0f, 0.0f,
+	// UV coordinates for triangle fan. See vertex_data_
+	static constexpr const GLfloat uv_data[] = {
+			0.0f, 0.0f,
+			0.0f, 1.0f,
+			1.0f, 1.0f,
+			1.0f, 0.0f
 	};
+	std::unique_ptr<OpenGLPlane> plane_;
+private:
+	Viewrect viewrect_;
+public:
+	inline Viewrect& viewrect() { return viewrect_; }
+	inline void fitViewrect() { viewrect_.fitToBorder(size()); };
+private slots:
+	void viewChanged(const QRectF& view_rect);
 
-	QRectF viewrect_;
-	QRect pixel_viewrect_;
+private:
+	OpenGLTransform opengl_transform_;
+	WidgetToFitsOpenGLTransform widget_to_fits_;
+public:
+	inline double rotation() const { return opengl_transform_.rotation(); }
+public slots:
+	void setRotation(double angle);
+signals:
+	void rotationChanged(double angle);
 
-	// Returns true if viewrect has been corrected
-	bool correct_viewrect();
-
+private:
 	std::unique_ptr<OpenGLShaderUniforms> shader_uniforms_;
+public slots:
+	void changeLevels(const std::pair<double, double>& minmax);
 
+private:
 	colormaps_type colormaps_;
 	int colormap_index_;
+public:
+	inline const colormaps_type& colormaps() const { return colormaps_; }
+	inline int colorMapIndex() const {return colormap_index_; }
+public slots:
+	void changeColorMap(int colormap_index);
 };
 
 

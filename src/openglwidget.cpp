@@ -70,23 +70,19 @@ QException* OpenGLWidget::ShaderCompileError::clone() const {
 OpenGLWidget::OpenGLWidget(QWidget *parent, const FITS::HeaderDataUnit& hdu):
 	QOpenGLWidget(parent),
 	hdu_(&hdu),
-	viewrect_(0, 0, 1, 1),
-	pixel_viewrect_(QPoint(0, 0), image_size()),
+	opengl_transform_(this),
+	widget_to_fits_(this),
 	shader_uniforms_(new OpenGLShaderUniforms(1, 1, 0, 1)),
 	colormaps_{{
 		openGL_unique_ptr<OpenGLColorMap>(new GrayscaleColorMap() , colormap_deleter_type(this)),
 		openGL_unique_ptr<OpenGLColorMap>(new PurpleBlueColorMap(), colormap_deleter_type(this)),
 	}},
 	colormap_index_(0) {
+
+	connect(&viewrect_, SIGNAL(viewChanged(const QRectF&)), this, SLOT(viewChanged(const QRectF&)));
+	connect(&viewrect_, SIGNAL(scrollChanged(const QRect&)), this, SLOT(update()));
+	connect(this, SIGNAL(rotationChanged(double)), this, SLOT(update()));
 	setMouseTracking(true); // We need it to catch mouseEvent when mouse buttons aren't pressed
-}
-
-OpenGLWidget::~OpenGLWidget() {
-	makeCurrent();
-
-	vbo_.destroy();
-
-	doneCurrent();
 }
 
 void OpenGLWidget::initializeGL() {
@@ -95,19 +91,17 @@ void OpenGLWidget::initializeGL() {
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glDisable(GL_DEPTH_TEST);
 
-	vbo_.create();
-	vbo_.bind();
-	vbo_.allocate(vbo_data, sizeof(vbo_data));
-
 	for (auto& x: colormaps_) {
 		x->initialize();
 	}
 
-	// Should be after vbo_ and colormaps_ initializing
-	initializeTextureAndShaders();
+	// Should be after colormaps_ initialization
+	initializeGLObjects();
 }
 
-void OpenGLWidget::initializeTextureAndShaders() {
+void OpenGLWidget::initializeGLObjects() {
+	std::unique_ptr<OpenGLPlane> new_plane{new OpenGLPlane(image_size())};
+
 	struct ShaderLoader {
 		QString* fragment_shader_source_main_;
 
@@ -171,12 +165,12 @@ void OpenGLWidget::initializeTextureAndShaders() {
 
 	QOpenGLShader *vshader = new QOpenGLShader(QOpenGLShader::Vertex, this);
 	const char *vsrc =
+			"attribute vec2 vertexCoord;\n"
 			"attribute vec2 VertexUV;\n"
-			"attribute vec3 vertexCoord;\n"
 			"varying vec2 UV;\n"
 			"uniform mat4 MVP;\n"
 			"void main() {\n"
-			"	gl_Position = MVP * vec4(vertexCoord,1);\n"
+			"	gl_Position = MVP * vec4(vertexCoord,0,1);\n"
 			"	UV = VertexUV;\n"
 			"}\n";
 	if (! vshader->compileSourceCode(vsrc)) throw ShaderCompileError(glGetError());
@@ -209,8 +203,8 @@ void OpenGLWidget::initializeTextureAndShaders() {
 	if (! new_program->bind()) throw ShaderBindError(glGetError());
 	new_program->enableAttributeArray(program_vertex_coord_attribute_);
 	new_program->enableAttributeArray(program_vertex_uv_attribute_);
-	new_program->setAttributeBuffer(program_vertex_coord_attribute_, GL_FLOAT, 0, 3, 3 * sizeof(GLfloat));
-	new_program->setAttributeBuffer(program_vertex_uv_attribute_,    GL_FLOAT, 0, 2, 3 * sizeof(GLfloat));
+	new_program->setAttributeArray(program_vertex_coord_attribute_, new_plane->vertexArray(), 2);
+	new_program->setAttributeArray(program_vertex_uv_attribute_, uv_data, 2);
 	new_program->setUniformValue("texture",  program_texture_uniform_);
 	new_program->setUniformValue("colormap", program_colormap_uniform_);
 
@@ -218,6 +212,11 @@ void OpenGLWidget::initializeTextureAndShaders() {
 	new_texture->initialize(hdu_);
 
 	// If no exceptions were thrown then we can put new objects to object's member pointers
+	plane_ = std::move(new_plane);
+	viewrect_.setBorder(plane_->borderRect(rotation()));
+	widget_to_fits_.setScale(plane_->scale());
+	widget_to_fits_.setImageSize(image_size());
+
 	if (program_) program_->release();
 	program_ = std::move(new_program);
 	program_->bind();
@@ -241,12 +240,14 @@ void OpenGLWidget::resizeEvent(QResizeEvent* event) {
 	if (old_widget_size.width() < 0 || old_widget_size.height() < 0) {
 		fitViewrect();
 	} else {
-		const auto new_viewrect_width  = viewrect_.width()  * (new_widget_size.width()  - 1.0) / (old_widget_size.width()  - 1.0);
-		const auto new_viewrect_height = viewrect_.height() * (new_widget_size.height() - 1.0) / (old_widget_size.height() - 1.0);
-		QRectF new_viewrect(viewrect_);
-		new_viewrect.setSize({new_viewrect_width, new_viewrect_height});
-		setViewrect(new_viewrect);
+		const auto new_viewrect_width  = viewrect_.view().width()  * (new_widget_size.width()  - 1.0) / (old_widget_size.width()  - 1.0);
+		const auto new_viewrect_height = viewrect_.view().height() * (new_widget_size.height() - 1.0) / (old_widget_size.height() - 1.0);
+		QRectF new_view(viewrect_.view());
+		new_view.setSize({new_viewrect_width, new_viewrect_height});
+		viewrect_.setView(new_view);
 	}
+
+	widget_to_fits_.setWidgetSize(new_widget_size);
 }
 
 void OpenGLWidget::paintGL() {
@@ -254,10 +255,9 @@ void OpenGLWidget::paintGL() {
 
 	program_->bind();
 
-	QMatrix4x4 mvp(base_mvp_);
-	// QT and OpenGL have different coordinate systems, we should change y-axes direction
-	mvp.ortho(viewrect_.left(), viewrect_.right(), 1 - viewrect_.bottom(), 1 - viewrect_.top(), -1.0f, 1.0f);
-	program_->setUniformValue("MVP", mvp);
+	program_->setAttributeArray(program_vertex_coord_attribute_, plane_->vertexArray(), 2);
+
+	program_->setUniformValue("MVP", opengl_transform_.transformMatrix());
 
 	program_->setUniformValueArray("c", shader_uniforms_->get_c().data(), 1, shader_uniforms_->channels);
 	program_->setUniformValueArray("z", shader_uniforms_->get_z().data(), 1, shader_uniforms_->channels);
@@ -265,7 +265,7 @@ void OpenGLWidget::paintGL() {
 	texture_->bind(program_texture_uniform_);
 	colormaps_[colormap_index_]->bind(program_colormap_uniform_);
 
-	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
 
 void OpenGLWidget::setHDU(const FITS::HeaderDataUnit &hdu) {
@@ -273,7 +273,7 @@ void OpenGLWidget::setHDU(const FITS::HeaderDataUnit &hdu) {
 	const auto old_hdu = hdu_;
 	hdu_ = &hdu;
 	try {
-		initializeTextureAndShaders();
+		initializeGLObjects();
 		if (image_size() != old_image_size) {
 			fitViewrect();
 		} else {
@@ -303,74 +303,10 @@ QSize OpenGLWidget::sizeHint() const {
 	return image_size();
 }
 
-void OpenGLWidget::setViewrect(const QRectF &viewrect) {
-	viewrect_ = viewrect;
-	correct_viewrect();
-	const QRect old_pixel_viewrect(pixel_viewrect_);
-	pixel_viewrect_ = viewrectToPixelViewrect(viewrect_);
-	if (pixel_viewrect_ != old_pixel_viewrect) {
-		update();
-		emit pixelViewrectChanged(pixel_viewrect_);
-	}
-}
+Pixel OpenGLWidget::pixelFromWidgetCoordinate(const QPoint &widget_coord) {
+	const auto p = widget_to_fits_.transform(widget_coord.x(), widget_coord.y());
+	const QPoint position(p.x(), p.y());
 
-QRect OpenGLWidget::viewrectToPixelViewrect(const QRectF& viewrect) const {
-	const int left =   qRound(viewrect.left()   * (image_size().width()  - 1));
-	const int top  =   qRound(viewrect.top()    * (image_size().height() - 1));
-	const int width =  qRound(viewrect.width()  * image_size().width());
-	const int height = qRound(viewrect.height() * image_size().height());
-	return {left, top, width, height};
-}
-
-void OpenGLWidget::setPixelViewrect(const QRect& pixel_viewrect) {
-	const auto left   = static_cast<double>(pixel_viewrect.left()  ) / (image_size().width()  - 1);
-	const auto top    = static_cast<double>(pixel_viewrect.top()   ) / (image_size().height() - 1);
-	const auto width  = static_cast<double>(pixel_viewrect.width() ) / image_size().width();
-	const auto height = static_cast<double>(pixel_viewrect.height()) / image_size().height();
-	setViewrect({left, top, width, height});
-}
-
-void OpenGLWidget::fitViewrect() {
-	QSizeF new_size((image_size().height() - 1.0) * (size().width() - 1.0), (image_size().width() - 1.0) * (size().height() - 1.0));
-	new_size.scale(1, 1, Qt::KeepAspectRatioByExpanding);
-	const QRectF new_viewrect(QPointF(0, 0), new_size);
-	setViewrect(new_viewrect);
-}
-
-bool OpenGLWidget::correct_viewrect() {
-	auto viewrect = viewrect_;
-	if (viewrect.size().width() > 1) {
-		viewrect.moveCenter({0.5, viewrect.center().y()});
-	} else {
-		if (viewrect.left() < 0) {
-			viewrect.moveLeft(0);
-		}
-		if (viewrect.right() > 1) {
-			viewrect.moveRight(1);
-		}
-	}
-	if (viewrect.size().height() > 1) {
-		viewrect.moveCenter({viewrect.center().x(), 0.5});
-	} else {
-		if (viewrect.top() < 0) {
-			viewrect.moveTop(0);
-		}
-		if (viewrect.bottom() > 1) {
-			viewrect.moveBottom(1);
-		}
-	}
-	if (viewrect != viewrect_) {
-		viewrect_ = viewrect;
-		return true;
-	}
-	return false;
-}
-
-Pixel OpenGLWidget::pixelFromWidgetCoordinate(const QPoint &widget_coord) const {
-	const QPoint position(
-			static_cast<int>(image_size().width()  * (viewrect_.left()      + widget_coord.x() * viewrect_.width()  / (size().width()  - 1.0))),
-			static_cast<int>(image_size().height() * (1.0 - viewrect_.top() - widget_coord.y() * viewrect_.height() / (size().height() - 1.0)))
-	);
 	const bool inside_image = QRect({0, 0}, image_size()).contains(position);
 	if (inside_image) {
 		double value;
@@ -380,4 +316,19 @@ Pixel OpenGLWidget::pixelFromWidgetCoordinate(const QPoint &widget_coord) const 
 	return Pixel(position);
 }
 
-constexpr const GLfloat OpenGLWidget::vbo_data[];
+void OpenGLWidget::viewChanged(const QRectF& view_rect) {
+	opengl_transform_.setViewrect(view_rect);
+	widget_to_fits_.setViewrect(view_rect);
+}
+
+void OpenGLWidget::setRotation(double angle) {
+	if (rotation() == angle) return;
+
+	opengl_transform_.setRotation(angle);
+	widget_to_fits_.setRotation(angle);
+	viewrect_.setBorder(plane_->borderRect(angle));
+
+	emit rotationChanged(rotation());
+}
+
+constexpr const GLfloat OpenGLWidget::uv_data[];

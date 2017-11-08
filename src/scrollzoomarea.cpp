@@ -29,9 +29,9 @@ ScrollZoomArea::ScrollZoomArea(QWidget *parent, const FITS::HeaderDataUnit& hdu)
 	/* setViewport promises to take ownership */
 	setViewport(open_gl_widget.release());
 
-	connect(horizontalScrollBar(), SIGNAL(valueChanged(int)), this, SLOT(translatePixelViewportX(int)));
-	connect(verticalScrollBar(),   SIGNAL(valueChanged(int)), this, SLOT(translatePixelViewportY(int)));
-	connect(viewport(), SIGNAL(pixelViewrectChanged(const QRect&)), this, SLOT(updateBars()));
+	connect(horizontalScrollBar(), SIGNAL(valueChanged(int)), this, SLOT(translateScrollRectX(int)));
+	connect(verticalScrollBar(),   SIGNAL(valueChanged(int)), this, SLOT(translateScrollRectY(int)));
+	connect(&viewport()->viewrect(), SIGNAL(scrollChanged(const QRect&)), this, SLOT(updateBars()));
 }
 
 void ScrollZoomArea::zoomViewport(double zoom_factor) {
@@ -42,14 +42,14 @@ void ScrollZoomArea::zoomViewport(double zoom_factor, const QPoint& fixed_point)
 	const QPointF fixed_point4{
 		static_cast<double>(fixed_point.x()) / (viewport()->width() - 1),
 		static_cast<double>(fixed_point.y()) / (viewport()->height() - 1)};
-	const auto old_viewrect = viewport()->viewrect();
-	const auto new_size = old_viewrect.size() / zoom_factor;
+	const auto old_view_rect = viewport()->viewrect().view();
+	const auto new_size = old_view_rect.size() / zoom_factor;
 	const QPointF new_top_left{
-		old_viewrect.topLeft().x() +
-			fixed_point4.x() * (old_viewrect.width() - new_size.width()),
-		old_viewrect.topLeft().y() +
-			fixed_point4.y() * (old_viewrect.height() - new_size.height())};
-	viewport()->setViewrect(QRectF{new_top_left, new_size});
+		old_view_rect.topLeft().x() +
+			fixed_point4.x() * (old_view_rect.width() - new_size.width()),
+		old_view_rect.topLeft().y() +
+			fixed_point4.y() * (old_view_rect.height() - new_size.height())};
+	viewport()->viewrect().setView(QRectF{new_top_left, new_size});
 }
 
 void ScrollZoomArea::fitToViewport() {
@@ -63,19 +63,21 @@ void ScrollZoomArea::fitToViewport() {
 	setVerticalScrollBarPolicy  (v_policy);
 }
 
-void ScrollZoomArea::translatePixelViewport(int x, int y) {
-	QRect new_pixel_viewrect(viewport()->pixelViewrect());
-	new_pixel_viewrect.moveTopLeft({x, y});
-	viewport()->setPixelViewrect(new_pixel_viewrect);
+void ScrollZoomArea::translateScrollRect(int x, int y) {
+	QRect new_scroll_rect(viewport()->viewrect().scroll());
+	new_scroll_rect.moveTopLeft({x, y});
+	viewport()->viewrect().setScroll(new_scroll_rect);
 }
 
 void ScrollZoomArea::updateBars() {
-	horizontalScrollBar()->setPageStep(viewport()->pixelViewrect().width());
-	verticalScrollBar()  ->setPageStep(viewport()->pixelViewrect().height());
-	horizontalScrollBar()->setRange(0, viewport()->image_size().width()  - viewport()->pixelViewrect().width()  - 1);
-	verticalScrollBar()  ->setRange(0, viewport()->image_size().height() - viewport()->pixelViewrect().height() - 1);
-	horizontalScrollBar()->setValue(viewport()->pixelViewrect().left());
-	verticalScrollBar()  ->setValue(viewport()->pixelViewrect().top());
+	const auto scroll_rect  = viewport()->viewrect().scroll();
+	const auto scroll_range = viewport()->viewrect().scrollRange();
+	horizontalScrollBar()->setPageStep(scroll_rect.width());
+	verticalScrollBar()  ->setPageStep(scroll_rect.height());
+	horizontalScrollBar()->setRange(0, scroll_range - scroll_rect.width());
+	verticalScrollBar()  ->setRange(0, scroll_range - scroll_rect.height());
+	horizontalScrollBar()->setValue(scroll_rect.left());
+	verticalScrollBar()  ->setValue(scroll_rect.top());
 }
 
 void ScrollZoomArea::wheelEvent(QWheelEvent* event) {

@@ -1,0 +1,111 @@
+/*
+ *  Copyright (C) 2017  Matwey V. Kornilov <matwey.kornilov@gmail.com>
+ *                      Konstantin Malanchev <hombit@gmail.com>
+ *
+ *  This program is free software: you can redistribute it and/or modify it
+ *  under the terms of the GNU Lesser General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or (at
+ *  your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful, but
+ *  WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
+ *  General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public License
+ *  along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#include <opengltransform.h>
+
+OpenGLTransform::OpenGLTransform(QObject* parent):
+	AbstractOpenGLTransform(parent),
+	expired_(true),
+	matrix_(), // QMatrix4x4() constructs an unity matrix
+	angle_(0),
+	viewrect_(-1, -1, 2, 2)
+{}
+
+OpenGLTransform::~OpenGLTransform() = default;
+
+void OpenGLTransform::updateTransform() const {
+// FIXME: this function plays with mutable objects and looks like const-function,
+// consider to implement it in reentable way in order to avoid threading issues.
+
+	matrix_.setToIdentity();
+	matrix_.ortho(QRectF{viewrect_.left(), -viewrect_.top(), viewrect_.width(), -viewrect_.height()});
+	matrix_.rotate(angle_, static_cast<float>(0), static_cast<float>(0), static_cast<float>(1));
+
+	expired_ = false;
+}
+
+const QMatrix4x4& OpenGLTransform::transformMatrix() const {
+	if (expired_) updateTransform();
+
+	return matrix_;
+}
+
+void OpenGLTransform::setRotation(float angle) {
+	if (angle_ == angle) return;
+
+	angle_ = angle;
+	expired_ = true;
+}
+
+void OpenGLTransform::setViewrect(const QRectF& viewrect) {
+	if (viewrect_ == viewrect) return;
+
+	viewrect_ = viewrect;
+	expired_ = true;
+}
+
+WidgetToFitsOpenGLTransform::WidgetToFitsOpenGLTransform(QObject* parent):
+	OpenGLTransform(parent) {}
+
+WidgetToFitsOpenGLTransform::~WidgetToFitsOpenGLTransform() = default;
+
+void WidgetToFitsOpenGLTransform::updateTransform() const {
+	matrix_.setToIdentity();
+
+	/* texture (0,0, 1,1) to image */
+	matrix_.scale(image_size_.width(), image_size_.height());
+
+	/* world to plane */
+	matrix_.translate(static_cast<float>(0.5), static_cast<float>(0.5));
+	matrix_.scale(static_cast<float>(0.5)/(scale_*image_size_.width()),
+		static_cast<float>(0.5)/(scale_*image_size_.height()));
+
+	/* world unrotated */
+	matrix_.rotate(-angle_, static_cast<float>(0), static_cast<float>(0), static_cast<float>(1));
+	/* viewrect to world */
+	matrix_.translate(viewrect_.center().x(), viewrect_.center().y());
+	matrix_.scale(viewrect_.width()/static_cast<float>(2), -viewrect_.height()/static_cast<float>(2));
+
+	/* widget pixel (0,0, w,h) to viewrect (-1,-1, 2,2)*/
+	matrix_.translate(static_cast<float>(-1), static_cast<float>(-1));
+	matrix_.scale(static_cast<float>(2)/widget_size_.width(), static_cast<float>(2)/widget_size_.height());
+
+	expired_ = false;
+}
+
+void WidgetToFitsOpenGLTransform::setImageSize(const QSize& image_size) {
+	if (image_size_ == image_size) return;
+
+	image_size_ = image_size;
+	expired_ = true;
+}
+
+void WidgetToFitsOpenGLTransform::setScale(const float scale) {
+	if (scale_ == scale) return;
+
+	scale_ = scale;
+	expired_ = true;
+}
+
+void WidgetToFitsOpenGLTransform::setWidgetSize(const QSize& widget_size) {
+	if (widget_size_ == widget_size) return;
+
+	widget_size_ = widget_size;
+	expired_ = true;
+}
+
