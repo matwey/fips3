@@ -19,7 +19,10 @@
 #ifndef _LEVELSWIDGET_H
 #define _LEVELSWIDGET_H
 
+#include <QCheckBox>
 #include <QWidget>
+
+#include <memory>
 
 #include <opengltexture.h>
 #include <scientificspinbox.h>
@@ -29,8 +32,11 @@
 class LevelsWidget: public QWidget {
 	Q_OBJECT
 private:
-	SpinboxWithSlider* min_level_;
-	SpinboxWithSlider* max_level_;
+	std::unique_ptr<SpinboxWithSlider> min_level_;
+	std::unique_ptr<SpinboxWithSlider> max_level_;
+	std::unique_ptr<QCheckBox> range_check_box_;
+	std::pair<double, double> instrumental_minmax_;
+	std::pair<double, double> image_minmax_;
 
 public:
 	explicit LevelsWidget(QWidget* parent);
@@ -49,6 +55,10 @@ private slots:
 	inline void notifyValuesChanged(const std::pair<double, double>& minmax) { emit valuesChanged(minmax); }
 	inline void notifyMinValueChanged(double min) { notifyValuesChanged(std::make_pair(min, max_level_->spinbox()->value())); }
 	inline void notifyMaxValueChanged(double max) { notifyValuesChanged(std::make_pair(min_level_->spinbox()->value(), max)); }
+	inline void setValuesToImageMinMax() { setValues(image_minmax_); }
+	void notifyRangeCheckboxStateChanged(int state);
+	inline void setRangeToImageMinMax() { setRange(image_minmax_); }
+	inline void setRangeToInstrumentalMinMax() { setRange(instrumental_minmax_); }
 };
 
 

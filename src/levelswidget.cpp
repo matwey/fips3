@@ -16,34 +16,49 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <QHBoxLayout>
 #include <QGridLayout>
 #include <QLabel>
-
-#include <memory>
+#include <QPushButton>
 
 #include <levelswidget.h>
 
 LevelsWidget::LevelsWidget(QWidget* parent):
 	QWidget(parent),
 	min_level_(new SpinboxWithSlider(Qt::Horizontal, this)),
-	max_level_(new SpinboxWithSlider(Qt::Horizontal, this)) {
+	max_level_(new SpinboxWithSlider(Qt::Horizontal, this)),
+	range_check_box_(new QCheckBox(tr("Set level ranges to image min/max"), this)),
+	instrumental_minmax_(min_level_->spinbox()->value(), max_level_->spinbox()->value()),
+	image_minmax_(min_level_->spinbox()->value(), max_level_->spinbox()->value()) {
+
+	std::unique_ptr<QVBoxLayout> widget_layout{new QVBoxLayout(this)};
 
 	connect(min_level_->spinbox(), SIGNAL(valueChanged(double)), this, SLOT(notifyMinValueChanged(double)));
 	connect(max_level_->spinbox(), SIGNAL(valueChanged(double)), this, SLOT(notifyMaxValueChanged(double)));
 
-	std::unique_ptr<QGridLayout> widget_layout{new QGridLayout(this)};
-	widget_layout->addWidget(new QLabel(tr("Min"), this), 0, 0);
-	widget_layout->addWidget(min_level_, 0, 1);
-	widget_layout->addWidget(new QLabel(tr("Max"), this), 1, 0);
-	widget_layout->addWidget(max_level_, 1, 1);
-	widget_layout->setRowStretch(2, 1);
+	std::unique_ptr<QWidget> sliders_spinboxes_widget{new QWidget(this)};
+	std::unique_ptr<QGridLayout> sliders_spinboxes_layout{new QGridLayout(sliders_spinboxes_widget.get())};
+	sliders_spinboxes_layout->addWidget(new QLabel(tr("Min"), this), 0, 0);
+	sliders_spinboxes_layout->addWidget(min_level_.get(), 0, 1);
+	sliders_spinboxes_layout->addWidget(new QLabel(tr("Max"), this), 1, 0);
+	sliders_spinboxes_layout->addWidget(max_level_.get(), 1, 1);
+	sliders_spinboxes_widget->setLayout(sliders_spinboxes_layout.release());
+
+	std::unique_ptr<QPushButton> auto_button{new QPushButton(tr("Auto"), this)};
+	connect(auto_button.get(), SIGNAL(clicked()), this, SLOT(setValuesToImageMinMax()));
+
+	connect(range_check_box_.get(), SIGNAL(stateChanged(int)), this, SLOT(notifyRangeCheckboxStateChanged(int)));
+
+	widget_layout->addWidget(sliders_spinboxes_widget.release());
+	widget_layout->addWidget(auto_button.release());
+	widget_layout->addWidget(range_check_box_.get());
+	widget_layout->addStretch(1);
 	setLayout(widget_layout.release());
 }
 
 void LevelsWidget::setRange(double minimum, double maximum) {
 	min_level_->spinbox()->setRange(minimum, maximum);
 	max_level_->spinbox()->setRange(minimum, maximum);
-	setValues(minimum, maximum);
 }
 
 void LevelsWidget::setValues(double minimum, double maximum) {
@@ -52,6 +67,27 @@ void LevelsWidget::setValues(double minimum, double maximum) {
 }
 
 void LevelsWidget::notifyTextureInitialized(const OpenGLTexture *texture) {
+	instrumental_minmax_ = texture->instrumental_minmax();
 	setRange(texture->instrumental_minmax());
-	setValues(texture->hdu_minmax());
+	image_minmax_ = texture->hdu_minmax();
+	setValues(image_minmax_);
+	if (instrumental_minmax_ == image_minmax_) {
+		range_check_box_->hide();
+	} else{
+		notifyRangeCheckboxStateChanged(range_check_box_->checkState());
+		range_check_box_->show();
+	}
+}
+
+void LevelsWidget::notifyRangeCheckboxStateChanged(int state) {
+	switch (state) {
+	case Qt::Unchecked:
+		setRangeToInstrumentalMinMax();
+		return;
+	case Qt::Checked:
+		setRangeToImageMinMax();
+		return;
+	default:
+		Q_ASSERT(false);
+	}
 }
