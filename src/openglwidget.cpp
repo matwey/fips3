@@ -326,6 +326,7 @@ void OpenGLWidget::setRotation(double angle) {
 
 	opengl_transform_.setRotation(angle);
 	widget_to_fits_.setRotation(angle);
+	viewrect_.setBorder(plane_->borderRect(angle));
 
 	emit rotationChanged(rotation());
 }

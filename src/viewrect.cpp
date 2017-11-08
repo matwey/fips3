@@ -110,5 +110,5 @@ void Viewrect::setBorder(const QRectF &border_rect) {
 
 	emit borderChanged(border_);
 
-	setView(view_);
+	setScroll(viewToScroll(view_));
 }
