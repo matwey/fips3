@@ -18,8 +18,6 @@
 
 #include <opengltransform.h>
 
-#include <QDebug>
-
 OpenGLTransform::OpenGLTransform(QObject* parent):
 	AbstractOpenGLTransform(parent),
 	expired_(true),
