@@ -133,5 +133,5 @@ void TestWidgetToFitsOpenGLTransform::test_1x2() {
 	}
 }
 
-QTEST_MAIN(TestWidgetToFitsOpenGLTransform)
+QTEST_GUILESS_MAIN(TestWidgetToFitsOpenGLTransform)
 #include "opengltransform.moc"

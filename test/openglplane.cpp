@@ -63,5 +63,5 @@ void TestOpenGLPlane::test_plane10x1000() {
 	QCOMPARE(static_cast<int>(1.0/pl.scale()), 1000);
 }
 
-QTEST_MAIN(TestOpenGLPlane)
+QTEST_GUILESS_MAIN(TestOpenGLPlane)
 #include "openglplane.moc"
