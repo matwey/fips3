@@ -30,7 +30,7 @@ class OpenGLPlane:
 
 private:
 	QSize image_size_;
-	float scale_;
+	qreal scale_;
 
 	std::array<float, 8> vertices_;
 
@@ -38,8 +38,10 @@ private:
 	void updateScale();
 public:
 	OpenGLPlane(const QSize& image_size, QObject* parent = Q_NULLPTR);
+	virtual ~OpenGLPlane();
 
-	inline const float& scale() const { return scale_; }
+	inline const qreal& scale() const { return scale_; }
+
 	void setImageSize(const QSize& image_size);
 
 	QRectF planeRect() const;
@@ -48,7 +50,7 @@ public:
 	inline const float* vertexArray() const { return vertices_.data(); }
 	inline std::size_t vertexArraySize() const { return vertices_.size(); }
 signals:
-	void scaleChanged(float scale);
+	void scaleChanged(qreal scale);
 	void vertexArrayChanged(const float* array);
 };
 
