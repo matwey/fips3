@@ -32,7 +32,8 @@ protected:
 
 	virtual void updateTransform() const;
 public:
-	OpenGLTransform(QObject* parent = Q_NULLPTR);
+	explicit OpenGLTransform(QObject* parent = Q_NULLPTR);
+	OpenGLTransform(const QRectF& viewrect, QObject* parent = Q_NULLPTR);
 	virtual ~OpenGLTransform() override;
 
 	inline void updateTransform() {
@@ -51,19 +52,20 @@ class WidgetToFitsOpenGLTransform:
 	public OpenGLTransform {
 private:
 	QSize image_size_;
-	float scale_;
+	qreal scale_;
 	QSize widget_size_;
 protected:
 	void updateTransform() const override;
 public:
-	WidgetToFitsOpenGLTransform(QObject* parent = Q_NULLPTR);
+	explicit WidgetToFitsOpenGLTransform(QObject* parent = Q_NULLPTR);
+	WidgetToFitsOpenGLTransform(const QSize& image_size, qreal scale, const QSize& widget_size, const QRectF& viewrect, QObject* parent = Q_NULLPTR);
 	~WidgetToFitsOpenGLTransform() override;
 
 	const QSize& imageSize() const { return image_size_; }
 	void setImageSize(const QSize& image_size);
 
-	const float& scale() const { return scale_; }
-	void setScale(const float scale);
+	const qreal& scale() const { return scale_; }
+	void setScale(const qreal& scale);
 
 	const QSize& widgetSize() const { return widget_size_; }
 	void setWidgetSize(const QSize& widget_size);

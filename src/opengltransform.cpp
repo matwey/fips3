@@ -18,6 +18,8 @@
 
 #include <opengltransform.h>
 
+#include <QDebug>
+
 OpenGLTransform::OpenGLTransform(QObject* parent):
 	AbstractOpenGLTransform(parent),
 	expired_(true),
@@ -25,6 +27,11 @@ OpenGLTransform::OpenGLTransform(QObject* parent):
 	angle_(0),
 	viewrect_(-1, -1, 2, 2)
 {}
+OpenGLTransform::OpenGLTransform(const QRectF& viewrect, QObject* parent):
+	OpenGLTransform(parent) {
+
+	setViewrect(viewrect);
+}
 
 OpenGLTransform::~OpenGLTransform() = default;
 
@@ -62,6 +69,14 @@ void OpenGLTransform::setViewrect(const QRectF& viewrect) {
 WidgetToFitsOpenGLTransform::WidgetToFitsOpenGLTransform(QObject* parent):
 	OpenGLTransform(parent) {}
 
+WidgetToFitsOpenGLTransform::WidgetToFitsOpenGLTransform(const QSize& image_size, qreal scale, const QSize& widget_size, const QRectF& viewrect, QObject* parent):
+	OpenGLTransform(viewrect, parent) {
+
+	setImageSize(image_size);
+	setScale(scale);
+	setWidgetSize(widget_size);
+}
+
 WidgetToFitsOpenGLTransform::~WidgetToFitsOpenGLTransform() = default;
 
 void WidgetToFitsOpenGLTransform::updateTransform() const {
@@ -82,8 +97,12 @@ void WidgetToFitsOpenGLTransform::updateTransform() const {
 	matrix_.scale(viewrect_.width()/static_cast<float>(2), -viewrect_.height()/static_cast<float>(2));
 
 	/* widget pixel (0,0, w,h) to viewrect (-1,-1, 2,2)*/
-	matrix_.translate(static_cast<float>(-1), static_cast<float>(-1));
-	matrix_.scale(static_cast<float>(2)/widget_size_.width(), static_cast<float>(2)/widget_size_.height());
+	const auto widget_width = widget_size_.width();
+	const auto widget_height = widget_size_.height();
+	const float tr_x = -static_cast<float>(widget_width-1) / static_cast<float>(widget_width);
+	const float tr_y = -static_cast<float>(widget_height-1) / static_cast<float>(widget_height);
+	matrix_.translate(tr_x, tr_y);
+	matrix_.scale(static_cast<float>(2)/widget_width, static_cast<float>(2)/widget_height);
 
 	expired_ = false;
 }
@@ -95,7 +114,7 @@ void WidgetToFitsOpenGLTransform::setImageSize(const QSize& image_size) {
 	expired_ = true;
 }
 
-void WidgetToFitsOpenGLTransform::setScale(const float scale) {
+void WidgetToFitsOpenGLTransform::setScale(const qreal& scale) {
 	if (scale_ == scale) return;
 
 	scale_ = scale;
