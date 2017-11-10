@@ -24,8 +24,8 @@
 #include <rotationwidget.h>
 
 RotationWidget::RotationWidget(QWidget* parent):
-	spinbox_with_slider_(new SpinboxWithSlider(Qt::Horizontal, this)),
-	QWidget(parent) {
+	QWidget(parent),
+	spinbox_with_slider_(new SpinboxWithSlider(Qt::Horizontal, this)) {
 
 	std::unique_ptr<QGridLayout> widget_layout{new QGridLayout(this)};
 	widget_layout->addWidget(spinbox_with_slider_, 0, 0);
