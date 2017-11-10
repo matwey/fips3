@@ -291,7 +291,7 @@ void OpenGLWidget::changeLevels(const std::pair<double, double>& minmax) {
 }
 
 void OpenGLWidget::changeColorMap(int colormap_index) {
-	Q_ASSERT(colormap_index >= 0 && colormap_index < colormaps_.size());
+	Q_ASSERT(colormap_index >= 0 && colormap_index < static_cast<int>(colormaps_.size()));
 	if (colormap_index != colormap_index_) {
 		colormap_index_ = colormap_index;
 		shader_uniforms_->setColorMapSize(colormaps_[colormap_index]->width());
