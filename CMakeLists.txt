@@ -165,6 +165,14 @@ add_executable(test_openglshaderuniforms test/openglshaderuniforms.cpp src/openg
 target_link_libraries(test_openglshaderuniforms Qt5::Test)
 add_test(test_openglshaderuniforms test_openglshaderuniforms)
 
+add_executable(test_openglplane test/openglplane.cpp src/openglplane.cpp include/openglplane.h)
+target_link_libraries(test_openglplane Qt5::Test Qt5::Gui)
+add_test(test_openglplane test_openglplane)
+
+add_executable(test_opengltransform test/opengltransform.cpp src/abstractopengltransform.cpp include/abstractopengltransform.h src/opengltransform.cpp include/opengltransform.h src/openglplane.cpp include/openglplane.h)
+target_link_libraries(test_opengltransform Qt5::Test Qt5::Gui)
+add_test(test_opengltransform test_opengltransform)
+
 add_executable(test_utils_openglrowalign test/utils/openglrowalign.cpp src/utils/openglrowalign.cpp)
 target_link_libraries(test_utils_openglrowalign Qt5::Test)
 add_test(test_utils_openglrowalign test_utils_openglrowalign)

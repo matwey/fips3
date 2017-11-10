@@ -29,10 +29,12 @@ OpenGLPlane::OpenGLPlane(const QSize& image_size, QObject* parent):
 	setImageSize(image_size);
 }
 
+OpenGLPlane::~OpenGLPlane() = default;
+
 void OpenGLPlane::updateScale() {
-	const auto w = image_size_.width() - 1;
-	const auto h = image_size_.height() - 1;
-	const float scale = static_cast<float>(1) / std::max(w, h);
+	const auto w = image_size_.width();
+	const auto h = image_size_.height();
+	const qreal scale = static_cast<qreal>(1) / std::max(w,h);
 
 	if (scale_ == scale) return;
 
@@ -71,7 +73,9 @@ void OpenGLPlane::setImageSize(const QSize& image_size) {
 QRectF OpenGLPlane::planeRect() const {
 	const auto w = image_size_.width();
 	const auto h = image_size_.height();
-	const QRectF p{-w*scale_, -h*scale_, w*scale_*static_cast<float>(2), h*scale_*static_cast<float>(2)};
+	const auto x = (w < h ? static_cast<qreal>(w)/h : static_cast<qreal>(1));
+	const auto y = (w < h ? static_cast<qreal>(1) : static_cast<qreal>(h)/w);
+	const QRectF p{QPointF{-x,-y}, QPointF{x,y}};
 
 	return p;
 }
