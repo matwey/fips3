@@ -65,6 +65,6 @@ void SpinboxWithSlider::notifySpinboxValueChanged(double value) {
 	slider_->setValue(spinboxValueToSlider(value));
 }
 
-void SpinboxWithSlider::notifySpinboxRangeChanged(double min, double max) {
+void SpinboxWithSlider::notifySpinboxRangeChanged(double, double) {
 	notifySpinboxValueChanged(spinbox_->value());
 }
