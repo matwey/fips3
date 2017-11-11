@@ -28,6 +28,7 @@
 #include <QMessageBox>
 
 #include <application.h>
+#include <flipwidget.h>
 #include <mainwindow.h>
 #include <rotationwidget.h>
 
@@ -196,6 +197,16 @@ MainWindow::MainWindow(const QString& fits_filename, QWidget *parent):
 	);
 	rotation_dock->setWidget(rotation_widget.release());
 	addDockWidget(Qt::RightDockWidgetArea, rotation_dock.release());
+
+	std::unique_ptr<QDockWidget> flip_dock{new QDockWidget(tr("Flipping"))};
+	flip_dock->setAllowedAreas(Qt::AllDockWidgetAreas);
+	view_menu->addAction(flip_dock->toggleViewAction());
+	flip_dock->toggleViewAction()->setShortcut(tr("Ctrl+F"));
+	std::unique_ptr<FlipWidget> flip_widget{new FlipWidget(this)};
+	// connect
+	// connect
+	flip_dock->setWidget(flip_widget.release());
+	addDockWidget(Qt::RightDockWidgetArea, flip_dock.release());
 
 	std::unique_ptr<QDockWidget> colormap_dock{new QDockWidget(tr("Color map"), this)};
 	colormap_dock->setAllowedAreas(Qt::AllDockWidgetAreas);
