@@ -29,6 +29,7 @@ protected:
 
 	float angle_;
 	QRectF viewrect_;
+	bool h_flip_, v_flip_;
 
 	virtual void updateTransform() const;
 public:
@@ -46,6 +47,11 @@ public:
 
 	const QRectF& viewrect() const { return viewrect_; }
 	void setViewrect(const QRectF& viewrect);
+
+	const bool& horizontalFlip() const { return h_flip_; }
+	void setHorizontalFlip(bool flip);
+	const bool& verticalFlip() const { return v_flip_; }
+	void setVerticalFlip(bool flip);
 };
 
 class WidgetToFitsOpenGLTransform:

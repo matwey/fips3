@@ -23,6 +23,8 @@ OpenGLTransform::OpenGLTransform(QObject* parent):
 	expired_(true),
 	matrix_(), // QMatrix4x4() constructs an unity matrix
 	angle_(0),
+	h_flip_(false),
+	v_flip_(false),
 	viewrect_(-1, -1, 2, 2)
 {}
 OpenGLTransform::OpenGLTransform(const QRectF& viewrect, QObject* parent):
@@ -40,6 +42,7 @@ void OpenGLTransform::updateTransform() const {
 	matrix_.setToIdentity();
 	matrix_.ortho(QRectF{viewrect_.left(), -viewrect_.top(), viewrect_.width(), -viewrect_.height()});
 	matrix_.rotate(angle_, static_cast<float>(0), static_cast<float>(0), static_cast<float>(1));
+	matrix_.scale(h_flip_ ? -1 : 1, v_flip_ ? -1 : 1);
 
 	expired_ = false;
 }
@@ -63,6 +66,21 @@ void OpenGLTransform::setViewrect(const QRectF& viewrect) {
 	viewrect_ = viewrect;
 	expired_ = true;
 }
+
+void OpenGLTransform::setHorizontalFlip(bool flip) {
+	if (h_flip_ == flip) return;
+
+	h_flip_ = flip;
+	expired_ = true;
+}
+
+void OpenGLTransform::setVerticalFlip(bool flip) {
+	if (v_flip_ == flip) return;
+
+	v_flip_ = flip;
+	expired_ = true;
+}
+
 
 WidgetToFitsOpenGLTransform::WidgetToFitsOpenGLTransform(QObject* parent):
 	OpenGLTransform(parent) {}
@@ -88,6 +106,8 @@ void WidgetToFitsOpenGLTransform::updateTransform() const {
 	matrix_.scale(static_cast<float>(0.5)/(scale_*image_size_.width()),
 		static_cast<float>(0.5)/(scale_*image_size_.height()));
 
+	/* flip */
+	matrix_.scale(h_flip_ ? -1 : 1, v_flip_ ? -1 : 1);
 	/* world unrotated */
 	matrix_.rotate(-angle_, static_cast<float>(0), static_cast<float>(0), static_cast<float>(1));
 	/* viewrect to world */
@@ -125,4 +145,3 @@ void WidgetToFitsOpenGLTransform::setWidgetSize(const QSize& widget_size) {
 	widget_size_ = widget_size;
 	expired_ = true;
 }
-

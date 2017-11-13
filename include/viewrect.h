@@ -39,7 +39,6 @@ public:
 
 	inline const QRectF& view()   const { return view_;   }
 	inline const QRect&  scroll() const { return scroll_; }
-	inline QRectF openGLprojection() const { return {view_.left(), -view_.top(), view_.width(), -view_.height()}; }
 	inline int scrollRange() const { return scroll_range_; }  // scroll range should be set to [0, scroll_range_]
 	void fitToBorder(QSizeF ratio);
 

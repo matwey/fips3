@@ -143,12 +143,20 @@ private slots:
 private:
 	OpenGLTransform opengl_transform_;
 	WidgetToFitsOpenGLTransform widget_to_fits_;
+protected:
+	void flipViewrect(Qt::Axis flip_axis);
 public:
 	inline double rotation() const { return opengl_transform_.rotation(); }
+	inline const bool& horizontalFlip() const { return opengl_transform_.horizontalFlip(); }
+	inline const bool& verticalFlip() const { return opengl_transform_.verticalFlip(); }
 public slots:
 	void setRotation(double angle);
+	void setHorizontalFlip(bool flip);
+	void setVerticalFlip(bool flip);
 signals:
 	void rotationChanged(double angle);
+	void horizontalFlipChanged(bool flip);
+	void verticalFlipChanged(bool flip);
 
 private:
 	std::unique_ptr<OpenGLShaderUniforms> shader_uniforms_;

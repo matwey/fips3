@@ -82,6 +82,8 @@ OpenGLWidget::OpenGLWidget(QWidget *parent, const FITS::HeaderDataUnit& hdu):
 	connect(&viewrect_, SIGNAL(viewChanged(const QRectF&)), this, SLOT(viewChanged(const QRectF&)));
 	connect(&viewrect_, SIGNAL(scrollChanged(const QRect&)), this, SLOT(update()));
 	connect(this, SIGNAL(rotationChanged(double)), this, SLOT(update()));
+	connect(this, SIGNAL(horizontalFlipChanged(bool)), this, SLOT(update()));
+	connect(this, SIGNAL(verticalFlipChanged(bool)), this, SLOT(update()));
 	setMouseTracking(true); // We need it to catch mouseEvent when mouse buttons aren't pressed
 }
 
@@ -336,6 +338,48 @@ void OpenGLWidget::setRotation(double angle) {
 	widget_to_fits_.setRotation(angle);
 
 	emit rotationChanged(rotation());
+}
+
+void OpenGLWidget::flipViewrect(Qt::Axis flip_axis) {
+	QMatrix4x4 rotation_matrix;
+	rotation_matrix.rotate(-rotation(), 0, 0, 1);
+	auto unrotated_view_center = rotation_matrix.transposed().map(viewrect_.view().center());
+	switch (flip_axis) {
+		case Qt::XAxis:
+			unrotated_view_center.setX(-unrotated_view_center.x());
+			break;
+		case Qt::YAxis:
+			unrotated_view_center.setY(-unrotated_view_center.y());
+			break;
+		default:
+			Q_ASSERT(false);
+	}
+	const auto view_center = rotation_matrix.map(unrotated_view_center);
+	auto new_view = viewrect_.view();
+	new_view.moveCenter(view_center);
+	viewrect_.setView(new_view);
+}
+
+void OpenGLWidget::setHorizontalFlip(bool flip) {
+	if (horizontalFlip() == flip) return;
+
+	flipViewrect(Qt::XAxis);
+
+	opengl_transform_.setHorizontalFlip(flip);
+	widget_to_fits_.setHorizontalFlip(flip);
+
+	emit horizontalFlipChanged(horizontalFlip());
+}
+
+void OpenGLWidget::setVerticalFlip(bool flip) {
+	if (verticalFlip() == flip) return;
+
+	flipViewrect(Qt::YAxis);
+
+	opengl_transform_.setVerticalFlip(flip);
+	widget_to_fits_.setVerticalFlip(flip);
+
+	emit verticalFlipChanged(verticalFlip());
 }
 
 constexpr const GLfloat OpenGLWidget::uv_data[];
