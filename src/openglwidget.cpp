@@ -340,8 +340,30 @@ void OpenGLWidget::setRotation(double angle) {
 	emit rotationChanged(rotation());
 }
 
+void OpenGLWidget::flipViewrect(Qt::Axis flip_axis) {
+	QMatrix4x4 rotation_matrix;
+	rotation_matrix.rotate(-rotation(), 0, 0, 1);
+	auto unrotated_view_center = rotation_matrix.transposed().map(viewrect_.view().center());
+	switch (flip_axis) {
+		case Qt::XAxis:
+			unrotated_view_center.setX(-unrotated_view_center.x());
+			break;
+		case Qt::YAxis:
+			unrotated_view_center.setY(-unrotated_view_center.y());
+			break;
+		default:
+			Q_ASSERT(false);
+	}
+	const auto view_center = rotation_matrix.map(unrotated_view_center);
+	auto new_view = viewrect_.view();
+	new_view.moveCenter(view_center);
+	viewrect_.setView(new_view);
+}
+
 void OpenGLWidget::setHorizontalFlip(bool flip) {
 	if (horizontalFlip() == flip) return;
+
+	flipViewrect(Qt::XAxis);
 
 	opengl_transform_.setHorizontalFlip(flip);
 	widget_to_fits_.setHorizontalFlip(flip);
@@ -351,6 +373,8 @@ void OpenGLWidget::setHorizontalFlip(bool flip) {
 
 void OpenGLWidget::setVerticalFlip(bool flip) {
 	if (verticalFlip() == flip) return;
+
+	flipViewrect(Qt::YAxis);
 
 	opengl_transform_.setVerticalFlip(flip);
 	widget_to_fits_.setVerticalFlip(flip);

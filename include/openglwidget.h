@@ -143,6 +143,8 @@ private slots:
 private:
 	OpenGLTransform opengl_transform_;
 	WidgetToFitsOpenGLTransform widget_to_fits_;
+protected:
+	void flipViewrect(Qt::Axis flip_axis);
 public:
 	inline double rotation() const { return opengl_transform_.rotation(); }
 	inline const bool& horizontalFlip() const { return opengl_transform_.horizontalFlip(); }
