@@ -82,6 +82,8 @@ OpenGLWidget::OpenGLWidget(QWidget *parent, const FITS::HeaderDataUnit& hdu):
 	connect(&viewrect_, SIGNAL(viewChanged(const QRectF&)), this, SLOT(viewChanged(const QRectF&)));
 	connect(&viewrect_, SIGNAL(scrollChanged(const QRect&)), this, SLOT(update()));
 	connect(this, SIGNAL(rotationChanged(double)), this, SLOT(update()));
+	connect(this, SIGNAL(horizontalFlipChanged(bool)), this, SLOT(update()));
+	connect(this, SIGNAL(verticalFlipChanged(bool)), this, SLOT(update()));
 	setMouseTracking(true); // We need it to catch mouseEvent when mouse buttons aren't pressed
 }
 
@@ -336,6 +338,24 @@ void OpenGLWidget::setRotation(double angle) {
 	widget_to_fits_.setRotation(angle);
 
 	emit rotationChanged(rotation());
+}
+
+void OpenGLWidget::setHorizontalFlip(bool flip) {
+	if (horizontalFlip() == flip) return;
+
+	opengl_transform_.setHorizontalFlip(flip);
+	widget_to_fits_.setHorizontalFlip(flip);
+
+	emit horizontalFlipChanged(horizontalFlip());
+}
+
+void OpenGLWidget::setVerticalFlip(bool flip) {
+	if (verticalFlip() == flip) return;
+
+	opengl_transform_.setVerticalFlip(flip);
+	widget_to_fits_.setVerticalFlip(flip);
+
+	emit verticalFlipChanged(verticalFlip());
 }
 
 constexpr const GLfloat OpenGLWidget::uv_data[];

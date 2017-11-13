@@ -203,8 +203,22 @@ MainWindow::MainWindow(const QString& fits_filename, QWidget *parent):
 	view_menu->addAction(flip_dock->toggleViewAction());
 	flip_dock->toggleViewAction()->setShortcut(tr("Ctrl+F"));
 	std::unique_ptr<FlipWidget> flip_widget{new FlipWidget(this)};
-	// connect
-	// connect
+	connect(
+			scrollZoomArea()->viewport(), SIGNAL(horizontalFlipChanged(bool)),
+			flip_widget->horizontalFlipCheckBox(), SLOT(setChecked(bool))
+	);
+	connect(
+			scrollZoomArea()->viewport(), SIGNAL(verticalFlipChanged(bool)),
+			flip_widget->verticalFlipCheckBox(), SLOT(setChecked(bool))
+	);
+	connect(
+			flip_widget->horizontalFlipCheckBox(), SIGNAL(clicked(bool)),
+			scrollZoomArea()->viewport(), SLOT(setHorizontalFlip(bool))
+	);
+	connect(
+			flip_widget->verticalFlipCheckBox(), SIGNAL(clicked(bool)),
+			scrollZoomArea()->viewport(), SLOT(setVerticalFlip(bool))
+	);
 	flip_dock->setWidget(flip_widget.release());
 	addDockWidget(Qt::RightDockWidgetArea, flip_dock.release());
 
