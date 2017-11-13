@@ -324,9 +324,16 @@ void OpenGLWidget::viewChanged(const QRectF& view_rect) {
 void OpenGLWidget::setRotation(double angle) {
 	if (rotation() == angle) return;
 
+	QMatrix4x4 viewrect_rotation_matrix;
+	viewrect_rotation_matrix.rotate(rotation()-angle, 0, 0, 1); // Rotation in viewrect coordinates is clockwise
+	const auto new_view_center = viewrect_rotation_matrix.map(viewrect_.view().center());
+	auto new_view = viewrect_.view();
+	new_view.moveCenter(new_view_center);
+	viewrect_.setView(new_view);
+	viewrect_.setBorder(plane_->borderRect(angle));
+
 	opengl_transform_.setRotation(angle);
 	widget_to_fits_.setRotation(angle);
-	viewrect_.setBorder(plane_->borderRect(angle));
 
 	emit rotationChanged(rotation());
 }
