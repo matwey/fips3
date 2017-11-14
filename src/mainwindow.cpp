@@ -168,8 +168,6 @@ MainWindow::MainWindow(const QString& fits_filename, QWidget *parent):
 
 	std::unique_ptr<QDockWidget> levels_dock{new QDockWidget(tr("Levels"), this)};
 	levels_dock->setAllowedAreas(Qt::AllDockWidgetAreas);
-	view_menu->addAction(levels_dock->toggleViewAction());
-	levels_dock->toggleViewAction()->setShortcut(tr("Ctrl+L"));
 	std::unique_ptr<LevelsWidget> levels_widget{new LevelsWidget(levels_dock.get())};
 	connect(
 			scrollZoomArea()->viewport(), SIGNAL(textureInitialized(const OpenGLTexture*)),
@@ -184,8 +182,6 @@ MainWindow::MainWindow(const QString& fits_filename, QWidget *parent):
 
 	std::unique_ptr<QDockWidget> rotation_dock{new QDockWidget(tr("Rotation"), this)};
 	rotation_dock->setAllowedAreas(Qt::AllDockWidgetAreas);
-	view_menu->addAction(rotation_dock->toggleViewAction());
-	rotation_dock->toggleViewAction()->setShortcut(tr("Ctrl+I"));
 	std::unique_ptr<RotationWidget> rotation_widget{new RotationWidget(this)};
 	connect(
 			scrollZoomArea()->viewport(), SIGNAL(rotationChanged(double)),
@@ -200,8 +196,6 @@ MainWindow::MainWindow(const QString& fits_filename, QWidget *parent):
 
 	std::unique_ptr<QDockWidget> flip_dock{new QDockWidget(tr("Flipping"))};
 	flip_dock->setAllowedAreas(Qt::AllDockWidgetAreas);
-	view_menu->addAction(flip_dock->toggleViewAction());
-	flip_dock->toggleViewAction()->setShortcut(tr("Ctrl+F"));
 	std::unique_ptr<FlipWidget> flip_widget{new FlipWidget(this)};
 	connect(
 			scrollZoomArea()->viewport(), SIGNAL(horizontalFlipChanged(bool)),
@@ -224,8 +218,6 @@ MainWindow::MainWindow(const QString& fits_filename, QWidget *parent):
 
 	std::unique_ptr<QDockWidget> colormap_dock{new QDockWidget(tr("Color map"), this)};
 	colormap_dock->setAllowedAreas(Qt::AllDockWidgetAreas);
-	view_menu->addAction(colormap_dock->toggleViewAction());
-	colormap_dock->toggleViewAction()->setShortcut(tr("Ctrl+E"));
 	std::unique_ptr<ColorMapWidget> colormap_widget{new ColorMapWidget(colormap_dock.get(), *scrollZoomArea()->viewport())};
 	connect(
 			colormap_widget->buttonGroup(), SIGNAL(buttonClicked(int)),
