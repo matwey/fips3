@@ -111,7 +111,7 @@ void WidgetToFitsOpenGLTransform::updateTransform() const {
 	/* world unrotated */
 	matrix_.rotate(-angle_, static_cast<float>(0), static_cast<float>(0), static_cast<float>(1));
 	/* viewrect to world */
-	matrix_.translate(viewrect_.center().x(), viewrect_.center().y());
+	matrix_.translate(viewrect_.center().x(), -viewrect_.center().y());
 	matrix_.scale(viewrect_.width()/static_cast<float>(2), -viewrect_.height()/static_cast<float>(2));
 
 	/* widget pixel (0,0, w,h) to viewrect (-1,-1, 2,2)*/
