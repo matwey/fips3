@@ -18,17 +18,68 @@
 
 #include <cmath>
 
+#include <QDebug>
+#include <QFontDatabase>
+#include <QLineEdit>
+
 #include <scientificspinbox.h>
 
 constexpr const char ScientificSpinBox::text_format_;
 constexpr const int ScientificSpinBox::log10_steps_in_range_;
 
-ScientificSpinBox::ScientificSpinBox(QWidget* parent, int decimals): QDoubleSpinBox(parent) {
-	setDecimals(decimals);
+ScientificSpinBox::ScientificSpinBox(QWidget* parent, int decimals):
+	QAbstractSpinBox(parent),
+	decimals_(decimals) {
+	const auto font = QFontDatabase::systemFont(QFontDatabase::GeneralFont);
+	const auto family = font.family();
+}
+
+QSize ScientificSpinBox::sizeHint() const {
+	const auto char_width = fontMetrics().averageCharWidth();
+	// +1 for number sign, +1 for integer part, +1 for decimal point, + decimals() for decimals,
+	// +2 for exponent sign and +/- after it, +3 for exponent digits
+	const auto width = (decimals() + 8) * char_width;
+	const auto height = lineEdit()->height();
+	return {width, height};
+}
+
+QSize ScientificSpinBox::minimumSizeHint() const {
+	return sizeHint();
+}
+
+void ScientificSpinBox::setValue(double value) {
+	const auto new_text = textFromValue(value);
+	if (new_text == text()) return;
+	value_ = valueFromText(new_text);
+	lineEdit()->setText(new_text);
+	emit valueChanged(value_);
+	emit valueChanged(new_text);
+}
+
+void ScientificSpinBox::stepBy(int steps) {
+	auto new_value = value() + steps * single_step_;
+	if (new_value > maximum()){
+		new_value = maximum();
+	}
+	if (new_value < minimum()){
+		new_value = minimum();
+	}
+	setValue(new_value);
+}
+
+QAbstractSpinBox::StepEnabled ScientificSpinBox::stepEnabled() const {
+	QAbstractSpinBox::StepEnabled se = QAbstractSpinBox::StepNone;
+	if (value() > minimum()){
+		se |= QAbstractSpinBox::StepDownEnabled;
+	}
+	if (value() < maximum()){
+		se |= QAbstractSpinBox::StepUpEnabled;
+	}
+	return se;
 }
 
 QString ScientificSpinBox::textFromValue(double value) const {
-	return locale().toString(value, text_format_, decimals());
+	return locale().toString(value, text_format_, decimals_);
 }
 
 double ScientificSpinBox::valueFromText(const QString& text) const {
@@ -73,10 +124,15 @@ QValidator::State ScientificSpinBox::validate(QString& text, int&) const {
 	return QValidator::Invalid;
 }
 
+void ScientificSpinBox::fixup(QString &str) const {
+	str.remove(locale().groupSeparator());
+}
+
 void ScientificSpinBox::setRange(double min, double max) {
-	QDoubleSpinBox::setRange(min, max);
+	Q_ASSERT(min < max);
+	minimum_ = min;
+	maximum_ = max;
 	// This is the maximum value of the form 1eN that smaller than (max - min) / 10**log10_steps_in_range_
-	const auto step_size = std::pow(10.0, std::floor(std::log10(max - min)) - log10_steps_in_range_);
-	setSingleStep(step_size);
+	single_step_ = std::pow(10.0, std::floor(std::log10(max - min)) - log10_steps_in_range_);
 	emit rangeChanged(min, max);
 }
