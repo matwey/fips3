@@ -19,26 +19,48 @@
 #ifndef _SCIENTIFICSPINBOX_H
 #define _SCIENTIFICSPINBOX_H
 
-#include <QDoubleSpinBox>
+#include <QAbstractSpinBox>
+#include <QString>
 
-class ScientificSpinBox: public QDoubleSpinBox {
+class ScientificSpinBox: public QAbstractSpinBox {
 	Q_OBJECT
 private:
 	static constexpr const char text_format_ = 'g';
 	static constexpr const int log10_steps_in_range_ = 2;
+	double value_ = 0;
+	const int decimals_;
+	double minimum_ = 0;
+	double maximum_ = 1;
+	double single_step_ = 0.01;
+
+protected:
+	virtual QSize sizeHint() const override;
+	virtual QSize minimumSizeHint() const override;
+	virtual void stepBy(int steps) override;
+	virtual QAbstractSpinBox::StepEnabled stepEnabled() const override;
+	virtual QValidator::State validate(QString& text, int& pos) const override;
+	virtual void fixup(QString &str) const override;
+	QString textFromValue(double value) const;
+	double valueFromText(const QString& text) const;
 
 public:
 	ScientificSpinBox(QWidget* parent=Q_NULLPTR, int decimals=5);
 
-	virtual QString textFromValue(double value) const override;
-	virtual double valueFromText(const QString& text) const override;
-	virtual QValidator::State validate(QString& text, int& pos) const override;
-	inline void setMaximum(double max) { setRange(minimum(), max); }
-	inline void setMinimum(double min) { setRange(min, maximum()); }
+	inline double value() const { return value_; }
+	inline int decimals() const { return decimals_; }
+	inline double minimum() const { return minimum_; }
+	inline double maximum() const { return maximum_; }
+
+public slots:
+	void setValue(double value);
+	inline void setMinimum(double min) { setRange(min, maximum_); }
+	inline void setMaximum(double max) { setRange(minimum_, max); }
 	void setRange(double min, double max);
 
 signals:
 	void rangeChanged(double min, double max);
+	void valueChanged(double value);
+	void valueChanged(const QString &value);
 };
 
 #endif //_SCIENTIFICSPINBOX_H
