@@ -16,11 +16,9 @@ matrix:
     - brew update
     - brew install qt
     - brew link --force qt
-    - ln -s $(brew --prefix qt)/mkspecs $(brew --prefix)/mkspecs
-    - ln -s $(brew --prefix qt)/plugins $(brew --prefix)/plugins
     install:
     - mkdir build && cd build
-    - cmake .. -DCMAKE_BUILD_TYPE=Release
+    - cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$(brew --prefix qt)
     - make package VERBOSE=1 DESTDIR=$(pwd)/install
     script:
     - make test
