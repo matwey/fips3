@@ -18,7 +18,9 @@
 
 #include <abstractopenglplan.h>
 
-AbstractOpenGLPlan::AbstractOpenGLPlan(QObject* parent): QObject(parent) {
+AbstractOpenGLPlan::AbstractOpenGLPlan(const QString& name, QObject* parent):
+	QObject(parent),
+	name_(name) {
 }
 
 AbstractOpenGLPlan::~AbstractOpenGLPlan() = default;

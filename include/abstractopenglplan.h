@@ -20,12 +20,17 @@
 #define _ABSTRACTOPENGLPLAN_H
 
 #include <QObject>
+#include <QString>
 
 class AbstractOpenGLPlan:
 	public QObject {
+private:
+	QString name_;
 public:
-	AbstractOpenGLPlan(QObject* parent = Q_NULLPTR);
+	AbstractOpenGLPlan(const QString& name, QObject* parent = Q_NULLPTR);
 	virtual ~AbstractOpenGLPlan() = 0;
+
+	inline const QString& name() const { return name_; }
 };
 
 #endif // _ABSTRACTOPENGLPLAN_H
