@@ -40,6 +40,16 @@ struct HDUValueGetter {
 };
 }
 
+OpenGLWidget::PlanCreationError::PlanCreationError():
+	Utils::Exception("Cannot create appropriate OpenGL plan for current configuration") {
+}
+void OpenGLWidget::PlanCreationError::raise() const {
+	throw *this;
+}
+QException* OpenGLWidget::PlanCreationError::clone() const {
+	return new OpenGLWidget::PlanCreationError(*this);
+}
+
 OpenGLWidget::ShaderLoadError::ShaderLoadError(GLenum gl_error_code):
 	OpenGLException("Cannot load the shader", gl_error_code) {
 }
