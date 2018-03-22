@@ -25,6 +25,7 @@
 
 #include <abstractfitsstorage.h>
 #include <utils/exception.h>
+#include <utils/result.h>
 
 #include <map>
 #include <memory>
@@ -113,7 +114,7 @@ public:
 			virtual void visit(const DataUnit<double>&) = 0;
 		};
 
-		virtual void do_apply(VisitorBase* visitor) const = 0;
+		virtual void do_apply(VisitorBase& visitor) const = 0;
 	public:
 		AbstractDataUnit(AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end, quint64 length);
 		virtual ~AbstractDataUnit() = 0;
@@ -121,23 +122,31 @@ public:
 		inline const quint8* data() const { return data_; }
 		inline quint64 length() const { return length_; }
 
-		template<class F> void apply(F fun) const {
+		template<class F> auto apply(F fun) const ->
+			decltype(fun(std::declval<const EmptyDataUnit&>())) {
+
+			using result_type = decltype(fun(std::declval<const EmptyDataUnit&>()));
+
 			struct Visitor: public VisitorBase {
-				F* fun_;
+				Utils::Result<result_type, F> fun_;
 
-				inline Visitor(F* fun): VisitorBase(), fun_(fun) {}
+				inline Visitor(F fun): VisitorBase(), fun_(std::move(fun)) {}
 
-				virtual void visit(const EmptyDataUnit& x) override { (*fun_)(x); };
-				virtual void visit(const DataUnit<quint8>& x) override { (*fun_)(x); };
-				virtual void visit(const DataUnit<qint16>& x) override { (*fun_)(x); };
-				virtual void visit(const DataUnit<qint32>& x) override { (*fun_)(x); };
-				virtual void visit(const DataUnit<qint64>& x) override { (*fun_)(x); };
-				virtual void visit(const DataUnit<float>& x)  override { (*fun_)(x); };
-				virtual void visit(const DataUnit<double>& x) override { (*fun_)(x); };
+				virtual void visit(const EmptyDataUnit& x) override { fun_(x); };
+				virtual void visit(const DataUnit<quint8>& x) override { fun_(x); };
+				virtual void visit(const DataUnit<qint16>& x) override { fun_(x); };
+				virtual void visit(const DataUnit<qint32>& x) override { fun_(x); };
+				virtual void visit(const DataUnit<qint64>& x) override { fun_(x); };
+				virtual void visit(const DataUnit<float>& x)  override { fun_(x); };
+				virtual void visit(const DataUnit<double>& x) override { fun_(x); };
+
+				result_type do_apply(const AbstractDataUnit& du) {
+					du.do_apply(*this);
+					return fun_.result();
+				}
 			};
 
-			Visitor v{&fun};
-			do_apply(&v);
+			return Visitor(std::move(fun)).do_apply(*this);
 		}
 
 		template<class F> static void bitpixToType(const QString& bitpix, F fun);
@@ -162,8 +171,8 @@ public:
 
 	class EmptyDataUnit: public AbstractDataUnit {
 	protected:
-		virtual void do_apply(VisitorBase* visitor) const override {
-			visitor->visit(*this);
+		virtual void do_apply(VisitorBase& visitor) const override {
+			visitor.visit(*this);
 		}
 	public:
 		EmptyDataUnit(AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end);
@@ -172,8 +181,8 @@ public:
 
 	template<class T> class DataUnit: public ImageDataUnit {
 	protected:
-		virtual void do_apply(VisitorBase* visitor) const override {
-			visitor->visit(*this);
+		virtual void do_apply(VisitorBase& visitor) const override {
+			visitor.visit(*this);
 		}
 	public:
 		inline DataUnit(AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end, quint64 height, quint64 width):
