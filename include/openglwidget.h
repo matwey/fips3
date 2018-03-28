@@ -40,6 +40,7 @@
 #include <openglcolormap.h>
 #include <openglerrors.h>
 #include <openglplane.h>
+#include <openglshaderprogram.h>
 #include <openglshaderunifroms.h>
 #include <opengltexture.h>
 #include <opengltransform.h>
@@ -117,13 +118,9 @@ public:
 private:
 	const FITS::HeaderDataUnit* hdu_;
 	openGL_unique_ptr<OpenGLTexture> texture_;
-	openGL_unique_ptr<QOpenGLShaderProgram> program_;
+	openGL_unique_ptr<OpenGLShaderProgram> program_;
 
 private:
-	static const int program_vertex_coord_attribute_ = 0;
-	static const int program_vertex_uv_attribute_    = 1;
-	static const int program_texture_uniform_  = 0;
-	static const int program_colormap_uniform_ = 1;
 	// UV coordinates for triangle fan. See vertex_data_
 	static constexpr const GLfloat uv_data[] = {
 			0.0f, 0.0f,

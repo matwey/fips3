@@ -20,6 +20,7 @@
 #include <QPoint>
 
 #include <openglwidget.h>
+#include <openglshaderprogram.h>
 #include <utils/swapbytes.h>
 
 namespace {
@@ -165,8 +166,7 @@ void OpenGLWidget::initializeGLObjects() {
 
 	QString fragment_shader_source_main = hdu_->data().apply(ShaderLoader{});
 
-	QOpenGLShader *vshader = new QOpenGLShader(QOpenGLShader::Vertex, this);
-	const char *vsrc =
+	const QString vsrc =
 			"attribute vec2 vertexCoord;\n"
 			"attribute vec2 VertexUV;\n"
 			"varying vec2 UV;\n"
@@ -175,9 +175,8 @@ void OpenGLWidget::initializeGLObjects() {
 			"	gl_Position = MVP * vec4(vertexCoord,0,1);\n"
 			"	UV = VertexUV;\n"
 			"}\n";
-	if (! vshader->compileSourceCode(vsrc)) throw ShaderCompileError(glGetError());
 
-	QString fsrc =
+	const QString fsrc =
 			"#ifdef GL_ES\n"
 			"	#ifdef GL_FRAGMENT_PRECISION_HIGH\n"
 			"		precision highp float;\n"
@@ -193,22 +192,14 @@ void OpenGLWidget::initializeGLObjects() {
 			+ fragment_shader_source_main +
 			"	gl_FragColor = texture1D(colormap, clamp(value, 0.0, 1.0));\n"
 			"}\n";
-	QOpenGLShader *fshader = new QOpenGLShader(QOpenGLShader::Fragment, this);
-	if (! fshader->compileSourceCode(fsrc)) throw ShaderCompileError(glGetError());
 
-	openGL_unique_ptr<QOpenGLShaderProgram> new_program(new QOpenGLShaderProgram(this), OpenGLDeleter<QOpenGLShaderProgram>(this));
-	if (! new_program->addShader(vshader)) throw ShaderLoadError(glGetError());
-	if (! new_program->addShader(fshader)) throw ShaderLoadError(glGetError());;
-	new_program->bindAttributeLocation("vertexCoord", program_vertex_coord_attribute_);
-	new_program->bindAttributeLocation("vertexUV",    program_vertex_uv_attribute_);
-	if (! new_program->link()) throw ShaderLoadError(glGetError());
-	if (! new_program->bind()) throw ShaderBindError(glGetError());
-	new_program->enableAttributeArray(program_vertex_coord_attribute_);
-	new_program->enableAttributeArray(program_vertex_uv_attribute_);
-	new_program->setAttributeArray(program_vertex_coord_attribute_, new_plane->vertexArray(), 2);
-	new_program->setAttributeArray(program_vertex_uv_attribute_, uv_data, 2);
-	new_program->setUniformValue("texture",  program_texture_uniform_);
-	new_program->setUniformValue("colormap", program_colormap_uniform_);
+	openGL_unique_ptr<OpenGLShaderProgram> new_program(new OpenGLShaderProgram(this), OpenGLDeleter<OpenGLShaderProgram>(this));
+	new_program->addFragmentShaderFromSourceCode(fsrc);
+	new_program->addVertexShaderFromSourceCode(vsrc);
+	new_program->setVertexCoordArray(new_plane->vertexArray(), 2);
+	new_program->setVertexUVArray(uv_data, 2);
+	if (!new_program->link()) throw ShaderLoadError(glGetError());
+	new_program->bind();
 
 	openGL_unique_ptr<OpenGLTexture> new_texture(new OpenGLTexture(), OpenGLDeleter<OpenGLTexture>(this));
 	new_texture->initialize(hdu_);
@@ -223,9 +214,9 @@ void OpenGLWidget::initializeGLObjects() {
 	program_ = std::move(new_program);
 	program_->bind();
 
-	if (texture_ && texture_->isBound(program_texture_uniform_)) texture_->release(program_texture_uniform_);
+	if (texture_ && texture_->isBound(OpenGLShaderProgram::image_texture_index)) texture_->release(OpenGLShaderProgram::image_texture_index);
 	texture_ = std::move(new_texture);
-	texture_->bind(program_texture_uniform_);
+	texture_->bind(OpenGLShaderProgram::image_texture_index);
 
 	emit textureInitialized(texture_.get());
 	shader_uniforms_.reset(new OpenGLShaderUniforms(texture_->channels(), texture_->channel_size(), hdu_->header().bzero(), hdu_->header().bscale()));
@@ -257,15 +248,15 @@ void OpenGLWidget::paintGL() {
 
 	program_->bind();
 
-	program_->setAttributeArray(program_vertex_coord_attribute_, plane_->vertexArray(), 2);
+	program_->setAttributeArray(OpenGLShaderProgram::vertex_coord_index, plane_->vertexArray(), 2);
 
 	program_->setUniformValue("MVP", opengl_transform_.transformMatrix());
 
 	program_->setUniformValueArray("c", shader_uniforms_->get_c().data(), 1, shader_uniforms_->channels);
 	program_->setUniformValueArray("z", shader_uniforms_->get_z().data(), 1, shader_uniforms_->channels);
 
-	texture_->bind(program_texture_uniform_);
-	colormaps_[colormap_index_]->bind(program_colormap_uniform_);
+	texture_->bind(OpenGLShaderProgram::image_texture_index);
+	colormaps_[colormap_index_]->bind(OpenGLShaderProgram::colormap_texture_index);
 
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
