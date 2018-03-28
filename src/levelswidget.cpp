@@ -66,10 +66,10 @@ void LevelsWidget::setValues(double minimum, double maximum) {
 	max_level_->spinbox()->setValue(maximum);
 }
 
-void LevelsWidget::notifyTextureInitialized(const AbstractOpenGLTexture *texture) {
-	instrumental_minmax_ = texture->instrumentalMinMax();
-	setRange(texture->instrumentalMinMax());
-	image_minmax_ = texture->hduMinMax();
+void LevelsWidget::notifyTextureInitialized(const AbstractOpenGLTexture& texture) {
+	instrumental_minmax_ = texture.instrumentalMinMax();
+	setRange(texture.instrumentalMinMax());
+	image_minmax_ = texture.hduMinMax();
 	setValues(image_minmax_);
 	if (instrumental_minmax_ == image_minmax_) {
 		range_check_box_->hide();

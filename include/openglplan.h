@@ -20,50 +20,76 @@
 #define _OPENGLPLAN_H
 
 #include <abstractopenglplan.h>
+#include <opengltexture.h>
 
 class Uint8OpenGLPlan:
 	public AbstractOpenGLPlan {
+private:
+	Uint8OpenGLTexture image_texture_;
 public:
-	Uint8OpenGLPlan(QObject* parent = Q_NULLPTR);
+	Uint8OpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu, QObject* parent = Q_NULLPTR);
 	virtual ~Uint8OpenGLPlan() override = default;
 
 	virtual QString fragmentShaderSourceCode() override;
+	virtual Uint8OpenGLTexture& imageTexture() override {
+		return image_texture_;
+	}
 };
 
 class Int16OpenGLPlan:
 	public AbstractOpenGLPlan {
+private:
+	Int16OpenGLTexture image_texture_;
 public:
-	Int16OpenGLPlan(QObject* parent = Q_NULLPTR);
+	Int16OpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu, QObject* parent = Q_NULLPTR);
 	virtual ~Int16OpenGLPlan() override = default;
 
 	virtual QString fragmentShaderSourceCode() override;
+	virtual Int16OpenGLTexture& imageTexture() override {
+		return image_texture_;
+	}
 };
 
 class Int32OpenGLPlan:
 	public AbstractOpenGLPlan {
+private:
+	Int32OpenGLTexture image_texture_;
 public:
-	Int32OpenGLPlan(QObject* parent = Q_NULLPTR);
+	Int32OpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu, QObject* parent = Q_NULLPTR);
 	virtual ~Int32OpenGLPlan() override = default;
 
 	virtual QString fragmentShaderSourceCode() override;
+	virtual Int32OpenGLTexture& imageTexture() override {
+		return image_texture_;
+	}
 };
 
 class Int64OpenGLPlan:
 	public AbstractOpenGLPlan {
+private:
+	Int64OpenGLTexture image_texture_;
 public:
-	Int64OpenGLPlan(QObject* parent = Q_NULLPTR);
+	Int64OpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<qint64>>& hdu, QObject* parent = Q_NULLPTR);
 	virtual ~Int64OpenGLPlan() override = default;
 
 	virtual QString fragmentShaderSourceCode() override;
+	virtual Int64OpenGLTexture& imageTexture() override {
+		return image_texture_;
+	}
 };
 
 class FloatOpenGLPlan:
 	public AbstractOpenGLPlan {
+private:
+	FloatOpenGLTexture image_texture_;
 public:
-	FloatOpenGLPlan(QObject* parent = Q_NULLPTR);
+	FloatOpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu, QObject* parent = Q_NULLPTR);
 	virtual ~FloatOpenGLPlan() override = default;
 
 	virtual QString fragmentShaderSourceCode() override;
+	virtual FloatOpenGLTexture& imageTexture() override {
+		return image_texture_;
+	}
 };
 
 #endif // _OPENGLPLAN_H

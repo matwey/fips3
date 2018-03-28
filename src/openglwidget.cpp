@@ -119,46 +119,34 @@ void OpenGLWidget::initializeGLObjects() {
 	struct PlanCreator {
 		OpenGLWidget* parent;
 
-		QPair<AbstractOpenGLPlan*, AbstractOpenGLTexture*> operator() (const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu) const {
-			std::unique_ptr<Uint8OpenGLPlan>    plan{new Uint8OpenGLPlan(parent)};
-			std::unique_ptr<Uint8OpenGLTexture> tex{new Uint8OpenGLTexture(hdu)};
-			return qMakePair(plan.release(), tex.release());
+		AbstractOpenGLPlan* operator() (const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu) const {
+			return new Uint8OpenGLPlan(hdu, parent);
 		}
-		QPair<AbstractOpenGLPlan*, AbstractOpenGLTexture*> operator() (const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu) const {
-			std::unique_ptr<Int16OpenGLPlan>    plan{new Int16OpenGLPlan(parent)};
-			std::unique_ptr<Int16OpenGLTexture> tex{new Int16OpenGLTexture(hdu)};
-			return qMakePair(plan.release(), tex.release());
+		AbstractOpenGLPlan* operator() (const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu) const {
+			return new Int16OpenGLPlan(hdu, parent);
 		}
-		QPair<AbstractOpenGLPlan*, AbstractOpenGLTexture*> operator() (const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu) const {
-			std::unique_ptr<Int32OpenGLPlan>    plan{new Int32OpenGLPlan(parent)};
-			std::unique_ptr<Int32OpenGLTexture> tex{new Int32OpenGLTexture(hdu)};
-			return qMakePair(plan.release(), tex.release());
+		AbstractOpenGLPlan* operator() (const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu) const {
+			return new Int32OpenGLPlan(hdu, parent);
 		}
-		QPair<AbstractOpenGLPlan*, AbstractOpenGLTexture*> operator() (const FITS::HeaderDataUnit<FITS::DataUnit<qint64>>& hdu) const {
-			std::unique_ptr<Int64OpenGLPlan>    plan{new Int64OpenGLPlan(parent)};
-			std::unique_ptr<Int64OpenGLTexture> tex{new Int64OpenGLTexture(hdu)};
-			return qMakePair(plan.release(), tex.release());
+		AbstractOpenGLPlan* operator() (const FITS::HeaderDataUnit<FITS::DataUnit<qint64>>& hdu) const {
+			return new Int64OpenGLPlan(hdu, parent);
 		}
-		QPair<AbstractOpenGLPlan*, AbstractOpenGLTexture*> operator() (const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu) const {
-			std::unique_ptr<FloatOpenGLPlan>    plan{new FloatOpenGLPlan(parent)};
-			std::unique_ptr<FloatOpenGLTexture> tex{new FloatOpenGLTexture(hdu)};
-			return qMakePair(plan.release(), tex.release());
+		AbstractOpenGLPlan* operator() (const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu) const {
+			return new FloatOpenGLPlan(hdu, parent);
 		}
-		QPair<AbstractOpenGLPlan*, AbstractOpenGLTexture*> operator() (const FITS::HeaderDataUnit<FITS::DataUnit<double>>&) const {
-			return qMakePair(Q_NULLPTR, Q_NULLPTR);
+		AbstractOpenGLPlan* operator() (const FITS::HeaderDataUnit<FITS::DataUnit<double>>&) const {
+			return Q_NULLPTR;
 		}
-		QPair<AbstractOpenGLPlan*, AbstractOpenGLTexture*> operator() (const FITS::HeaderDataUnit<FITS::EmptyDataUnit>&) const {
-			return qMakePair(Q_NULLPTR, Q_NULLPTR);
+		AbstractOpenGLPlan* operator() (const FITS::HeaderDataUnit<FITS::EmptyDataUnit>&) const {
+			return Q_NULLPTR;
 		}
 	};
 
-	const auto& ret = hdu_->apply(PlanCreator{this});
-	std::unique_ptr<AbstractOpenGLPlan> plan{ret.first};
-	openGL_unique_ptr<AbstractOpenGLTexture> new_texture(ret.second, OpenGLDeleter<AbstractOpenGLTexture>(this));
-	if (!plan) throw PlanCreationError();
+	openGL_unique_ptr<AbstractOpenGLPlan> new_plan{hdu_->apply(PlanCreator{this}), OpenGLDeleter<AbstractOpenGLPlan>(this)};
+	if (!new_plan) throw PlanCreationError();
 
-	const QString vsrc = plan->vertexShaderSourceCode();
-	const QString fsrc = plan->fragmentShaderSourceCode();
+	const QString vsrc = new_plan->vertexShaderSourceCode();
+	const QString fsrc = new_plan->fragmentShaderSourceCode();
 
 	openGL_unique_ptr<OpenGLShaderProgram> new_program(new OpenGLShaderProgram(this), OpenGLDeleter<OpenGLShaderProgram>(this));
 	new_program->addFragmentShaderFromSourceCode(fsrc);
@@ -168,7 +156,7 @@ void OpenGLWidget::initializeGLObjects() {
 	if (!new_program->link()) throw ShaderLoadError(glGetError());
 	new_program->bind();
 
-	new_texture->initialize();
+	new_plan->imageTexture().initialize();
 
 	// If no exceptions were thrown then we can put new objects to object's member pointers
 	plane_ = std::move(new_plane);
@@ -180,11 +168,11 @@ void OpenGLWidget::initializeGLObjects() {
 	program_ = std::move(new_program);
 	program_->bind();
 
-	texture_ = std::move(new_texture);
+	plan_ = std::move(new_plan);
 
-	emit textureInitialized(texture_.get());
-	shader_uniforms_.reset(new OpenGLShaderUniforms(texture_->channels(), texture_->channel_size(), hdu_->header().bzero(), hdu_->header().bscale()));
-	shader_uniforms_->setMinMax(texture_->hduMinMax());
+	emit textureInitialized(plan_->imageTexture());
+	shader_uniforms_.reset(new OpenGLShaderUniforms(plan_->imageTexture().channels(), plan_->imageTexture().channel_size(), hdu_->header().bzero(), hdu_->header().bscale()));
+	shader_uniforms_->setMinMax(plan_->imageTexture().hduMinMax());
 	shader_uniforms_->setColorMapSize(colormaps_[colormap_index_]->width());
 }
 
@@ -215,7 +203,7 @@ void OpenGLWidget::paintGL() {
 	program_->setCUniform(shader_uniforms_->get_c(), shader_uniforms_->channels);
 	program_->setZUniform(shader_uniforms_->get_z(), shader_uniforms_->channels);
 
-	texture_->bind(OpenGLShaderProgram::image_texture_index);
+	plan_->imageTexture().bind(OpenGLShaderProgram::image_texture_index);
 	colormaps_[colormap_index_]->bind(OpenGLShaderProgram::colormap_texture_index);
 
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);

@@ -18,8 +18,9 @@
 
 #include <openglplan.h>
 
-Uint8OpenGLPlan::Uint8OpenGLPlan(QObject* parent):
-	AbstractOpenGLPlan("uint8", parent) {
+Uint8OpenGLPlan::Uint8OpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu, QObject* parent):
+	AbstractOpenGLPlan("uint8", parent),
+	image_texture_(hdu) {
 }
 
 QString Uint8OpenGLPlan::fragmentShaderSourceCode() {
@@ -48,8 +49,9 @@ QString Uint8OpenGLPlan::fragmentShaderSourceCode() {
 	return source;
 }
 
-Int16OpenGLPlan::Int16OpenGLPlan(QObject* parent):
-	AbstractOpenGLPlan("int16", parent) {
+Int16OpenGLPlan::Int16OpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu, QObject* parent):
+	AbstractOpenGLPlan("int16", parent),
+	image_texture_(hdu) {
 }
 
 QString Int16OpenGLPlan::fragmentShaderSourceCode() {
@@ -80,8 +82,9 @@ QString Int16OpenGLPlan::fragmentShaderSourceCode() {
 	return source;
 }
 
-Int32OpenGLPlan::Int32OpenGLPlan(QObject* parent):
-	AbstractOpenGLPlan("int32", parent) {
+Int32OpenGLPlan::Int32OpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu, QObject* parent):
+	AbstractOpenGLPlan("int32", parent),
+	image_texture_(hdu) {
 }
 
 QString Int32OpenGLPlan::fragmentShaderSourceCode() {
@@ -112,8 +115,9 @@ QString Int32OpenGLPlan::fragmentShaderSourceCode() {
 	return source;
 }
 
-Int64OpenGLPlan::Int64OpenGLPlan(QObject* parent):
-	AbstractOpenGLPlan("int64", parent) {
+Int64OpenGLPlan::Int64OpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<qint64>>& hdu, QObject* parent):
+	AbstractOpenGLPlan("int64", parent),
+	image_texture_(hdu) {
 }
 
 QString Int64OpenGLPlan::fragmentShaderSourceCode() {
@@ -144,8 +148,9 @@ QString Int64OpenGLPlan::fragmentShaderSourceCode() {
 	return source;
 }
 
-FloatOpenGLPlan::FloatOpenGLPlan(QObject* parent):
-	AbstractOpenGLPlan("float32", parent) {
+FloatOpenGLPlan::FloatOpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu, QObject* parent):
+	AbstractOpenGLPlan("float32", parent),
+	image_texture_(hdu) {
 }
 
 QString FloatOpenGLPlan::fragmentShaderSourceCode() {

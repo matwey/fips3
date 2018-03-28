@@ -37,6 +37,7 @@
 #include <cmath>
 
 #include <fits.h>
+#include <abstractopenglplan.h>
 #include <openglcolormap.h>
 #include <openglerrors.h>
 #include <openglplane.h>
@@ -110,7 +111,7 @@ private:
 	void initializeGLObjects();
 
 signals:
-	void textureInitialized(const AbstractOpenGLTexture* texture);
+	void textureInitialized(const AbstractOpenGLTexture& texture);
 
 protected:
 	virtual void initializeGL() override;
@@ -125,9 +126,8 @@ public:
 
 private:
 	const FITS::AbstractHeaderDataUnit* hdu_;
-	openGL_unique_ptr<AbstractOpenGLTexture> texture_;
+	openGL_unique_ptr<AbstractOpenGLPlan> plan_;
 	openGL_unique_ptr<OpenGLShaderProgram> program_;
-
 private:
 	std::unique_ptr<OpenGLPlane> plane_;
 private:

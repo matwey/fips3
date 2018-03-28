@@ -22,6 +22,9 @@
 #include <QObject>
 #include <QString>
 
+#include <fits.h>
+#include <abstractopengltexture.h>
+
 class AbstractOpenGLPlan:
 	public QObject {
 private:
@@ -34,6 +37,7 @@ public:
 
 	virtual QString fragmentShaderSourceCode() = 0;
 	virtual QString vertexShaderSourceCode();
+	virtual AbstractOpenGLTexture& imageTexture() = 0;
 };
 
 #endif // _ABSTRACTOPENGLPLAN_H
