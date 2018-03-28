@@ -157,16 +157,7 @@ void OpenGLWidget::initializeGLObjects() {
 	openGL_unique_ptr<AbstractOpenGLTexture> new_texture(ret.second, OpenGLDeleter<AbstractOpenGLTexture>(this));
 	if (!plan) throw PlanCreationError();
 
-	const QString vsrc =
-			"attribute vec2 vertexCoord;\n"
-			"attribute vec2 VertexUV;\n"
-			"varying vec2 UV;\n"
-			"uniform mat4 MVP;\n"
-			"void main() {\n"
-			"	gl_Position = MVP * vec4(vertexCoord,0,1);\n"
-			"	UV = VertexUV;\n"
-			"}\n";
-
+	const QString vsrc = plan->vertexShaderSourceCode();
 	const QString fsrc = plan->fragmentShaderSourceCode();
 
 	openGL_unique_ptr<OpenGLShaderProgram> new_program(new OpenGLShaderProgram(this), OpenGLDeleter<OpenGLShaderProgram>(this));

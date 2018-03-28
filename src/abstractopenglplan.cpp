@@ -24,3 +24,19 @@ AbstractOpenGLPlan::AbstractOpenGLPlan(const QString& name, QObject* parent):
 }
 
 AbstractOpenGLPlan::~AbstractOpenGLPlan() = default;
+
+QString AbstractOpenGLPlan::vertexShaderSourceCode() {
+	static const QString source = R"(
+		attribute vec2 vertexCoord;
+		attribute vec2 VertexUV;
+		varying vec2 UV;
+		uniform mat4 MVP;
+
+		void main() {
+			gl_Position = MVP * vec4(vertexCoord,0,1);
+			UV = VertexUV;
+		}
+	)";
+
+	return source;
+}

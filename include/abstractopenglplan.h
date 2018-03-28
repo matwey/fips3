@@ -33,6 +33,7 @@ public:
 	inline const QString& name() const { return name_; }
 
 	virtual QString fragmentShaderSourceCode() = 0;
+	virtual QString vertexShaderSourceCode();
 };
 
 #endif // _ABSTRACTOPENGLPLAN_H
