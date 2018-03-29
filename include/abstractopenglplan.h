@@ -21,26 +21,33 @@
 
 #include <QObject>
 #include <QString>
+#include <QOpenGLShaderProgram>
+#include <QOpenGLWidget>
 
 #include <fits.h>
 #include <abstractopengltexture.h>
 #include <openglplane.h>
+#include <openglshaderprogram.h>
 
 class AbstractOpenGLPlan:
 	public QObject {
 private:
 	QString name_;
 	OpenGLPlane plane_;
+	OpenGLShaderProgram program_;
 public:
 	AbstractOpenGLPlan(const QString& name, const FITS::AbstractHeaderDataUnit& hdu, QObject* parent = Q_NULLPTR);
 	virtual ~AbstractOpenGLPlan() = 0;
 
 	inline const QString& name() const { return name_; }
 	inline const OpenGLPlane& plane() const { return plane_; }
+	inline OpenGLShaderProgram& program() { return program_; }
 
 	virtual QString fragmentShaderSourceCode() = 0;
 	virtual QString vertexShaderSourceCode();
 	virtual AbstractOpenGLTexture& imageTexture() = 0;
+
+	bool initialize();
 };
 
 #endif // _ABSTRACTOPENGLPLAN_H

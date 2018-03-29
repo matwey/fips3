@@ -21,7 +21,8 @@
 AbstractOpenGLPlan::AbstractOpenGLPlan(const QString& name, const FITS::AbstractHeaderDataUnit& hdu, QObject* parent):
 	QObject(parent),
 	name_(name),
-	plane_(hdu.data().imageDataUnit()->size()) {
+	plane_(hdu.data().imageDataUnit()->size()),
+	program_() {
 }
 
 AbstractOpenGLPlan::~AbstractOpenGLPlan() = default;
@@ -40,4 +41,22 @@ QString AbstractOpenGLPlan::vertexShaderSourceCode() {
 	)";
 
 	return source;
+}
+
+bool AbstractOpenGLPlan::initialize() {
+	const QString vsrc = vertexShaderSourceCode();
+	const QString fsrc = fragmentShaderSourceCode();
+
+	imageTexture().initialize();
+
+	if (!program_.addFragmentShaderFromSourceCode(fsrc)) {
+		return false;
+	}
+	if (!program_.addVertexShaderFromSourceCode(vsrc)) {
+		return false;
+	}
+	program_.setVertexCoordArray(plane().vertexArray(), 2);
+	program_.setVertexUVArray(plane().uv_data, 2);
+
+	return program_.link();
 }

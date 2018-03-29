@@ -153,28 +153,14 @@ void OpenGLWidget::initializeGLObjects() {
 	openGL_unique_ptr<AbstractOpenGLPlan> new_plan{hdu_->apply(PlanCreator{this}), OpenGLDeleter<AbstractOpenGLPlan>(this)};
 	if (!new_plan) throw PlanCreationError();
 
-	const QString vsrc = new_plan->vertexShaderSourceCode();
-	const QString fsrc = new_plan->fragmentShaderSourceCode();
-
-	openGL_unique_ptr<OpenGLShaderProgram> new_program(new OpenGLShaderProgram(this), OpenGLDeleter<OpenGLShaderProgram>(this));
-	new_program->addFragmentShaderFromSourceCode(fsrc);
-	new_program->addVertexShaderFromSourceCode(vsrc);
-	new_program->setVertexCoordArray(new_plan->plane().vertexArray(), 2);
-	new_program->setVertexUVArray(new_plan->plane().uv_data, 2);
-	if (!new_program->link()) throw ShaderLoadError(glGetError());
-	new_program->bind();
-
-	new_plan->imageTexture().initialize();
+	if (!new_plan->initialize()) throw PlanInitializationError(*new_plan);
+	new_plan->program().bind();
 
 	plan_ = std::move(new_plan);
 	// If no exceptions were thrown then we can put new objects to object's member pointers
 	viewrect_.setBorder(plan_->plane().borderRect(rotation()));
 	widget_to_fits_.setScale(plan_->plane().scale());
 	widget_to_fits_.setImageSize(image_size());
-
-	if (program_) program_->release();
-	program_ = std::move(new_program);
-	program_->bind();
 
 	emit textureInitialized(plan_->imageTexture());
 	shader_uniforms_.reset(new OpenGLShaderUniforms(plan_->imageTexture().channels(), plan_->imageTexture().channel_size(), hdu_->header().bzero(), hdu_->header().bscale()));
@@ -204,10 +190,10 @@ void OpenGLWidget::resizeEvent(QResizeEvent* event) {
 void OpenGLWidget::paintGL() {
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	program_->bind();
-	program_->setMVPUniform(opengl_transform_.transformMatrix());
-	program_->setCUniform(shader_uniforms_->get_c(), shader_uniforms_->channels);
-	program_->setZUniform(shader_uniforms_->get_z(), shader_uniforms_->channels);
+	plan_->program().bind();
+	plan_->program().setMVPUniform(opengl_transform_.transformMatrix());
+	plan_->program().setCUniform(shader_uniforms_->get_c(), shader_uniforms_->channels);
+	plan_->program().setZUniform(shader_uniforms_->get_z(), shader_uniforms_->channels);
 
 	plan_->imageTexture().bind(OpenGLShaderProgram::image_texture_index);
 	colormaps_[colormap_index_]->bind(OpenGLShaderProgram::colormap_texture_index);

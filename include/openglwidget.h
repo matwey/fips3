@@ -135,7 +135,6 @@ public:
 private:
 	const FITS::AbstractHeaderDataUnit* hdu_;
 	openGL_unique_ptr<AbstractOpenGLPlan> plan_;
-	openGL_unique_ptr<OpenGLShaderProgram> program_;
 private:
 	Viewrect viewrect_;
 public:
