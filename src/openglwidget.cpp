@@ -114,8 +114,6 @@ void OpenGLWidget::initializeGL() {
 }
 
 void OpenGLWidget::initializeGLObjects() {
-	std::unique_ptr<OpenGLPlane> new_plane{new OpenGLPlane(image_size())};
-
 	struct PlanCreator {
 		OpenGLWidget* parent;
 
@@ -151,24 +149,22 @@ void OpenGLWidget::initializeGLObjects() {
 	openGL_unique_ptr<OpenGLShaderProgram> new_program(new OpenGLShaderProgram(this), OpenGLDeleter<OpenGLShaderProgram>(this));
 	new_program->addFragmentShaderFromSourceCode(fsrc);
 	new_program->addVertexShaderFromSourceCode(vsrc);
-	new_program->setVertexCoordArray(new_plane->vertexArray(), 2);
-	new_program->setVertexUVArray(new_plane->uv_data, 2);
+	new_program->setVertexCoordArray(new_plan->plane().vertexArray(), 2);
+	new_program->setVertexUVArray(new_plan->plane().uv_data, 2);
 	if (!new_program->link()) throw ShaderLoadError(glGetError());
 	new_program->bind();
 
 	new_plan->imageTexture().initialize();
 
+	plan_ = std::move(new_plan);
 	// If no exceptions were thrown then we can put new objects to object's member pointers
-	plane_ = std::move(new_plane);
-	viewrect_.setBorder(plane_->borderRect(rotation()));
-	widget_to_fits_.setScale(plane_->scale());
+	viewrect_.setBorder(plan_->plane().borderRect(rotation()));
+	widget_to_fits_.setScale(plan_->plane().scale());
 	widget_to_fits_.setImageSize(image_size());
 
 	if (program_) program_->release();
 	program_ = std::move(new_program);
 	program_->bind();
-
-	plan_ = std::move(new_plan);
 
 	emit textureInitialized(plan_->imageTexture());
 	shader_uniforms_.reset(new OpenGLShaderUniforms(plan_->imageTexture().channels(), plan_->imageTexture().channel_size(), hdu_->header().bzero(), hdu_->header().bscale()));
@@ -274,7 +270,7 @@ void OpenGLWidget::setRotation(double angle) {
 	auto new_view = viewrect_.view();
 	new_view.moveCenter(new_view_center);
 	viewrect_.setView(new_view);
-	viewrect_.setBorder(plane_->borderRect(angle));
+	viewrect_.setBorder(plan_->plane().borderRect(angle));
 
 	opengl_transform_.setRotation(angle);
 	widget_to_fits_.setRotation(angle);

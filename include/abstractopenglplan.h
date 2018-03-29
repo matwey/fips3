@@ -24,16 +24,19 @@
 
 #include <fits.h>
 #include <abstractopengltexture.h>
+#include <openglplane.h>
 
 class AbstractOpenGLPlan:
 	public QObject {
 private:
 	QString name_;
+	OpenGLPlane plane_;
 public:
-	AbstractOpenGLPlan(const QString& name, QObject* parent = Q_NULLPTR);
+	AbstractOpenGLPlan(const QString& name, const FITS::AbstractHeaderDataUnit& hdu, QObject* parent = Q_NULLPTR);
 	virtual ~AbstractOpenGLPlan() = 0;
 
 	inline const QString& name() const { return name_; }
+	inline const OpenGLPlane& plane() const { return plane_; }
 
 	virtual QString fragmentShaderSourceCode() = 0;
 	virtual QString vertexShaderSourceCode();

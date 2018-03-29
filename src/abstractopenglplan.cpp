@@ -18,9 +18,10 @@
 
 #include <abstractopenglplan.h>
 
-AbstractOpenGLPlan::AbstractOpenGLPlan(const QString& name, QObject* parent):
+AbstractOpenGLPlan::AbstractOpenGLPlan(const QString& name, const FITS::AbstractHeaderDataUnit& hdu, QObject* parent):
 	QObject(parent),
-	name_(name) {
+	name_(name),
+	plane_(hdu.data().imageDataUnit()->size()) {
 }
 
 AbstractOpenGLPlan::~AbstractOpenGLPlan() = default;

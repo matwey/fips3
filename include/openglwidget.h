@@ -36,8 +36,8 @@
 #include <array>
 #include <cmath>
 
-#include <fits.h>
 #include <abstractopenglplan.h>
+#include <fits.h>
 #include <openglcolormap.h>
 #include <openglerrors.h>
 #include <openglplane.h>
@@ -128,8 +128,6 @@ private:
 	const FITS::AbstractHeaderDataUnit* hdu_;
 	openGL_unique_ptr<AbstractOpenGLPlan> plan_;
 	openGL_unique_ptr<OpenGLShaderProgram> program_;
-private:
-	std::unique_ptr<OpenGLPlane> plane_;
 private:
 	Viewrect viewrect_;
 public:
