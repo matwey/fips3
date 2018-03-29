@@ -275,13 +275,16 @@ void OpenGLWidget::setHDU(const FITS::HeaderDataUnit &hdu) {
 	const auto old_hdu = hdu_;
 	hdu_ = &hdu;
 	try {
+		makeCurrent();
 		initializeGLObjects();
 		if (image_size() != old_image_size) {
 			fitViewrect();
 		} else {
 			update();
 		}
+		doneCurrent();
 	} catch (const std::exception& e) {
+		doneCurrent();
 		hdu_ = old_hdu;
 		throw e;
 	}
