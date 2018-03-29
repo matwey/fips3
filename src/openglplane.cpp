@@ -89,3 +89,5 @@ QRectF OpenGLPlane::borderRect(float angle) const {
 	// Arguments are top left and bottom right corners in viewrect coordinates:
 	return rotation_matrix.mapRect(p);
 }
+
+constexpr const GLfloat OpenGLPlane::uv_data[];

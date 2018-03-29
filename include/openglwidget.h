@@ -121,13 +121,6 @@ private:
 	openGL_unique_ptr<OpenGLShaderProgram> program_;
 
 private:
-	// UV coordinates for triangle fan. See vertex_data_
-	static constexpr const GLfloat uv_data[] = {
-			0.0f, 0.0f,
-			0.0f, 1.0f,
-			1.0f, 1.0f,
-			1.0f, 0.0f
-	};
 	std::unique_ptr<OpenGLPlane> plane_;
 private:
 	Viewrect viewrect_;

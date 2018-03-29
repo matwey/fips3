@@ -197,7 +197,7 @@ void OpenGLWidget::initializeGLObjects() {
 	new_program->addFragmentShaderFromSourceCode(fsrc);
 	new_program->addVertexShaderFromSourceCode(vsrc);
 	new_program->setVertexCoordArray(new_plane->vertexArray(), 2);
-	new_program->setVertexUVArray(uv_data, 2);
+	new_program->setVertexUVArray(new_plane->uv_data, 2);
 	if (!new_program->link()) throw ShaderLoadError(glGetError());
 	new_program->bind();
 
@@ -375,5 +375,3 @@ void OpenGLWidget::setVerticalFlip(bool flip) {
 
 	emit verticalFlipChanged(verticalFlip());
 }
-
-constexpr const GLfloat OpenGLWidget::uv_data[];
