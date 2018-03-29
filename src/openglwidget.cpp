@@ -105,65 +105,65 @@ void OpenGLWidget::initializeGLObjects() {
 	std::unique_ptr<OpenGLPlane> new_plane{new OpenGLPlane(image_size())};
 
 	struct ShaderLoader {
-		QString* fragment_shader_source_main_;
-
-		void operator() (const FITS::DataUnit<quint8>&) const {
-			*fragment_shader_source_main_ =
+		QString operator() (const FITS::DataUnit<quint8>&) const {
+			return QString(
 					"uniform float c;\n"
 					"uniform float z;\n"
 					"void main() {\n"
-					"	float value = c * (texture2D(texture, UV).a - z);\n";
+					"	float value = c * (texture2D(texture, UV).a - z);\n");
 		}
-		void operator() (const FITS::DataUnit<qint16>&) const {
-			*fragment_shader_source_main_ =
+		QString operator() (const FITS::DataUnit<qint16>&) const {
+			return QString(
 					"uniform vec2 c;\n"
 					"uniform vec2 z;\n"
 					"void main() {\n"
 					"	vec2 raw_value = texture2D(texture, UV).ga;\n"
 					"   raw_value.x -= float(raw_value.x > 0.5) * 1.003921568627451;  // 256.0 / 255.0\n"
-					"	float value = dot(c, raw_value - z);\n";
+					"	float value = dot(c, raw_value - z);\n");
 		}
-		void operator() (const FITS::DataUnit<qint32>&) const {
-			*fragment_shader_source_main_ =
+		QString operator() (const FITS::DataUnit<qint32>&) const {
+			return QString(
 					"uniform vec4 c;\n"
 					"uniform vec4 z;\n"
 					"void main() {\n"
 					"	vec4 raw_value = texture2D(texture, UV);\n"
 					"   raw_value.x -= float(raw_value.x > 0.5) * 1.003921568627451;  // 256.0 / 255.0\n"
-					"	float value = dot(c, raw_value - z);\n";
+					"	float value = dot(c, raw_value - z);\n");
 		}
-		void operator() (const FITS::DataUnit<qint64>&) const {
-			*fragment_shader_source_main_ =
+		QString operator() (const FITS::DataUnit<qint64>&) const {
+			return QString(
 					"uniform vec4 c;\n"
 					"uniform vec4 z;\n"
 					"void main() {\n"
 					"	vec4 raw_value = texture2D(texture, UV);\n"
 					"   raw_value.x -= float(raw_value.x > 0.5) * 1.0000152590218967;  // 65536.0 / 65535.0\n"
-					"	float value = dot(c, raw_value - z);\n";
+					"	float value = dot(c, raw_value - z);\n");
 		}
-		void operator() (const FITS::DataUnit<float>&) const {
+		QString operator() (const FITS::DataUnit<float>&) const {
 			// TODO: Check GL_ARB_color_buffer_float, GL_OES_texture_float.
 			if (! QOpenGLContext::currentContext()->hasExtension("GL_ARB_texture_float")) {
 				// TODO: recode data from float into (u)int32
 				qDebug() << "BITPIX==-32 is not implemented for this hardware";
 			} else {
-				*fragment_shader_source_main_ =
+				return QString(
 						"uniform float c;\n"
 						"uniform float z;\n"
 						"void main() {\n"
-						"	float value = c * (texture2D(texture, UV).a - z);\n";
+						"	float value = c * (texture2D(texture, UV).a - z);\n");
 			}
+			return QString();
 		}
-		void operator() (const FITS::DataUnit<double>&) const {
+		QString operator() (const FITS::DataUnit<double>&) const {
 			qDebug() << "BITPIX==-64 is not implemented";
+			return QString();
 		}
-		void operator() (const FITS::EmptyDataUnit&) const {
+		QString operator() (const FITS::EmptyDataUnit&) const {
 			Q_ASSERT(0);
+			return QString();
 		}
 	};
 
-	QString fragment_shader_source_main;
-	hdu_->data().apply(ShaderLoader{&fragment_shader_source_main});
+	QString fragment_shader_source_main = hdu_->data().apply(ShaderLoader{});
 
 	QOpenGLShader *vshader = new QOpenGLShader(QOpenGLShader::Vertex, this);
 	const char *vsrc =
