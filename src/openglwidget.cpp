@@ -248,8 +248,6 @@ void OpenGLWidget::paintGL() {
 
 	program_->bind();
 
-	program_->setAttributeArray(OpenGLShaderProgram::vertex_coord_index, plane_->vertexArray(), 2);
-
 	program_->setUniformValue("MVP", opengl_transform_.transformMatrix());
 
 	program_->setUniformValueArray("c", shader_uniforms_->get_c().data(), 1, shader_uniforms_->channels);
