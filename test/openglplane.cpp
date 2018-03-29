@@ -9,8 +9,8 @@ private slots:
 	void test_plane1x1();
 	void test_plane1x2();
 	void test_plane2x1();
-	void test_plane10x10();
-	void test_plane10x1000();
+	void test_plane16x16();
+	void test_plane16x1024();
 };
 
 void TestOpenGLPlane::test_plane1x1() {
@@ -43,24 +43,24 @@ void TestOpenGLPlane::test_plane2x1() {
 	QCOMPARE(pl.scale(), 0.5);
 }
 
-void TestOpenGLPlane::test_plane10x10() {
-	OpenGLPlane pl{QSize{10,10}};
+void TestOpenGLPlane::test_plane16x16() {
+	OpenGLPlane pl{QSize{16,16}};
 	auto p = pl.planeRect();
 	QCOMPARE(p.left(), -1.);
 	QCOMPARE(p.top(), -1.);
 	QCOMPARE(p.right(), 1.);
 	QCOMPARE(p.bottom(), 1.);
-	QCOMPARE(static_cast<int>(1.0/pl.scale()), 10);
+	QCOMPARE(pl.scale(), 1./16);
 }
 
-void TestOpenGLPlane::test_plane10x1000() {
-	OpenGLPlane pl{QSize{10,1000}};
+void TestOpenGLPlane::test_plane16x1024() {
+	OpenGLPlane pl{QSize{16,1024}};
 	auto p = pl.planeRect();
-	QCOMPARE(p.left(), -static_cast<qreal>(0.01));
+	QCOMPARE(p.left(), -1./64);
 	QCOMPARE(p.top(), -1.);
-	QCOMPARE(p.right(), static_cast<qreal>(0.01));
+	QCOMPARE(p.right(), 1./64);
 	QCOMPARE(p.bottom(), 1.);
-	QCOMPARE(static_cast<int>(1.0/pl.scale()), 1000);
+	QCOMPARE(pl.scale(), 1./1024);
 }
 
 QTEST_GUILESS_MAIN(TestOpenGLPlane)
