@@ -21,6 +21,7 @@
 
 #include <QObject>
 #include <QSize>
+#include <QOpenGLShaderProgram>
 
 #include <array>
 
@@ -52,6 +53,14 @@ public:
 signals:
 	void scaleChanged(qreal scale);
 	void vertexArrayChanged(const float* array);
+public:
+	// UV coordinates for triangle fan. See vertex_data_
+	static constexpr const GLfloat uv_data[] = {
+			0.0f, 0.0f,
+			0.0f, 1.0f,
+			1.0f, 1.0f,
+			1.0f, 0.0f
+	};
 };
 
 #endif // _OPENGLPLANE_H
