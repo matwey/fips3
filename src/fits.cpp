@@ -86,7 +86,12 @@ void FITS::UnsupportedBitpix::raise() const {
 QException* FITS::UnsupportedBitpix::clone() const {
 	return new FITS::UnsupportedBitpix(*this);
 }
-FITS::HeaderUnit::HeaderUnit(AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end) {
+FITS::HeaderUnit::HeaderUnit(const std::map<QString, QString>& headers): headers_(headers) {
+}
+FITS::HeaderUnit::HeaderUnit(std::map<QString, QString>&& headers): headers_(std::move(headers)) {
+}
+FITS::HeaderUnit FITS::HeaderUnit::createFromPages(AbstractFITSStorage::Page& begin, AbstractFITSStorage::Page end) {
+	std::map<QString, QString> headers;
 	bool foundEnd = false;
 
 	for (; begin != end && !foundEnd; ++begin) {
@@ -101,12 +106,14 @@ FITS::HeaderUnit::HeaderUnit(AbstractFITSStorage::Page& begin, const AbstractFIT
 			if (comment != -1) {
 				value.resize(comment);
 			}
-			headers_.emplace(key,value.trimmed());
+			headers.emplace(key,value.trimmed());
 		}
 	}
 
 	if (!foundEnd)
 		throw FITS::UnexpectedEnd();
+
+	return HeaderUnit(std::move(headers));
 }
 FITS::AbstractDataUnit::AbstractDataUnit(AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end, quint64 length):
 	data_(begin.data()), length_(length) {
@@ -135,7 +142,7 @@ FITS::EmptyDataUnit::EmptyDataUnit(AbstractFITSStorage::Page& begin, const Abstr
 FITS::EmptyDataUnit::~EmptyDataUnit() = default;
 
 FITS::HeaderDataUnit::HeaderDataUnit(AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end):
-	header_(new HeaderUnit(begin, end)) {
+	header_(new HeaderUnit(HeaderUnit::createFromPages(begin, end))) {
 	bool ok = false;
 
 	auto bitpix = header_->header("BITPIX");

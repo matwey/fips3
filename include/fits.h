@@ -68,7 +68,18 @@ public:
 	private:
 		std::map<QString, QString> headers_;
 	public:
-		HeaderUnit(AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end);
+		HeaderUnit() = default;
+		explicit HeaderUnit(const std::map<QString, QString>& headers);
+		explicit HeaderUnit(std::map<QString, QString>&& headers);
+		HeaderUnit(const HeaderUnit&) = default;
+		HeaderUnit(HeaderUnit&&) = default;
+
+		HeaderUnit& operator=(const HeaderUnit&) = default;
+		HeaderUnit& operator=(HeaderUnit&&) = default;
+
+		~HeaderUnit() = default;
+
+		static HeaderUnit createFromPages(AbstractFITSStorage::Page& begin, AbstractFITSStorage::Page end);
 
 		inline const QString& header(const QString& key) const {
 			return headers_.at(key);
