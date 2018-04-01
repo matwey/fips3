@@ -149,7 +149,7 @@ public:
 			return Visitor(std::move(fun)).do_apply(*this);
 		}
 
-		template<class F> static void bitpixToType(const QString& bitpix, F fun);
+		template<class F> static auto bitpixToType(const QString& bitpix, F fun) -> decltype(std::declval<F>()(static_cast<quint8*>(0)));
 		static AbstractDataUnit* createFromBitpix(const QString& bitpix, AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end, quint64 height, quint64 width);
 
 		inline       ImageDataUnit* imageDataUnit()       { return dynamic_cast<ImageDataUnit*>(this); }
@@ -228,22 +228,22 @@ public:
 	const_iterator end()   const { return extensions_.end(); }
 };
 
-template<class F> void FITS::AbstractDataUnit::bitpixToType(const QString& bitpix, F fun) {
+template<class F> auto FITS::AbstractDataUnit::bitpixToType(const QString& bitpix, F fun) -> decltype(std::declval<F>()(static_cast<quint8*>(0))) {
 	if (bitpix == "8") {
-		fun(static_cast<quint8*>(0));
+		return fun(static_cast<quint8*>(0));
 	} else if (bitpix == "16") {
-		fun(static_cast<qint16*>(0));
+		return fun(static_cast<qint16*>(0));
 	} else if (bitpix == "32") {
-		fun(static_cast<qint32*>(0));
+		return fun(static_cast<qint32*>(0));
 	} else if (bitpix == "64") {
-		fun(static_cast<qint64*>(0));
+		return fun(static_cast<qint64*>(0));
 	} else if (bitpix == "-32") {
-		fun(static_cast<float*>(0));
+		return fun(static_cast<float*>(0));
 	} else if (bitpix == "-64") {
-		fun(static_cast<double*>(0));
-	} else {
-		throw FITS::UnsupportedBitpix(bitpix);
+		return fun(static_cast<double*>(0));
 	}
+
+	throw FITS::UnsupportedBitpix(bitpix);
 }
 
 #endif // _FITS_H_
