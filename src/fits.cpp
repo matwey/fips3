@@ -24,14 +24,13 @@
 namespace {
 
 struct DataUnitCreateHelper {
-	FITS::AbstractDataUnit** data_unit_ref_;
 	AbstractFITSStorage::Page& begin_;
 	const AbstractFITSStorage::Page& end_;
 	quint64 height_;
 	quint64 width_;
 
-	template<class T> void operator() (T*) {
-		*data_unit_ref_ = new FITS::DataUnit<T>(begin_, end_, height_, width_);
+	template<class T> FITS::AbstractDataUnit* operator() (T*) {
+		return new FITS::DataUnit<T>(begin_, end_, height_, width_);
 	}
 };
 
@@ -121,10 +120,8 @@ FITS::AbstractDataUnit::~AbstractDataUnit() = default;
 FITS::AbstractDataUnit::VisitorBase::~VisitorBase() = default;
 
 FITS::AbstractDataUnit* FITS::AbstractDataUnit::createFromBitpix(const QString& bitpix, AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end, quint64 height, quint64 width) {
-	FITS::AbstractDataUnit* data_unit;
-	DataUnitCreateHelper c {&data_unit, begin, end, height, width};
-	bitpixToType(bitpix, c);
-	return data_unit;
+	DataUnitCreateHelper c{begin, end, height, width};
+	return bitpixToType(bitpix, c);
 }
 FITS::ImageDataUnit::ImageDataUnit(AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end, quint32 element_size, quint64 height, quint64 width):
 	AbstractDataUnit(begin, end, element_size * height * width),
