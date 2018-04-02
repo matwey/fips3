@@ -154,6 +154,8 @@ public:
 			return Visitor(std::move(fun)).do_apply(*this);
 		}
 
+		static AbstractDataUnit* createFromPages(AbstractFITSStorage::Page& begin, AbstractFITSStorage::Page end, const HeaderUnit& header);
+
 		inline       ImageDataUnit* imageDataUnit()       { return dynamic_cast<ImageDataUnit*>(this); }
 		inline const ImageDataUnit* imageDataUnit() const { return dynamic_cast<const ImageDataUnit*>(this); }
 	};
@@ -209,36 +211,67 @@ public:
 		inline quint64 length() const { return length_; }
 	};
 
-	class HeaderDataUnit {
+	class AbstractHeaderDataUnit {
 	private:
-		std::unique_ptr<HeaderUnit>       header_;
-		std::unique_ptr<AbstractDataUnit> data_;
+		HeaderUnit header_;
 	public:
-		HeaderDataUnit(AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end);
+		explicit AbstractHeaderDataUnit(const HeaderUnit& header);
+		explicit AbstractHeaderDataUnit(HeaderUnit&& header);
 
+		AbstractHeaderDataUnit(AbstractHeaderDataUnit&&) = default;
+		AbstractHeaderDataUnit(const AbstractHeaderDataUnit&) = default;
+		AbstractHeaderDataUnit& operator=(AbstractHeaderDataUnit&&) = default;
+		AbstractHeaderDataUnit& operator=(const AbstractHeaderDataUnit&) = default;
+
+		virtual ~AbstractHeaderDataUnit() = 0;
+
+		static AbstractHeaderDataUnit* createFromPages(AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end);
+
+		inline const HeaderUnit&       header() const { return header_; }
+		virtual const AbstractDataUnit& data() const = 0;
+	};
+
+	template<class T> class HeaderDataUnit: public AbstractHeaderDataUnit {
+	public:
+		typedef T data_unit_type;
+	private:
+		data_unit_type data_;
+	public:
+		HeaderDataUnit(const HeaderUnit& header, const T& dataunit):
+			AbstractHeaderDataUnit(header),
+			data_(dataunit) {}
+		HeaderDataUnit(HeaderUnit&& header, T&& dataunit):
+			AbstractHeaderDataUnit(std::move(header)),
+			data_(std::move(dataunit)) {}
+
+		HeaderDataUnit(const HeaderDataUnit&) = default;
 		HeaderDataUnit(HeaderDataUnit&&) = default;
+		HeaderDataUnit& operator=(const HeaderDataUnit&) = default;
 		HeaderDataUnit& operator=(HeaderDataUnit&&) = default;
 
-		inline const HeaderUnit&       header() const { return *header_; }
-		inline const AbstractDataUnit& data()   const { return *data_; }
+		virtual ~HeaderDataUnit() override = default;
+
+		virtual const T& data() const override {
+			return data_;
+		}
 	};
 private:
 	std::unique_ptr<AbstractFITSStorage> fits_storage_;
-	HeaderDataUnit primary_hdu_;
+	std::unique_ptr<AbstractHeaderDataUnit> primary_hdu_;
 
-	std::list<HeaderDataUnit> extensions_;
+	std::list<std::unique_ptr<AbstractHeaderDataUnit>> extensions_;
 
 	FITS(AbstractFITSStorage* fits_storage, AbstractFITSStorage::Page begin, const AbstractFITSStorage::Page& end);
 public:
-	typedef std::list<HeaderDataUnit>::const_iterator const_iterator;
+	typedef decltype(extensions_)::const_iterator const_iterator;
 
 	FITS(AbstractFITSStorage* fits_storage);
 	FITS(QFileDevice* file_device);
 
-	inline const HeaderDataUnit&   primary_hdu() const { return primary_hdu_; }
-	inline const HeaderUnit&       header_unit() const { return primary_hdu_.header(); }
-	inline const AbstractDataUnit& data_unit()   const { return primary_hdu_.data(); }
-	const HeaderDataUnit& first_hdu() const;
+	inline const AbstractHeaderDataUnit& primary_hdu() const { return *primary_hdu_; }
+	inline const HeaderUnit&       header_unit() const { return primary_hdu_->header(); }
+	inline const AbstractDataUnit& data_unit()   const { return primary_hdu_->data(); }
+	const AbstractHeaderDataUnit& first_hdu() const;
 
 	const_iterator begin() const { return extensions_.begin(); }
 	const_iterator end()   const { return extensions_.end(); }

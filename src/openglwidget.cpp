@@ -25,7 +25,7 @@
 
 namespace {
 struct HDUValueGetter {
-	const FITS::HeaderDataUnit* hdu;
+	const FITS::AbstractHeaderDataUnit* hdu;
 	const QPoint* image_position;
 	double* value;
 
@@ -68,7 +68,7 @@ QException* OpenGLWidget::ShaderCompileError::clone() const {
 	return new OpenGLWidget::ShaderCompileError(*this);
 }
 
-OpenGLWidget::OpenGLWidget(QWidget *parent, const FITS::HeaderDataUnit& hdu):
+OpenGLWidget::OpenGLWidget(QWidget *parent, const FITS::AbstractHeaderDataUnit& hdu):
 	QOpenGLWidget(parent),
 	hdu_(&hdu),
 	opengl_transform_(this),
@@ -259,7 +259,7 @@ void OpenGLWidget::paintGL() {
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
 
-void OpenGLWidget::setHDU(const FITS::HeaderDataUnit &hdu) {
+void OpenGLWidget::setHDU(const FITS::AbstractHeaderDataUnit &hdu) {
 	const auto old_image_size = image_size();
 	const auto old_hdu = hdu_;
 	hdu_ = &hdu;

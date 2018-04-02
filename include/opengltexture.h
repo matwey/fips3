@@ -50,7 +50,7 @@ private:
 public:
 	OpenGLTexture();
 
-	void initialize(const FITS::HeaderDataUnit* hdu);
+	void initialize(const FITS::AbstractHeaderDataUnit* hdu);
 	inline const std::pair<double, double>& hdu_minmax() const { return minmax_; }
 	inline const std::pair<double, double>& instrumental_minmax() const { return instrumental_minmax_; }
 	inline quint8 channels() const { return channels_; }

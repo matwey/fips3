@@ -58,9 +58,9 @@ QException* OpenGLTexture::TextureCreateError::clone() const {
 
 OpenGLTexture::OpenGLTexture(): QOpenGLTexture(QOpenGLTexture::Target2D) {}
 
-void OpenGLTexture::initialize(const FITS::HeaderDataUnit* hdu) {
+void OpenGLTexture::initialize(const FITS::AbstractHeaderDataUnit* hdu) {
 	struct Loader {
-		const FITS::HeaderDataUnit* hdu;
+		const FITS::AbstractHeaderDataUnit* hdu;
 		QOpenGLTexture::TextureFormat* texture_format;
 		QOpenGLTexture::PixelFormat* pixel_format;
 		QOpenGLTexture::PixelType *pixel_type;

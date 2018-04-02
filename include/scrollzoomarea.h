@@ -27,7 +27,7 @@
 class ScrollZoomArea: public QAbstractScrollArea {
 	Q_OBJECT
 public:
-	ScrollZoomArea(QWidget *parent, const FITS::HeaderDataUnit& hdu);
+	ScrollZoomArea(QWidget *parent, const FITS::AbstractHeaderDataUnit& hdu);
 
 	void zoomViewport(double zoom_factor);
 	void zoomViewport(double zoom_factor, const QPoint& fixed_point);

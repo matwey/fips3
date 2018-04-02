@@ -42,17 +42,25 @@ struct DataUnitCreateHelper {
 	}
 };
 
+struct HeaderDataUnitCreateHelper {
+	FITS::HeaderUnit header;
+
+	template<class T> FITS::AbstractHeaderDataUnit* operator() (const T& data) {
+		return new FITS::HeaderDataUnit<T>(std::move(header), data);
+	}
+};
+
 }
 
 FITS::FITS(AbstractFITSStorage* fits_storage, AbstractFITSStorage::Page begin, const AbstractFITSStorage::Page& end):
 	fits_storage_(fits_storage),
-	primary_hdu_(begin, end) {
+	primary_hdu_{AbstractHeaderDataUnit::createFromPages(begin, end)} {
 
-	const bool has_extension = (primary_hdu_.header().header("EXTEND","F") == "T");
+	const bool has_extension = (primary_hdu_->header().header("EXTEND","F") == "T");
 
 	if (has_extension) {
 		while (begin != end) {
-			extensions_.emplace_back(begin, end);
+			extensions_.emplace_back(AbstractHeaderDataUnit::createFromPages(begin, end));
 		}
 	}
 }
@@ -127,6 +135,33 @@ FITS::AbstractDataUnit::AbstractDataUnit() = default;
 
 FITS::AbstractDataUnit::~AbstractDataUnit() = default;
 
+FITS::AbstractDataUnit* FITS::AbstractDataUnit::createFromPages(AbstractFITSStorage::Page& begin, AbstractFITSStorage::Page end, const HeaderUnit& header) {
+	bool ok = false;
+
+	const auto bitpix = header.header("BITPIX");
+
+	const auto naxis = header.header("NAXIS").toInt(&ok);
+	if (!ok || (naxis != 0 && naxis != 2)) {
+		throw FITS::WrongHeaderValue("NAXIS", header.header("NAXIS"));
+	}
+
+	if (!naxis) {
+		return new EmptyDataUnit{};
+	}
+
+	const auto width = header.header("NAXIS1").toULongLong(&ok);
+	if (!ok) {
+		throw FITS::WrongHeaderValue("NAXIS1", header.header("NAXIS1"));
+	}
+
+	const auto height = header.header("NAXIS2").toULongLong(&ok);
+	if (!ok) {
+		throw FITS::WrongHeaderValue("NAXIS2", header.header("NAXIS2"));
+	}
+
+	return ImageDataUnit::createFromPages(begin, end, bitpix, height, width);
+}
+
 FITS::AbstractDataUnit::VisitorBase::~VisitorBase() = default;
 
 FITS::ImageDataUnit::ImageDataUnit(quint64 height, quint64 width, quint32 element_size):
@@ -147,44 +182,28 @@ FITS::EmptyDataUnit::EmptyDataUnit() = default;
 
 FITS::EmptyDataUnit::~EmptyDataUnit() = default;
 
-FITS::HeaderDataUnit::HeaderDataUnit(AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end):
-	header_(new HeaderUnit(HeaderUnit::createFromPages(begin, end))) {
-	bool ok = false;
-
-	auto bitpix = header_->header("BITPIX");
-
-	auto naxis = header_->header("NAXIS").toInt(&ok);
-	if (!ok || (naxis != 0 && naxis != 2)) {
-		throw FITS::WrongHeaderValue("NAXIS", header_->header("NAXIS"));
-	}
-
-	if (naxis) {
-		// width
-		auto naxis1 = header_->header("NAXIS1").toULongLong(&ok);
-		if (!ok) {
-			throw FITS::WrongHeaderValue("NAXIS1", header_->header("NAXIS1"));
-		}
-
-		// height
-		auto naxis2 = header_->header("NAXIS2").toULongLong(&ok);
-		if (!ok) {
-			throw FITS::WrongHeaderValue("NAXIS2", header_->header("NAXIS2"));
-		}
-
-		data_.reset(ImageDataUnit::createFromPages(begin, end, bitpix, naxis2, naxis1));
-	} else {
-		data_.reset(new EmptyDataUnit());
-	}
+FITS::AbstractHeaderDataUnit::AbstractHeaderDataUnit(const HeaderUnit& header):
+	header_(header) {
+}
+FITS::AbstractHeaderDataUnit::AbstractHeaderDataUnit(HeaderUnit&& header):
+	header_(std::move(header)) {
+}
+FITS::AbstractHeaderDataUnit::~AbstractHeaderDataUnit() = default;
+FITS::AbstractHeaderDataUnit* FITS::AbstractHeaderDataUnit::createFromPages(AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end) {
+	FITS::HeaderUnit hdr{HeaderUnit::createFromPages(begin, end)};
+	auto dataunit = FITS::AbstractDataUnit::createFromPages(begin, end, hdr);
+	HeaderDataUnitCreateHelper c{std::move(hdr)};
+	return dataunit->apply(c);
 }
 
-const FITS::HeaderDataUnit& FITS::first_hdu() const {
-	const FITS::HeaderDataUnit* hdu = &primary_hdu();
+const FITS::AbstractHeaderDataUnit& FITS::first_hdu() const {
+	const FITS::AbstractHeaderDataUnit* hdu = &primary_hdu();
 
 	for (auto it = begin();
 		 it != end() && !hdu->data().imageDataUnit();
 		 ++it) {
 
-		hdu = &(*it);
+		hdu = &(**it);
 	}
 	return *hdu;
 }

@@ -22,7 +22,7 @@
 
 #include <scrollzoomarea.h>
 
-ScrollZoomArea::ScrollZoomArea(QWidget *parent, const FITS::HeaderDataUnit& hdu):
+ScrollZoomArea::ScrollZoomArea(QWidget *parent, const FITS::AbstractHeaderDataUnit& hdu):
 	QAbstractScrollArea(parent) {
 
 	std::unique_ptr<OpenGLWidget> open_gl_widget{new OpenGLWidget(this, hdu)};
