@@ -110,9 +110,6 @@ public:
 	template<class T> class DataUnit;
 
 	class AbstractDataUnit {
-	private:
-		const quint8* data_;
-		quint64 length_;
 	protected:
 		struct VisitorBase {
 			virtual ~VisitorBase() = 0;
@@ -127,11 +124,8 @@ public:
 
 		virtual void do_apply(VisitorBase& visitor) const = 0;
 	public:
-		AbstractDataUnit(AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end, quint64 length);
+		AbstractDataUnit();
 		virtual ~AbstractDataUnit() = 0;
-
-		inline const quint8* data() const { return data_; }
-		inline quint64 length() const { return length_; }
 
 		template<class F> auto apply(F fun) const ->
 			decltype(fun(std::declval<const EmptyDataUnit&>())) {
@@ -160,9 +154,6 @@ public:
 			return Visitor(std::move(fun)).do_apply(*this);
 		}
 
-		template<class F> static auto bitpixToType(const QString& bitpix, F fun) -> decltype(std::declval<F>()(static_cast<quint8*>(0)));
-		static AbstractDataUnit* createFromBitpix(const QString& bitpix, AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end, quint64 height, quint64 width);
-
 		inline       ImageDataUnit* imageDataUnit()       { return dynamic_cast<ImageDataUnit*>(this); }
 		inline const ImageDataUnit* imageDataUnit() const { return dynamic_cast<const ImageDataUnit*>(this); }
 	};
@@ -171,12 +162,17 @@ public:
 	private:
 		quint64 height_;
 		quint64 width_;
+		quint32 element_size_;
 	public:
-		ImageDataUnit(AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end, quint32 element_size, quint64 height, quint64 width);
-		virtual ~ImageDataUnit() = 0;
+		ImageDataUnit(quint64 height, quint64 width, quint32 element_size);
+		virtual ~ImageDataUnit() override = 0;
+
+		template<class F> static auto bitpixToType(const QString& bitpix, F fun) -> decltype(std::declval<F>()(static_cast<quint8*>(0)));
+		static ImageDataUnit* createFromPages(AbstractFITSStorage::Page& begin, AbstractFITSStorage::Page end, const QString& bitpix, quint64 height, quint64 width);
 
 		inline quint64 height() const { return height_; }
 		inline quint64 width()  const { return width_; }
+		inline quint32 element_size() const { return element_size_; }
 		inline QSize size() const { return QSize(width_, height_); }
 	};
 
@@ -186,22 +182,31 @@ public:
 			visitor.visit(*this);
 		}
 	public:
-		EmptyDataUnit(AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end);
-		virtual ~EmptyDataUnit();
+		EmptyDataUnit();
+		virtual ~EmptyDataUnit() override;
 	};
 
 	template<class T> class DataUnit: public ImageDataUnit {
+	private:
+		T const* data_;
+		quint64  length_;
 	protected:
 		virtual void do_apply(VisitorBase& visitor) const override {
 			visitor.visit(*this);
 		}
 	public:
-		inline DataUnit(AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end, quint64 height, quint64 width):
-			ImageDataUnit(begin, end, sizeof(T), height, width) {}
-		inline const T* data() const {
-			return reinterpret_cast<const T*>(AbstractDataUnit::data());
-		}
-		inline quint64 length() const { return AbstractDataUnit::length() / sizeof(T); }
+		DataUnit(T const* data, quint64 height, quint64 width):
+			ImageDataUnit(height, width, sizeof(T)),
+			data_(data), length_(height*width) {}
+		DataUnit(const DataUnit&) = default;
+		DataUnit(DataUnit&&) = default;
+		DataUnit& operator=(const DataUnit&) = default;
+		DataUnit& operator=(DataUnit&&) = default;
+
+		virtual ~DataUnit() override = default;
+
+		inline const T* data() const { return data_; }
+		inline quint64 length() const { return length_; }
 	};
 
 	class HeaderDataUnit {
@@ -239,7 +244,7 @@ public:
 	const_iterator end()   const { return extensions_.end(); }
 };
 
-template<class F> auto FITS::AbstractDataUnit::bitpixToType(const QString& bitpix, F fun) -> decltype(std::declval<F>()(static_cast<quint8*>(0))) {
+template<class F> auto FITS::ImageDataUnit::bitpixToType(const QString& bitpix, F fun) -> decltype(std::declval<F>()(static_cast<quint8*>(0))) {
 	if (bitpix == "8") {
 		return fun(static_cast<quint8*>(0));
 	} else if (bitpix == "16") {

@@ -29,8 +29,16 @@ struct DataUnitCreateHelper {
 	quint64 height_;
 	quint64 width_;
 
-	template<class T> FITS::AbstractDataUnit* operator() (T*) {
-		return new FITS::DataUnit<T>(begin_, end_, height_, width_);
+	template<class T> FITS::ImageDataUnit* operator() (T*) {
+		std::unique_ptr<FITS::DataUnit<T>> du{new FITS::DataUnit<T>(reinterpret_cast<const T*>(begin_.data()), height_, width_)};
+
+		const auto length = du->element_size() * height_ * width_;
+
+		if (begin_.distanceInBytes(end_) < length)
+			throw FITS::UnexpectedEnd();
+		begin_.advanceInBytes(length);
+
+		return du.release();
 	}
 };
 
@@ -115,30 +123,28 @@ FITS::HeaderUnit FITS::HeaderUnit::createFromPages(AbstractFITSStorage::Page& be
 
 	return HeaderUnit(std::move(headers));
 }
-FITS::AbstractDataUnit::AbstractDataUnit(AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end, quint64 length):
-	data_(begin.data()), length_(length) {
+FITS::AbstractDataUnit::AbstractDataUnit() = default;
 
-	if (begin.distanceInBytes(end) < length)
-		throw FITS::UnexpectedEnd();
-	begin.advanceInBytes(length);
-}
 FITS::AbstractDataUnit::~AbstractDataUnit() = default;
 
 FITS::AbstractDataUnit::VisitorBase::~VisitorBase() = default;
 
-FITS::AbstractDataUnit* FITS::AbstractDataUnit::createFromBitpix(const QString& bitpix, AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end, quint64 height, quint64 width) {
+FITS::ImageDataUnit::ImageDataUnit(quint64 height, quint64 width, quint32 element_size):
+	AbstractDataUnit(),
+	height_(height),
+	width_(width),
+	element_size_(element_size) {
+}
+
+FITS::ImageDataUnit::~ImageDataUnit() = default;
+
+FITS::ImageDataUnit* FITS::ImageDataUnit::createFromPages(AbstractFITSStorage::Page& begin, AbstractFITSStorage::Page end, const QString& bitpix, quint64 height, quint64 width) {
 	DataUnitCreateHelper c{begin, end, height, width};
 	return bitpixToType(bitpix, c);
 }
-FITS::ImageDataUnit::ImageDataUnit(AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end, quint32 element_size, quint64 height, quint64 width):
-	AbstractDataUnit(begin, end, element_size * height * width),
-	height_(height),
-	width_(width) {
-}
-FITS::ImageDataUnit::~ImageDataUnit() = default;
-FITS::EmptyDataUnit::EmptyDataUnit(AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end):
-	AbstractDataUnit(begin, end, 0) {
-}
+
+FITS::EmptyDataUnit::EmptyDataUnit() = default;
+
 FITS::EmptyDataUnit::~EmptyDataUnit() = default;
 
 FITS::HeaderDataUnit::HeaderDataUnit(AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end):
@@ -165,9 +171,9 @@ FITS::HeaderDataUnit::HeaderDataUnit(AbstractFITSStorage::Page& begin, const Abs
 			throw FITS::WrongHeaderValue("NAXIS2", header_->header("NAXIS2"));
 		}
 
-		data_.reset(AbstractDataUnit::createFromBitpix(bitpix, begin, end, naxis2, naxis1));
+		data_.reset(ImageDataUnit::createFromPages(begin, end, bitpix, naxis2, naxis1));
 	} else {
-		data_.reset(new EmptyDataUnit(begin, end));
+		data_.reset(new EmptyDataUnit());
 	}
 }
 
