@@ -211,9 +211,25 @@ public:
 		inline quint64 length() const { return length_; }
 	};
 
+	class AbstractHeaderDataUnit;
+	template<class T> class HeaderDataUnit;
+
 	class AbstractHeaderDataUnit {
 	private:
 		HeaderUnit header_;
+
+		template<class F>
+		struct ApplyWrap {
+			using result_type = decltype(std::declval<F>()(std::declval<const HeaderDataUnit<EmptyDataUnit>&>()));
+
+			const AbstractHeaderDataUnit* self;
+			F& fun_;
+
+			template<class T> auto operator()(const T&) ->
+			decltype(std::declval<F>()(std::declval<const HeaderDataUnit<T>&>())) {
+				return fun_(*static_cast<const HeaderDataUnit<T>*>(self));
+			}
+		};
 	public:
 		explicit AbstractHeaderDataUnit(const HeaderUnit& header);
 		explicit AbstractHeaderDataUnit(HeaderUnit&& header);
@@ -229,6 +245,12 @@ public:
 
 		inline const HeaderUnit&       header() const { return header_; }
 		virtual const AbstractDataUnit& data() const = 0;
+
+		template<class F> auto apply(F fun) const ->
+			decltype(std::declval<F>()(std::declval<const HeaderDataUnit<EmptyDataUnit>&>())) {
+
+			return data().apply(ApplyWrap<F>{this, fun});
+		}
 	};
 
 	template<class T> class HeaderDataUnit: public AbstractHeaderDataUnit {
