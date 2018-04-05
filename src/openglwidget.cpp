@@ -106,65 +106,72 @@ void OpenGLWidget::initializeGLObjects() {
 	std::unique_ptr<OpenGLPlane> new_plane{new OpenGLPlane(image_size())};
 
 	struct ShaderLoader {
-		QString operator() (const FITS::DataUnit<quint8>&) const {
-			return QString(
+		QPair<QString, AbstractOpenGLTexture*> operator() (const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu) const {
+			return qMakePair(QString(
 					"uniform float c;\n"
 					"uniform float z;\n"
 					"void main() {\n"
-					"	float value = c * (texture2D(texture, UV).a - z);\n");
+					"	float value = c * (texture2D(texture, UV).a - z);\n"),
+			new Uint8OpenGLTexture(hdu));
 		}
-		QString operator() (const FITS::DataUnit<qint16>&) const {
-			return QString(
+		QPair<QString, AbstractOpenGLTexture*> operator() (const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu) const {
+			return qMakePair(QString(
 					"uniform vec2 c;\n"
 					"uniform vec2 z;\n"
 					"void main() {\n"
 					"	vec2 raw_value = texture2D(texture, UV).ga;\n"
 					"   raw_value.x -= float(raw_value.x > 0.5) * 1.003921568627451;  // 256.0 / 255.0\n"
-					"	float value = dot(c, raw_value - z);\n");
+					"	float value = dot(c, raw_value - z);\n"),
+			new Int16OpenGLTexture(hdu));
 		}
-		QString operator() (const FITS::DataUnit<qint32>&) const {
-			return QString(
+		QPair<QString, AbstractOpenGLTexture*> operator() (const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu) const {
+			return qMakePair(QString(
 					"uniform vec4 c;\n"
 					"uniform vec4 z;\n"
 					"void main() {\n"
 					"	vec4 raw_value = texture2D(texture, UV);\n"
 					"   raw_value.x -= float(raw_value.x > 0.5) * 1.003921568627451;  // 256.0 / 255.0\n"
-					"	float value = dot(c, raw_value - z);\n");
+					"	float value = dot(c, raw_value - z);\n"),
+			new Int32OpenGLTexture(hdu));
 		}
-		QString operator() (const FITS::DataUnit<qint64>&) const {
-			return QString(
+		QPair<QString, AbstractOpenGLTexture*> operator() (const FITS::HeaderDataUnit<FITS::DataUnit<qint64>>& hdu) const {
+			return qMakePair(QString(
 					"uniform vec4 c;\n"
 					"uniform vec4 z;\n"
 					"void main() {\n"
 					"	vec4 raw_value = texture2D(texture, UV);\n"
 					"   raw_value.x -= float(raw_value.x > 0.5) * 1.0000152590218967;  // 65536.0 / 65535.0\n"
-					"	float value = dot(c, raw_value - z);\n");
+					"	float value = dot(c, raw_value - z);\n"),
+			new Int64OpenGLTexture(hdu));
 		}
-		QString operator() (const FITS::DataUnit<float>&) const {
+		QPair<QString, AbstractOpenGLTexture*> operator() (const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu) const {
 			// TODO: Check GL_ARB_color_buffer_float, GL_OES_texture_float.
 			if (! QOpenGLContext::currentContext()->hasExtension("GL_ARB_texture_float")) {
 				// TODO: recode data from float into (u)int32
 				qDebug() << "BITPIX==-32 is not implemented for this hardware";
 			} else {
-				return QString(
+				return qMakePair(QString(
 						"uniform float c;\n"
 						"uniform float z;\n"
 						"void main() {\n"
-						"	float value = c * (texture2D(texture, UV).a - z);\n");
+						"	float value = c * (texture2D(texture, UV).a - z);\n"),
+				new FloatOpenGLTexture(hdu));
 			}
-			return QString();
+			return qMakePair(QString(), Q_NULLPTR);
 		}
-		QString operator() (const FITS::DataUnit<double>&) const {
+		QPair<QString, AbstractOpenGLTexture*> operator() (const FITS::HeaderDataUnit<FITS::DataUnit<double>>&) const {
 			qDebug() << "BITPIX==-64 is not implemented";
-			return QString();
+			return qMakePair(QString(), Q_NULLPTR);
 		}
-		QString operator() (const FITS::EmptyDataUnit&) const {
+		QPair<QString, AbstractOpenGLTexture*> operator() (const FITS::HeaderDataUnit<FITS::EmptyDataUnit>&) const {
 			Q_ASSERT(0);
-			return QString();
+			return qMakePair(QString(), Q_NULLPTR);
 		}
 	};
 
-	QString fragment_shader_source_main = hdu_->data().apply(ShaderLoader{});
+	const auto& ret = hdu_->apply(ShaderLoader{});
+	QString fragment_shader_source_main = ret.first;
+	openGL_unique_ptr<AbstractOpenGLTexture> new_texture(ret.second, OpenGLDeleter<AbstractOpenGLTexture>(this));
 
 	const QString vsrc =
 			"attribute vec2 vertexCoord;\n"
@@ -201,8 +208,7 @@ void OpenGLWidget::initializeGLObjects() {
 	if (!new_program->link()) throw ShaderLoadError(glGetError());
 	new_program->bind();
 
-	openGL_unique_ptr<OpenGLTexture> new_texture(new OpenGLTexture(), OpenGLDeleter<OpenGLTexture>(this));
-	new_texture->initialize(hdu_);
+	new_texture->initialize();
 
 	// If no exceptions were thrown then we can put new objects to object's member pointers
 	plane_ = std::move(new_plane);
@@ -220,7 +226,7 @@ void OpenGLWidget::initializeGLObjects() {
 
 	emit textureInitialized(texture_.get());
 	shader_uniforms_.reset(new OpenGLShaderUniforms(texture_->channels(), texture_->channel_size(), hdu_->header().bzero(), hdu_->header().bscale()));
-	shader_uniforms_->setMinMax(texture_->hdu_minmax());
+	shader_uniforms_->setMinMax(texture_->hduMinMax());
 	shader_uniforms_->setColorMapSize(colormaps_[colormap_index_]->width());
 }
 

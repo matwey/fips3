@@ -102,7 +102,7 @@ private:
 	void initializeGLObjects();
 
 signals:
-	void textureInitialized(const OpenGLTexture* texture);
+	void textureInitialized(const AbstractOpenGLTexture* texture);
 
 protected:
 	virtual void initializeGL() override;
@@ -117,7 +117,7 @@ public:
 
 private:
 	const FITS::AbstractHeaderDataUnit* hdu_;
-	openGL_unique_ptr<OpenGLTexture> texture_;
+	openGL_unique_ptr<AbstractOpenGLTexture> texture_;
 	openGL_unique_ptr<OpenGLShaderProgram> program_;
 
 private:

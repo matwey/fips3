@@ -19,42 +19,91 @@
 #ifndef _OPENGLTEXTURE_H
 #define _OPENGLTEXTURE_H
 
-#include <QOpenGLTexture>
-#include <QOpenGLWidget>
+#include <abstractopengltexture.h>
 
-#include <algorithm>
-
-#include <fits.h>
-#include <openglerrors.h>
-
-class OpenGLTexture: public QOpenGLTexture {
-public:
-	class TextureCreateError: public OpenGLException {
-	public:
-		TextureCreateError(GLenum gl_error_code);
-
-		virtual void raise() const override;
-		virtual QException* clone() const override;
-	};
-
+class Uint8OpenGLTexture:
+	public AbstractOpenGLTexture {
 private:
-	quint8 channels_;  // Number of color channels
-	quint8 channel_size_;  // Bytes per channel for integral texture, 0 for float one
-	std::pair<double, double> minmax_;
-	std::pair<double, double> instrumental_minmax_;
-	QOpenGLTexture::TextureFormat texture_format_;
-	QOpenGLTexture::PixelFormat pixel_format_;
-	QOpenGLTexture::PixelType pixel_type_;
-	bool swap_bytes_enabled_;
+	const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>* hdu_;
+protected:
+	virtual const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu() const override {
+		return *hdu_;
+	}
 
+	virtual void setFormat() override;
+	virtual void allocateStorage() override;
+	virtual void setData() override;
 public:
-	OpenGLTexture();
+	explicit Uint8OpenGLTexture(const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu);
+	virtual ~Uint8OpenGLTexture() override = default;
+};
 
-	void initialize(const FITS::AbstractHeaderDataUnit* hdu);
-	inline const std::pair<double, double>& hdu_minmax() const { return minmax_; }
-	inline const std::pair<double, double>& instrumental_minmax() const { return instrumental_minmax_; }
-	inline quint8 channels() const { return channels_; }
-	inline quint8 channel_size() const { return channel_size_; };
+class Int16OpenGLTexture:
+	public AbstractOpenGLTexture {
+private:
+	const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>* hdu_;
+protected:
+	virtual const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu() const override {
+		return *hdu_;
+	}
+
+	virtual void setFormat() override;
+	virtual void allocateStorage() override;
+	virtual void setData() override;
+public:
+	explicit Int16OpenGLTexture(const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu);
+	virtual ~Int16OpenGLTexture() override = default;
+};
+
+class Int32OpenGLTexture:
+	public AbstractOpenGLTexture {
+private:
+	const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>* hdu_;
+protected:
+	virtual const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu() const override {
+		return *hdu_;
+	}
+
+	virtual void setFormat() override;
+	virtual void allocateStorage() override;
+	virtual void setData() override;
+public:
+	explicit Int32OpenGLTexture(const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu);
+	virtual ~Int32OpenGLTexture() override = default;
+};
+
+class Int64OpenGLTexture:
+	public AbstractOpenGLTexture {
+private:
+	const FITS::HeaderDataUnit<FITS::DataUnit<qint64>>* hdu_;
+protected:
+	virtual const FITS::HeaderDataUnit<FITS::DataUnit<qint64>>& hdu() const override {
+		return *hdu_;
+	}
+
+	virtual void setFormat() override;
+	virtual void allocateStorage() override;
+	virtual void setData() override;
+public:
+	explicit Int64OpenGLTexture(const FITS::HeaderDataUnit<FITS::DataUnit<qint64>>& hdu);
+	virtual ~Int64OpenGLTexture() override = default;
+};
+
+class FloatOpenGLTexture:
+	public AbstractOpenGLTexture {
+private:
+	const FITS::HeaderDataUnit<FITS::DataUnit<float>>* hdu_;
+
+	virtual void setFormat() override;
+	virtual void allocateStorage() override;
+	virtual void setData() override;
+protected:
+	virtual const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu() const override {
+		return *hdu_;
+	}
+public:
+	explicit FloatOpenGLTexture(const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu);
+	virtual ~FloatOpenGLTexture() override = default;
 };
 
 #endif //_OPENGLTEXTURE_H
