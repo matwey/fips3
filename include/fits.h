@@ -251,6 +251,18 @@ public:
 
 			return data().apply(ApplyWrap<F>{this, fun});
 		}
+
+		template<class T> auto FITSToInstrumental(const T& x) const -> decltype(std::declval<T>() * 1.0 + 1.0) {
+			const auto bscale = header().bscale();
+			const auto bzero  = header().bzero();
+			return x * bscale + bzero;
+		}
+
+		template<class T> auto InstrumentalToFITS(const T& x) const -> decltype((std::declval<T>() - 1.0)/1.0) {
+			const auto bzero  = header().bzero();
+			const auto bscale = header().bscale();
+			return (x - bzero) / bscale;
+		}
 	};
 
 	template<class T> class HeaderDataUnit: public AbstractHeaderDataUnit {
