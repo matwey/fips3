@@ -220,7 +220,6 @@ void OpenGLWidget::initializeGLObjects() {
 	program_ = std::move(new_program);
 	program_->bind();
 
-	if (texture_ && texture_->isBound(OpenGLShaderProgram::image_texture_index)) texture_->release(OpenGLShaderProgram::image_texture_index);
 	texture_ = std::move(new_texture);
 
 	emit textureInitialized(texture_.get());
