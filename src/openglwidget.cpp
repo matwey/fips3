@@ -253,11 +253,9 @@ void OpenGLWidget::paintGL() {
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	program_->bind();
-
-	program_->setUniformValue("MVP", opengl_transform_.transformMatrix());
-
-	program_->setUniformValueArray("c", shader_uniforms_->get_c().data(), 1, shader_uniforms_->channels);
-	program_->setUniformValueArray("z", shader_uniforms_->get_z().data(), 1, shader_uniforms_->channels);
+	program_->setMVPUniform(opengl_transform_.transformMatrix());
+	program_->setCUniform(shader_uniforms_->get_c(), shader_uniforms_->channels);
+	program_->setZUniform(shader_uniforms_->get_z(), shader_uniforms_->channels);
 
 	texture_->bind(OpenGLShaderProgram::image_texture_index);
 	colormaps_[colormap_index_]->bind(OpenGLShaderProgram::colormap_texture_index);
