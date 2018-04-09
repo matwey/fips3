@@ -26,6 +26,8 @@ class Uint8OpenGLPlan:
 public:
 	Uint8OpenGLPlan(QObject* parent = Q_NULLPTR);
 	virtual ~Uint8OpenGLPlan() override = default;
+
+	virtual QString fragmentShaderSourceCode() override;
 };
 
 class Int16OpenGLPlan:
@@ -33,6 +35,8 @@ class Int16OpenGLPlan:
 public:
 	Int16OpenGLPlan(QObject* parent = Q_NULLPTR);
 	virtual ~Int16OpenGLPlan() override = default;
+
+	virtual QString fragmentShaderSourceCode() override;
 };
 
 class Int32OpenGLPlan:
@@ -40,6 +44,8 @@ class Int32OpenGLPlan:
 public:
 	Int32OpenGLPlan(QObject* parent = Q_NULLPTR);
 	virtual ~Int32OpenGLPlan() override = default;
+
+	virtual QString fragmentShaderSourceCode() override;
 };
 
 class Int64OpenGLPlan:
@@ -47,6 +53,8 @@ class Int64OpenGLPlan:
 public:
 	Int64OpenGLPlan(QObject* parent = Q_NULLPTR);
 	virtual ~Int64OpenGLPlan() override = default;
+
+	virtual QString fragmentShaderSourceCode() override;
 };
 
 class FloatOpenGLPlan:
@@ -54,6 +62,8 @@ class FloatOpenGLPlan:
 public:
 	FloatOpenGLPlan(QObject* parent = Q_NULLPTR);
 	virtual ~FloatOpenGLPlan() override = default;
+
+	virtual QString fragmentShaderSourceCode() override;
 };
 
 #endif // _OPENGLPLAN_H

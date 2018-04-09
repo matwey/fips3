@@ -31,6 +31,8 @@ public:
 	virtual ~AbstractOpenGLPlan() = 0;
 
 	inline const QString& name() const { return name_; }
+
+	virtual QString fragmentShaderSourceCode() = 0;
 };
 
 #endif // _ABSTRACTOPENGLPLAN_H

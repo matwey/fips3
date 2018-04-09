@@ -19,6 +19,7 @@
 #include <QFile>
 #include <QPoint>
 
+#include <openglplan.h>
 #include <openglwidget.h>
 #include <openglshaderprogram.h>
 #include <utils/swapbytes.h>
@@ -115,73 +116,46 @@ void OpenGLWidget::initializeGL() {
 void OpenGLWidget::initializeGLObjects() {
 	std::unique_ptr<OpenGLPlane> new_plane{new OpenGLPlane(image_size())};
 
-	struct ShaderLoader {
-		QPair<QString, AbstractOpenGLTexture*> operator() (const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu) const {
-			return qMakePair(QString(
-					"uniform float c;\n"
-					"uniform float z;\n"
-					"void main() {\n"
-					"	float value = c * (texture2D(texture, UV).a - z);\n"),
-			new Uint8OpenGLTexture(hdu));
+	struct PlanCreator {
+		OpenGLWidget* parent;
+
+		QPair<AbstractOpenGLPlan*, AbstractOpenGLTexture*> operator() (const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu) const {
+			std::unique_ptr<Uint8OpenGLPlan>    plan{new Uint8OpenGLPlan(parent)};
+			std::unique_ptr<Uint8OpenGLTexture> tex{new Uint8OpenGLTexture(hdu)};
+			return qMakePair(plan.release(), tex.release());
 		}
-		QPair<QString, AbstractOpenGLTexture*> operator() (const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu) const {
-			return qMakePair(QString(
-					"uniform vec2 c;\n"
-					"uniform vec2 z;\n"
-					"void main() {\n"
-					"	vec2 raw_value = texture2D(texture, UV).ga;\n"
-					"   raw_value.x -= float(raw_value.x > 0.5) * 1.003921568627451;  // 256.0 / 255.0\n"
-					"	float value = dot(c, raw_value - z);\n"),
-			new Int16OpenGLTexture(hdu));
+		QPair<AbstractOpenGLPlan*, AbstractOpenGLTexture*> operator() (const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu) const {
+			std::unique_ptr<Int16OpenGLPlan>    plan{new Int16OpenGLPlan(parent)};
+			std::unique_ptr<Int16OpenGLTexture> tex{new Int16OpenGLTexture(hdu)};
+			return qMakePair(plan.release(), tex.release());
 		}
-		QPair<QString, AbstractOpenGLTexture*> operator() (const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu) const {
-			return qMakePair(QString(
-					"uniform vec4 c;\n"
-					"uniform vec4 z;\n"
-					"void main() {\n"
-					"	vec4 raw_value = texture2D(texture, UV);\n"
-					"   raw_value.x -= float(raw_value.x > 0.5) * 1.003921568627451;  // 256.0 / 255.0\n"
-					"	float value = dot(c, raw_value - z);\n"),
-			new Int32OpenGLTexture(hdu));
+		QPair<AbstractOpenGLPlan*, AbstractOpenGLTexture*> operator() (const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu) const {
+			std::unique_ptr<Int32OpenGLPlan>    plan{new Int32OpenGLPlan(parent)};
+			std::unique_ptr<Int32OpenGLTexture> tex{new Int32OpenGLTexture(hdu)};
+			return qMakePair(plan.release(), tex.release());
 		}
-		QPair<QString, AbstractOpenGLTexture*> operator() (const FITS::HeaderDataUnit<FITS::DataUnit<qint64>>& hdu) const {
-			return qMakePair(QString(
-					"uniform vec4 c;\n"
-					"uniform vec4 z;\n"
-					"void main() {\n"
-					"	vec4 raw_value = texture2D(texture, UV);\n"
-					"   raw_value.x -= float(raw_value.x > 0.5) * 1.0000152590218967;  // 65536.0 / 65535.0\n"
-					"	float value = dot(c, raw_value - z);\n"),
-			new Int64OpenGLTexture(hdu));
+		QPair<AbstractOpenGLPlan*, AbstractOpenGLTexture*> operator() (const FITS::HeaderDataUnit<FITS::DataUnit<qint64>>& hdu) const {
+			std::unique_ptr<Int64OpenGLPlan>    plan{new Int64OpenGLPlan(parent)};
+			std::unique_ptr<Int64OpenGLTexture> tex{new Int64OpenGLTexture(hdu)};
+			return qMakePair(plan.release(), tex.release());
 		}
-		QPair<QString, AbstractOpenGLTexture*> operator() (const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu) const {
-			// TODO: Check GL_ARB_color_buffer_float, GL_OES_texture_float.
-			if (! QOpenGLContext::currentContext()->hasExtension("GL_ARB_texture_float")) {
-				// TODO: recode data from float into (u)int32
-				qDebug() << "BITPIX==-32 is not implemented for this hardware";
-			} else {
-				return qMakePair(QString(
-						"uniform float c;\n"
-						"uniform float z;\n"
-						"void main() {\n"
-						"	float value = c * (texture2D(texture, UV).a - z);\n"),
-				new FloatOpenGLTexture(hdu));
-			}
-			return qMakePair(QString(), Q_NULLPTR);
+		QPair<AbstractOpenGLPlan*, AbstractOpenGLTexture*> operator() (const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu) const {
+			std::unique_ptr<FloatOpenGLPlan>    plan{new FloatOpenGLPlan(parent)};
+			std::unique_ptr<FloatOpenGLTexture> tex{new FloatOpenGLTexture(hdu)};
+			return qMakePair(plan.release(), tex.release());
 		}
-		QPair<QString, AbstractOpenGLTexture*> operator() (const FITS::HeaderDataUnit<FITS::DataUnit<double>>&) const {
-			qDebug() << "BITPIX==-64 is not implemented";
-			return qMakePair(QString(), Q_NULLPTR);
+		QPair<AbstractOpenGLPlan*, AbstractOpenGLTexture*> operator() (const FITS::HeaderDataUnit<FITS::DataUnit<double>>&) const {
+			return qMakePair(Q_NULLPTR, Q_NULLPTR);
 		}
-		QPair<QString, AbstractOpenGLTexture*> operator() (const FITS::HeaderDataUnit<FITS::EmptyDataUnit>&) const {
-			Q_ASSERT(0);
-			return qMakePair(QString(), Q_NULLPTR);
+		QPair<AbstractOpenGLPlan*, AbstractOpenGLTexture*> operator() (const FITS::HeaderDataUnit<FITS::EmptyDataUnit>&) const {
+			return qMakePair(Q_NULLPTR, Q_NULLPTR);
 		}
 	};
 
-	const auto& ret = hdu_->apply(ShaderLoader{});
-	QString fragment_shader_source_main = ret.first;
+	const auto& ret = hdu_->apply(PlanCreator{this});
+	std::unique_ptr<AbstractOpenGLPlan> plan{ret.first};
 	openGL_unique_ptr<AbstractOpenGLTexture> new_texture(ret.second, OpenGLDeleter<AbstractOpenGLTexture>(this));
+	if (!plan) throw PlanCreationError();
 
 	const QString vsrc =
 			"attribute vec2 vertexCoord;\n"
@@ -193,22 +167,7 @@ void OpenGLWidget::initializeGLObjects() {
 			"	UV = VertexUV;\n"
 			"}\n";
 
-	const QString fsrc =
-			"#ifdef GL_ES\n"
-			"	#ifdef GL_FRAGMENT_PRECISION_HIGH\n"
-			"		precision highp float;\n"
-			"		precision highp sampler2D;\n"
-			"	#else\n"
-			"		precision mediump float;\n"
-			"		precision mediump sampler2D;\n"
-			"	#endif\n"
-			"#endif\n"
-			"varying vec2 UV;\n"
-			"uniform sampler2D texture;\n"
-			"uniform sampler1D colormap;\n"
-			+ fragment_shader_source_main +
-			"	gl_FragColor = texture1D(colormap, clamp(value, 0.0, 1.0));\n"
-			"}\n";
+	const QString fsrc = plan->fragmentShaderSourceCode();
 
 	openGL_unique_ptr<OpenGLShaderProgram> new_program(new OpenGLShaderProgram(this), OpenGLDeleter<OpenGLShaderProgram>(this));
 	new_program->addFragmentShaderFromSourceCode(fsrc);
