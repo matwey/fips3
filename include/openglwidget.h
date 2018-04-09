@@ -119,7 +119,7 @@ private:
 	void initializeGLObjects();
 
 signals:
-	void textureInitialized(const AbstractOpenGLTexture& texture);
+	void planInitialized(const AbstractOpenGLPlan& plan);
 
 protected:
 	virtual void initializeGL() override;

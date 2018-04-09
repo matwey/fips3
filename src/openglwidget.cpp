@@ -162,9 +162,10 @@ void OpenGLWidget::initializeGLObjects() {
 	widget_to_fits_.setScale(plan_->plane().scale());
 	widget_to_fits_.setImageSize(image_size());
 
-	emit textureInitialized(plan_->imageTexture());
-	shader_uniforms_.reset(new OpenGLShaderUniforms(plan_->imageTexture().channels(), plan_->imageTexture().channel_size(), hdu_->header().bzero(), hdu_->header().bscale()));
-	shader_uniforms_->setMinMax(plan_->imageTexture().hduMinMax());
+	emit planInitialized(*plan_);
+
+	shader_uniforms_.reset(new OpenGLShaderUniforms(plan_->channels(), plan_->channel_size(), hdu_->header().bzero(), hdu_->header().bscale()));
+	shader_uniforms_->setMinMax(plan_->hduMinMax());
 	shader_uniforms_->setColorMapSize(colormaps_[colormap_index_]->width());
 }
 

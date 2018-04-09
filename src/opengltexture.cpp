@@ -26,12 +26,7 @@
 #include <utils/openglrowalign.h>
 
 Uint8OpenGLTexture::Uint8OpenGLTexture(const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu):
-	AbstractOpenGLTexture(1, 1), hdu_(&hdu) {
-
-	const auto bzero = hdu.header().bzero();
-
-	minmax_ = makeMinMax(hdu);
-	instrumental_minmax_ = makeInstrumentalMinMax(hdu);
+	AbstractOpenGLTexture(), hdu_(&hdu) {
 }
 
 void Uint8OpenGLTexture::setFormat() {
@@ -50,10 +45,7 @@ void Uint8OpenGLTexture::setData() {
 }
 
 Int16OpenGLTexture::Int16OpenGLTexture(const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu):
-	AbstractOpenGLTexture(2, 1), hdu_(&hdu) {
-
-	minmax_ = makeMinMax(hdu);
-	instrumental_minmax_ = makeInstrumentalMinMax(hdu);
+	AbstractOpenGLTexture(), hdu_(&hdu) {
 }
 
 void Int16OpenGLTexture::setFormat() {
@@ -72,10 +64,7 @@ void Int16OpenGLTexture::setData() {
 }
 
 Int32OpenGLTexture::Int32OpenGLTexture(const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu):
-	AbstractOpenGLTexture(4, 1), hdu_(&hdu) {
-
-	minmax_ = makeMinMax(hdu);
-	instrumental_minmax_ = makeInstrumentalMinMax(hdu);
+	AbstractOpenGLTexture(), hdu_(&hdu) {
 }
 
 void Int32OpenGLTexture::setFormat() {
@@ -94,10 +83,7 @@ void Int32OpenGLTexture::setData() {
 }
 
 Int64OpenGLTexture::Int64OpenGLTexture(const FITS::HeaderDataUnit<FITS::DataUnit<qint64>>& hdu):
-	AbstractOpenGLTexture(4, 2), hdu_(&hdu) {
-
-	minmax_ = makeMinMax(hdu);
-	instrumental_minmax_ = makeInstrumentalMinMax(hdu);
+	AbstractOpenGLTexture(), hdu_(&hdu) {
 }
 
 void Int64OpenGLTexture::setFormat() {
@@ -116,10 +102,7 @@ void Int64OpenGLTexture::setData() {
 }
 
 FloatOpenGLTexture::FloatOpenGLTexture(const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu):
-	AbstractOpenGLTexture(1, 0), hdu_(&hdu) {
-
-	minmax_ = makeMinMax(hdu);
-	instrumental_minmax_ = minmax_;
+	AbstractOpenGLTexture(), hdu_(&hdu) {
 }
 
 void FloatOpenGLTexture::setFormat() {

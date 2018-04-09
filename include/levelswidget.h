@@ -24,7 +24,7 @@
 
 #include <memory>
 
-#include <opengltexture.h>
+#include <abstractopenglplan.h>
 #include <scientificspinbox.h>
 #include <spinboxwithslider.h>
 
@@ -49,7 +49,7 @@ public slots:
 	inline void setRange(const std::pair<double, double>& minmax) { setRange(minmax.first, minmax.second); }
 	void setValues(double minimum, double maximum);
 	inline void setValues(const std::pair<double, double>& minmax) { setValues(minmax.first, minmax.second); }
-	void notifyTextureInitialized(const AbstractOpenGLTexture& texture);
+	void notifyPlanInitialized(const AbstractOpenGLPlan& plan);
 
 private slots:
 	inline void notifyValuesChanged(const std::pair<double, double>& minmax) { emit valuesChanged(minmax); }

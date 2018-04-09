@@ -82,6 +82,8 @@ class FloatOpenGLPlan:
 	public AbstractOpenGLPlan {
 private:
 	FloatOpenGLTexture image_texture_;
+
+	FloatOpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu, const std::pair<double, double>& minmax, QObject* parent);
 public:
 	FloatOpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu, QObject* parent = Q_NULLPTR);
 	virtual ~FloatOpenGLPlan() override = default;

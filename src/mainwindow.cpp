@@ -170,8 +170,8 @@ MainWindow::MainWindow(const QString& fits_filename, QWidget *parent):
 	levels_dock->setAllowedAreas(Qt::AllDockWidgetAreas);
 	std::unique_ptr<LevelsWidget> levels_widget{new LevelsWidget(levels_dock.get())};
 	connect(
-			scrollZoomArea()->viewport(), SIGNAL(textureInitialized(const AbstractOpenGLTexture&)),
-			levels_widget.get(), SLOT(notifyTextureInitialized(const AbstractOpenGLTexture&))
+			scrollZoomArea()->viewport(), SIGNAL(planInitialized(const AbstractOpenGLPlan&)),
+			levels_widget.get(), SLOT(notifyPlanInitialized(const AbstractOpenGLPlan&))
 	);
 	connect(
 			levels_widget.get(), SIGNAL(valuesChanged(const std::pair<double, double>&)),

@@ -19,7 +19,7 @@
 #include <openglplan.h>
 
 Uint8OpenGLPlan::Uint8OpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu, QObject* parent):
-	AbstractOpenGLPlan("uint8", hdu, parent),
+	AbstractOpenGLPlan("uint8", hdu, makeMinMax(hdu), makeInstrumentalMinMax(hdu), 1, 1, parent),
 	image_texture_(hdu) {
 }
 
@@ -50,7 +50,7 @@ QString Uint8OpenGLPlan::fragmentShaderSourceCode() {
 }
 
 Int16OpenGLPlan::Int16OpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu, QObject* parent):
-	AbstractOpenGLPlan("int16", hdu, parent),
+	AbstractOpenGLPlan("int16", hdu, makeMinMax(hdu), makeInstrumentalMinMax(hdu), 2, 1, parent),
 	image_texture_(hdu) {
 }
 
@@ -83,7 +83,7 @@ QString Int16OpenGLPlan::fragmentShaderSourceCode() {
 }
 
 Int32OpenGLPlan::Int32OpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu, QObject* parent):
-	AbstractOpenGLPlan("int32", hdu, parent),
+	AbstractOpenGLPlan("int32", hdu, makeMinMax(hdu), makeInstrumentalMinMax(hdu), 4, 1, parent),
 	image_texture_(hdu) {
 }
 
@@ -116,7 +116,7 @@ QString Int32OpenGLPlan::fragmentShaderSourceCode() {
 }
 
 Int64OpenGLPlan::Int64OpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<qint64>>& hdu, QObject* parent):
-	AbstractOpenGLPlan("int64", hdu, parent),
+	AbstractOpenGLPlan("int64", hdu, makeMinMax(hdu), makeInstrumentalMinMax(hdu), 4, 2, parent),
 	image_texture_(hdu) {
 }
 
@@ -148,9 +148,12 @@ QString Int64OpenGLPlan::fragmentShaderSourceCode() {
 	return source;
 }
 
-FloatOpenGLPlan::FloatOpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu, QObject* parent):
-	AbstractOpenGLPlan("float32", hdu, parent),
+FloatOpenGLPlan::FloatOpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu, const std::pair<double, double>& minmax, QObject* parent):
+	AbstractOpenGLPlan("float32", hdu, minmax, minmax, 1, 0, parent),
 	image_texture_(hdu) {
+}
+FloatOpenGLPlan::FloatOpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu, QObject* parent):
+	FloatOpenGLPlan(hdu, makeMinMax(hdu), parent) {
 }
 
 QString FloatOpenGLPlan::fragmentShaderSourceCode() {

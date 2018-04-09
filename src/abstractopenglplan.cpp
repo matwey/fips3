@@ -18,11 +18,18 @@
 
 #include <abstractopenglplan.h>
 
-AbstractOpenGLPlan::AbstractOpenGLPlan(const QString& name, const FITS::AbstractHeaderDataUnit& hdu, QObject* parent):
+AbstractOpenGLPlan::AbstractOpenGLPlan(const QString& name, const FITS::AbstractHeaderDataUnit& hdu,
+	const std::pair<double, double>& hdu_minmax,
+	const std::pair<double, double>& instrumental_minmax,
+	quint8 channels, quint8 channel_size, QObject* parent):
 	QObject(parent),
 	name_(name),
 	plane_(hdu.data().imageDataUnit()->size()),
-	program_() {
+	program_(),
+	hdu_minmax_(hdu_minmax),
+	instrumental_minmax_(instrumental_minmax),
+	channels_(channels),
+	channel_size_(channel_size) {
 }
 
 AbstractOpenGLPlan::~AbstractOpenGLPlan() = default;

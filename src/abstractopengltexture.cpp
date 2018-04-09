@@ -28,9 +28,7 @@ QException* AbstractOpenGLTexture::TextureCreateError::clone() const {
 	return new AbstractOpenGLTexture::TextureCreateError(*this);
 }
 
-AbstractOpenGLTexture::AbstractOpenGLTexture(const quint8& channels, const quint8& channel_size):
-	channels_(channels),
-	channel_size_(channel_size),
+AbstractOpenGLTexture::AbstractOpenGLTexture():
 	QOpenGLTexture(QOpenGLTexture::Target2D) {
 }
 
