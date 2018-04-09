@@ -68,7 +68,18 @@ public:
 	private:
 		std::map<QString, QString> headers_;
 	public:
-		HeaderUnit(AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end);
+		HeaderUnit() = default;
+		explicit HeaderUnit(const std::map<QString, QString>& headers);
+		explicit HeaderUnit(std::map<QString, QString>&& headers);
+		HeaderUnit(const HeaderUnit&) = default;
+		HeaderUnit(HeaderUnit&&) = default;
+
+		HeaderUnit& operator=(const HeaderUnit&) = default;
+		HeaderUnit& operator=(HeaderUnit&&) = default;
+
+		~HeaderUnit() = default;
+
+		static HeaderUnit createFromPages(AbstractFITSStorage::Page& begin, AbstractFITSStorage::Page end);
 
 		inline const QString& header(const QString& key) const {
 			return headers_.at(key);
@@ -99,9 +110,6 @@ public:
 	template<class T> class DataUnit;
 
 	class AbstractDataUnit {
-	private:
-		const quint8* data_;
-		quint64 length_;
 	protected:
 		struct VisitorBase {
 			virtual ~VisitorBase() = 0;
@@ -116,11 +124,8 @@ public:
 
 		virtual void do_apply(VisitorBase& visitor) const = 0;
 	public:
-		AbstractDataUnit(AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end, quint64 length);
+		AbstractDataUnit();
 		virtual ~AbstractDataUnit() = 0;
-
-		inline const quint8* data() const { return data_; }
-		inline quint64 length() const { return length_; }
 
 		template<class F> auto apply(F fun) const ->
 			decltype(fun(std::declval<const EmptyDataUnit&>())) {
@@ -149,8 +154,7 @@ public:
 			return Visitor(std::move(fun)).do_apply(*this);
 		}
 
-		template<class F> static void bitpixToType(const QString& bitpix, F fun);
-		static AbstractDataUnit* createFromBitpix(const QString& bitpix, AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end, quint64 height, quint64 width);
+		static AbstractDataUnit* createFromPages(AbstractFITSStorage::Page& begin, AbstractFITSStorage::Page end, const HeaderUnit& header);
 
 		inline       ImageDataUnit* imageDataUnit()       { return dynamic_cast<ImageDataUnit*>(this); }
 		inline const ImageDataUnit* imageDataUnit() const { return dynamic_cast<const ImageDataUnit*>(this); }
@@ -160,12 +164,17 @@ public:
 	private:
 		quint64 height_;
 		quint64 width_;
+		quint32 element_size_;
 	public:
-		ImageDataUnit(AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end, quint32 element_size, quint64 height, quint64 width);
-		virtual ~ImageDataUnit() = 0;
+		ImageDataUnit(quint64 height, quint64 width, quint32 element_size);
+		virtual ~ImageDataUnit() override = 0;
+
+		template<class F> static auto bitpixToType(const QString& bitpix, F fun) -> decltype(std::declval<F>()(static_cast<quint8*>(0)));
+		static ImageDataUnit* createFromPages(AbstractFITSStorage::Page& begin, AbstractFITSStorage::Page end, const QString& bitpix, quint64 height, quint64 width);
 
 		inline quint64 height() const { return height_; }
 		inline quint64 width()  const { return width_; }
+		inline quint32 element_size() const { return element_size_; }
 		inline QSize size() const { return QSize(width_, height_); }
 	};
 
@@ -175,75 +184,149 @@ public:
 			visitor.visit(*this);
 		}
 	public:
-		EmptyDataUnit(AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end);
-		virtual ~EmptyDataUnit();
+		EmptyDataUnit();
+		virtual ~EmptyDataUnit() override;
 	};
 
 	template<class T> class DataUnit: public ImageDataUnit {
+	private:
+		T const* data_;
+		quint64  length_;
 	protected:
 		virtual void do_apply(VisitorBase& visitor) const override {
 			visitor.visit(*this);
 		}
 	public:
-		inline DataUnit(AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end, quint64 height, quint64 width):
-			ImageDataUnit(begin, end, sizeof(T), height, width) {}
-		inline const T* data() const {
-			return reinterpret_cast<const T*>(AbstractDataUnit::data());
-		}
-		inline quint64 length() const { return AbstractDataUnit::length() / sizeof(T); }
+		DataUnit(T const* data, quint64 height, quint64 width):
+			ImageDataUnit(height, width, sizeof(T)),
+			data_(data), length_(height*width) {}
+		DataUnit(const DataUnit&) = default;
+		DataUnit(DataUnit&&) = default;
+		DataUnit& operator=(const DataUnit&) = default;
+		DataUnit& operator=(DataUnit&&) = default;
+
+		virtual ~DataUnit() override = default;
+
+		inline const T* data() const { return data_; }
+		inline quint64 length() const { return length_; }
 	};
 
-	class HeaderDataUnit {
-	private:
-		std::unique_ptr<HeaderUnit>       header_;
-		std::unique_ptr<AbstractDataUnit> data_;
-	public:
-		HeaderDataUnit(AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end);
+	class AbstractHeaderDataUnit;
+	template<class T> class HeaderDataUnit;
 
+	class AbstractHeaderDataUnit {
+	private:
+		HeaderUnit header_;
+
+		template<class F>
+		struct ApplyWrap {
+			using result_type = decltype(std::declval<F>()(std::declval<const HeaderDataUnit<EmptyDataUnit>&>()));
+
+			const AbstractHeaderDataUnit* self;
+			F& fun_;
+
+			template<class T> auto operator()(const T&) ->
+			decltype(std::declval<F>()(std::declval<const HeaderDataUnit<T>&>())) {
+				return fun_(*static_cast<const HeaderDataUnit<T>*>(self));
+			}
+		};
+	public:
+		explicit AbstractHeaderDataUnit(const HeaderUnit& header);
+		explicit AbstractHeaderDataUnit(HeaderUnit&& header);
+
+		AbstractHeaderDataUnit(AbstractHeaderDataUnit&&) = default;
+		AbstractHeaderDataUnit(const AbstractHeaderDataUnit&) = default;
+		AbstractHeaderDataUnit& operator=(AbstractHeaderDataUnit&&) = default;
+		AbstractHeaderDataUnit& operator=(const AbstractHeaderDataUnit&) = default;
+
+		virtual ~AbstractHeaderDataUnit() = 0;
+
+		static AbstractHeaderDataUnit* createFromPages(AbstractFITSStorage::Page& begin, const AbstractFITSStorage::Page& end);
+
+		inline const HeaderUnit&       header() const { return header_; }
+		virtual const AbstractDataUnit& data() const = 0;
+
+		template<class F> auto apply(F fun) const ->
+			decltype(std::declval<F>()(std::declval<const HeaderDataUnit<EmptyDataUnit>&>())) {
+
+			return data().apply(ApplyWrap<F>{this, fun});
+		}
+
+		template<class T> auto FITSToInstrumental(const T& x) const -> decltype(std::declval<T>() * 1.0 + 1.0) {
+			const auto bscale = header().bscale();
+			const auto bzero  = header().bzero();
+			return x * bscale + bzero;
+		}
+
+		template<class T> auto InstrumentalToFITS(const T& x) const -> decltype((std::declval<T>() - 1.0)/1.0) {
+			const auto bzero  = header().bzero();
+			const auto bscale = header().bscale();
+			return (x - bzero) / bscale;
+		}
+	};
+
+	template<class T> class HeaderDataUnit: public AbstractHeaderDataUnit {
+	public:
+		typedef T data_unit_type;
+	private:
+		data_unit_type data_;
+	public:
+		HeaderDataUnit(const HeaderUnit& header, const T& dataunit):
+			AbstractHeaderDataUnit(header),
+			data_(dataunit) {}
+		HeaderDataUnit(HeaderUnit&& header, T&& dataunit):
+			AbstractHeaderDataUnit(std::move(header)),
+			data_(std::move(dataunit)) {}
+
+		HeaderDataUnit(const HeaderDataUnit&) = default;
 		HeaderDataUnit(HeaderDataUnit&&) = default;
+		HeaderDataUnit& operator=(const HeaderDataUnit&) = default;
 		HeaderDataUnit& operator=(HeaderDataUnit&&) = default;
 
-		inline const HeaderUnit&       header() const { return *header_; }
-		inline const AbstractDataUnit& data()   const { return *data_; }
+		virtual ~HeaderDataUnit() override = default;
+
+		virtual const T& data() const override {
+			return data_;
+		}
 	};
 private:
 	std::unique_ptr<AbstractFITSStorage> fits_storage_;
-	HeaderDataUnit primary_hdu_;
+	std::unique_ptr<AbstractHeaderDataUnit> primary_hdu_;
 
-	std::list<HeaderDataUnit> extensions_;
+	std::list<std::unique_ptr<AbstractHeaderDataUnit>> extensions_;
 
 	FITS(AbstractFITSStorage* fits_storage, AbstractFITSStorage::Page begin, const AbstractFITSStorage::Page& end);
 public:
-	typedef std::list<HeaderDataUnit>::const_iterator const_iterator;
+	typedef decltype(extensions_)::const_iterator const_iterator;
 
 	FITS(AbstractFITSStorage* fits_storage);
 	FITS(QFileDevice* file_device);
 
-	inline const HeaderDataUnit&   primary_hdu() const { return primary_hdu_; }
-	inline const HeaderUnit&       header_unit() const { return primary_hdu_.header(); }
-	inline const AbstractDataUnit& data_unit()   const { return primary_hdu_.data(); }
-	const HeaderDataUnit& first_hdu() const;
+	inline const AbstractHeaderDataUnit& primary_hdu() const { return *primary_hdu_; }
+	inline const HeaderUnit&       header_unit() const { return primary_hdu_->header(); }
+	inline const AbstractDataUnit& data_unit()   const { return primary_hdu_->data(); }
+	const AbstractHeaderDataUnit& first_hdu() const;
 
 	const_iterator begin() const { return extensions_.begin(); }
 	const_iterator end()   const { return extensions_.end(); }
 };
 
-template<class F> void FITS::AbstractDataUnit::bitpixToType(const QString& bitpix, F fun) {
+template<class F> auto FITS::ImageDataUnit::bitpixToType(const QString& bitpix, F fun) -> decltype(std::declval<F>()(static_cast<quint8*>(0))) {
 	if (bitpix == "8") {
-		fun(static_cast<quint8*>(0));
+		return fun(static_cast<quint8*>(0));
 	} else if (bitpix == "16") {
-		fun(static_cast<qint16*>(0));
+		return fun(static_cast<qint16*>(0));
 	} else if (bitpix == "32") {
-		fun(static_cast<qint32*>(0));
+		return fun(static_cast<qint32*>(0));
 	} else if (bitpix == "64") {
-		fun(static_cast<qint64*>(0));
+		return fun(static_cast<qint64*>(0));
 	} else if (bitpix == "-32") {
-		fun(static_cast<float*>(0));
+		return fun(static_cast<float*>(0));
 	} else if (bitpix == "-64") {
-		fun(static_cast<double*>(0));
-	} else {
-		throw FITS::UnsupportedBitpix(bitpix);
+		return fun(static_cast<double*>(0));
 	}
+
+	throw FITS::UnsupportedBitpix(bitpix);
 }
 
 #endif // _FITS_H_

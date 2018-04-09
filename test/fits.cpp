@@ -85,7 +85,7 @@ void TestFits::parseHeaderUnit3() {
 	AbstractFITSStorage::Page page_begin(end);
 	AbstractFITSStorage::Page page_end(end + 2880);
 
-	FITS::HeaderUnit hdr(page_begin, page_end);
+	FITS::HeaderUnit hdr(FITS::HeaderUnit::createFromPages(page_begin, page_end));
 	QTRY_COMPARE(page_begin, page_end);
 }
 void TestFits::parseHeaderUnit4() {
@@ -95,7 +95,7 @@ void TestFits::parseHeaderUnit4() {
 	AbstractFITSStorage::Page header_end(end + 2880);
 	AbstractFITSStorage::Page page_end(end + 2 * 2880);
 
-	FITS::HeaderUnit hdr(page_begin, page_end);
+	FITS::HeaderUnit hdr(FITS::HeaderUnit::createFromPages(page_begin, page_end));
 	QTRY_COMPARE(page_begin, header_end);
 }
 void TestFits::parseHeaderBzero1() {

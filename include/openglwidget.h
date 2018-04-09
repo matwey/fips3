@@ -96,13 +96,13 @@ public:
 	typedef OpenGLDeleter<OpenGLColorMap> colormap_deleter_type;
 
 public:
-	OpenGLWidget(QWidget *parent, const FITS::HeaderDataUnit& hdu);
+	OpenGLWidget(QWidget *parent, const FITS::AbstractHeaderDataUnit& hdu);
 
 private:
 	void initializeGLObjects();
 
 signals:
-	void textureInitialized(const OpenGLTexture* texture);
+	void textureInitialized(const AbstractOpenGLTexture* texture);
 
 protected:
 	virtual void initializeGL() override;
@@ -112,12 +112,12 @@ protected:
 
 public:
 	inline QSize image_size() const { return hdu_->data().imageDataUnit()->size(); }
-	void setHDU(const FITS::HeaderDataUnit& hdu);
+	void setHDU(const FITS::AbstractHeaderDataUnit& hdu);
 	Pixel pixelFromWidgetCoordinate(const QPoint &widget_coord);
 
 private:
-	const FITS::HeaderDataUnit* hdu_;
-	openGL_unique_ptr<OpenGLTexture> texture_;
+	const FITS::AbstractHeaderDataUnit* hdu_;
+	openGL_unique_ptr<AbstractOpenGLTexture> texture_;
 	openGL_unique_ptr<OpenGLShaderProgram> program_;
 
 private:
