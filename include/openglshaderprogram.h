@@ -19,6 +19,8 @@
 #ifndef _OPENGLSHADERPROGRAM_H
 #define _OPENGLSHADERPROGRAM_H
 
+#include <array>
+
 #include <QOpenGLShaderProgram>
 #include <QString>
 
@@ -32,6 +34,10 @@ public:
 
 	void setVertexCoordArray(const GLfloat *values, int tupleSize);
 	void setVertexUVArray(const GLfloat *values, int tupleSize);
+
+	void setMVPUniform(const QMatrix4x4& mvp);
+	void setCUniform(const std::array<GLfloat, 4>& array, const quint8& channels);
+	void setZUniform(const std::array<GLfloat, 4>& array, const quint8& channels);
 
 	virtual bool link() override;
 

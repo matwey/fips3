@@ -40,6 +40,18 @@ void OpenGLShaderProgram::setVertexUVArray(const GLfloat *values, int tupleSize)
 	setAttributeArray(OpenGLShaderProgram::vertex_UV_index, values, tupleSize);
 }
 
+void OpenGLShaderProgram::setMVPUniform(const QMatrix4x4& mvp) {
+	setUniformValue("MVP", mvp);
+}
+
+void OpenGLShaderProgram::setCUniform(const std::array<GLfloat, 4>& array, const quint8& channels) {
+	setUniformValueArray("c", array.data(), 1, channels);
+}
+
+void OpenGLShaderProgram::setZUniform(const std::array<GLfloat, 4>& array, const quint8& channels) {
+	setUniformValueArray("z", array.data(), 1, channels);
+}
+
 bool OpenGLShaderProgram::link() {
 	bindAttributeLocation(vertex_coord_name, vertex_coord_index);
 	bindAttributeLocation(vertex_UV_name, vertex_UV_index);
