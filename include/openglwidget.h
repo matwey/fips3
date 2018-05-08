@@ -59,6 +59,14 @@ public:
 		virtual QException* clone() const override;
 	};
 
+	class PlanInitializationError: public Utils::Exception {
+	public:
+		explicit PlanInitializationError(const AbstractOpenGLPlan& plan);
+
+		virtual void raise() const override;
+		virtual QException* clone() const override;
+	};
+
 	class ShaderLoadError: public OpenGLException {
 	public:
 		ShaderLoadError(GLenum gl_error_code);

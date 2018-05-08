@@ -51,6 +51,16 @@ QException* OpenGLWidget::PlanCreationError::clone() const {
 	return new OpenGLWidget::PlanCreationError(*this);
 }
 
+OpenGLWidget::PlanInitializationError::PlanInitializationError(const AbstractOpenGLPlan& plan):
+	Utils::Exception(QString("Cannot initialize OpenGL plan ") + plan.name()) {
+}
+void OpenGLWidget::PlanInitializationError::raise() const {
+	throw *this;
+}
+QException* OpenGLWidget::PlanInitializationError::clone() const {
+	return new OpenGLWidget::PlanInitializationError(*this);
+}
+
 OpenGLWidget::ShaderLoadError::ShaderLoadError(GLenum gl_error_code):
 	OpenGLException("Cannot load the shader", gl_error_code) {
 }
