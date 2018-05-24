@@ -19,6 +19,7 @@
 #include <QFile>
 #include <QPoint>
 
+#include <openglplan.h>
 #include <openglwidget.h>
 #include <openglshaderprogram.h>
 #include <utils/swapbytes.h>
@@ -38,6 +39,26 @@ struct HDUValueGetter {
 		Q_ASSERT(0);
 	}
 };
+}
+
+OpenGLWidget::PlanCreationError::PlanCreationError():
+	Utils::Exception("Cannot create appropriate OpenGL plan for current configuration") {
+}
+void OpenGLWidget::PlanCreationError::raise() const {
+	throw *this;
+}
+QException* OpenGLWidget::PlanCreationError::clone() const {
+	return new OpenGLWidget::PlanCreationError(*this);
+}
+
+OpenGLWidget::PlanInitializationError::PlanInitializationError(const AbstractOpenGLPlan& plan):
+	Utils::Exception(QString("Cannot initialize OpenGL plan ") + plan.name()) {
+}
+void OpenGLWidget::PlanInitializationError::raise() const {
+	throw *this;
+}
+QException* OpenGLWidget::PlanInitializationError::clone() const {
+	return new OpenGLWidget::PlanInitializationError(*this);
 }
 
 OpenGLWidget::ShaderLoadError::ShaderLoadError(GLenum gl_error_code):
@@ -103,128 +124,48 @@ void OpenGLWidget::initializeGL() {
 }
 
 void OpenGLWidget::initializeGLObjects() {
-	std::unique_ptr<OpenGLPlane> new_plane{new OpenGLPlane(image_size())};
+	struct PlanCreator {
+		OpenGLWidget* parent;
 
-	struct ShaderLoader {
-		QPair<QString, AbstractOpenGLTexture*> operator() (const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu) const {
-			return qMakePair(QString(
-					"uniform float c;\n"
-					"uniform float z;\n"
-					"void main() {\n"
-					"	float value = c * (texture2D(texture, UV).a - z);\n"),
-			new Uint8OpenGLTexture(hdu));
+		AbstractOpenGLPlan* operator() (const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu) const {
+			return new Uint8OpenGLPlan(hdu, parent);
 		}
-		QPair<QString, AbstractOpenGLTexture*> operator() (const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu) const {
-			return qMakePair(QString(
-					"uniform vec2 c;\n"
-					"uniform vec2 z;\n"
-					"void main() {\n"
-					"	vec2 raw_value = texture2D(texture, UV).ga;\n"
-					"   raw_value.x -= float(raw_value.x > 0.5) * 1.003921568627451;  // 256.0 / 255.0\n"
-					"	float value = dot(c, raw_value - z);\n"),
-			new Int16OpenGLTexture(hdu));
+		AbstractOpenGLPlan* operator() (const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu) const {
+			return new Int16OpenGLPlan(hdu, parent);
 		}
-		QPair<QString, AbstractOpenGLTexture*> operator() (const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu) const {
-			return qMakePair(QString(
-					"uniform vec4 c;\n"
-					"uniform vec4 z;\n"
-					"void main() {\n"
-					"	vec4 raw_value = texture2D(texture, UV);\n"
-					"   raw_value.x -= float(raw_value.x > 0.5) * 1.003921568627451;  // 256.0 / 255.0\n"
-					"	float value = dot(c, raw_value - z);\n"),
-			new Int32OpenGLTexture(hdu));
+		AbstractOpenGLPlan* operator() (const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu) const {
+			return new Int32OpenGLPlan(hdu, parent);
 		}
-		QPair<QString, AbstractOpenGLTexture*> operator() (const FITS::HeaderDataUnit<FITS::DataUnit<qint64>>& hdu) const {
-			return qMakePair(QString(
-					"uniform vec4 c;\n"
-					"uniform vec4 z;\n"
-					"void main() {\n"
-					"	vec4 raw_value = texture2D(texture, UV);\n"
-					"   raw_value.x -= float(raw_value.x > 0.5) * 1.0000152590218967;  // 65536.0 / 65535.0\n"
-					"	float value = dot(c, raw_value - z);\n"),
-			new Int64OpenGLTexture(hdu));
+		AbstractOpenGLPlan* operator() (const FITS::HeaderDataUnit<FITS::DataUnit<qint64>>& hdu) const {
+			return new Int64OpenGLPlan(hdu, parent);
 		}
-		QPair<QString, AbstractOpenGLTexture*> operator() (const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu) const {
-			// TODO: Check GL_ARB_color_buffer_float, GL_OES_texture_float.
-			if (! QOpenGLContext::currentContext()->hasExtension("GL_ARB_texture_float")) {
-				// TODO: recode data from float into (u)int32
-				qDebug() << "BITPIX==-32 is not implemented for this hardware";
-			} else {
-				return qMakePair(QString(
-						"uniform float c;\n"
-						"uniform float z;\n"
-						"void main() {\n"
-						"	float value = c * (texture2D(texture, UV).a - z);\n"),
-				new FloatOpenGLTexture(hdu));
-			}
-			return qMakePair(QString(), Q_NULLPTR);
+		AbstractOpenGLPlan* operator() (const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu) const {
+			return new FloatOpenGLPlan(hdu, parent);
 		}
-		QPair<QString, AbstractOpenGLTexture*> operator() (const FITS::HeaderDataUnit<FITS::DataUnit<double>>&) const {
-			qDebug() << "BITPIX==-64 is not implemented";
-			return qMakePair(QString(), Q_NULLPTR);
+		AbstractOpenGLPlan* operator() (const FITS::HeaderDataUnit<FITS::DataUnit<double>>&) const {
+			return Q_NULLPTR;
 		}
-		QPair<QString, AbstractOpenGLTexture*> operator() (const FITS::HeaderDataUnit<FITS::EmptyDataUnit>&) const {
-			Q_ASSERT(0);
-			return qMakePair(QString(), Q_NULLPTR);
+		AbstractOpenGLPlan* operator() (const FITS::HeaderDataUnit<FITS::EmptyDataUnit>&) const {
+			return Q_NULLPTR;
 		}
 	};
 
-	const auto& ret = hdu_->apply(ShaderLoader{});
-	QString fragment_shader_source_main = ret.first;
-	openGL_unique_ptr<AbstractOpenGLTexture> new_texture(ret.second, OpenGLDeleter<AbstractOpenGLTexture>(this));
+	openGL_unique_ptr<AbstractOpenGLPlan> new_plan{hdu_->apply(PlanCreator{this}), OpenGLDeleter<AbstractOpenGLPlan>(this)};
+	if (!new_plan) throw PlanCreationError();
 
-	const QString vsrc =
-			"attribute vec2 vertexCoord;\n"
-			"attribute vec2 VertexUV;\n"
-			"varying vec2 UV;\n"
-			"uniform mat4 MVP;\n"
-			"void main() {\n"
-			"	gl_Position = MVP * vec4(vertexCoord,0,1);\n"
-			"	UV = VertexUV;\n"
-			"}\n";
+	if (!new_plan->initialize()) throw PlanInitializationError(*new_plan);
+	new_plan->program().bind();
 
-	const QString fsrc =
-			"#ifdef GL_ES\n"
-			"	#ifdef GL_FRAGMENT_PRECISION_HIGH\n"
-			"		precision highp float;\n"
-			"		precision highp sampler2D;\n"
-			"	#else\n"
-			"		precision mediump float;\n"
-			"		precision mediump sampler2D;\n"
-			"	#endif\n"
-			"#endif\n"
-			"varying vec2 UV;\n"
-			"uniform sampler2D texture;\n"
-			"uniform sampler1D colormap;\n"
-			+ fragment_shader_source_main +
-			"	gl_FragColor = texture1D(colormap, clamp(value, 0.0, 1.0));\n"
-			"}\n";
-
-	openGL_unique_ptr<OpenGLShaderProgram> new_program(new OpenGLShaderProgram(this), OpenGLDeleter<OpenGLShaderProgram>(this));
-	new_program->addFragmentShaderFromSourceCode(fsrc);
-	new_program->addVertexShaderFromSourceCode(vsrc);
-	new_program->setVertexCoordArray(new_plane->vertexArray(), 2);
-	new_program->setVertexUVArray(new_plane->uv_data, 2);
-	if (!new_program->link()) throw ShaderLoadError(glGetError());
-	new_program->bind();
-
-	new_texture->initialize();
-
+	plan_ = std::move(new_plan);
 	// If no exceptions were thrown then we can put new objects to object's member pointers
-	plane_ = std::move(new_plane);
-	viewrect_.setBorder(plane_->borderRect(rotation()));
-	widget_to_fits_.setScale(plane_->scale());
+	viewrect_.setBorder(plan_->plane().borderRect(rotation()));
+	widget_to_fits_.setScale(plan_->plane().scale());
 	widget_to_fits_.setImageSize(image_size());
 
-	if (program_) program_->release();
-	program_ = std::move(new_program);
-	program_->bind();
+	emit planInitialized(*plan_);
 
-	texture_ = std::move(new_texture);
-
-	emit textureInitialized(texture_.get());
-	shader_uniforms_.reset(new OpenGLShaderUniforms(texture_->channels(), texture_->channel_size(), hdu_->header().bzero(), hdu_->header().bscale()));
-	shader_uniforms_->setMinMax(texture_->hduMinMax());
+	shader_uniforms_.reset(new OpenGLShaderUniforms(plan_->channels(), plan_->channel_size(), hdu_->header().bzero(), hdu_->header().bscale()));
+	shader_uniforms_->setMinMax(plan_->hduMinMax());
 	shader_uniforms_->setColorMapSize(colormaps_[colormap_index_]->width());
 }
 
@@ -250,12 +191,12 @@ void OpenGLWidget::resizeEvent(QResizeEvent* event) {
 void OpenGLWidget::paintGL() {
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	program_->bind();
-	program_->setMVPUniform(opengl_transform_.transformMatrix());
-	program_->setCUniform(shader_uniforms_->get_c(), shader_uniforms_->channels);
-	program_->setZUniform(shader_uniforms_->get_z(), shader_uniforms_->channels);
+	plan_->program().bind();
+	plan_->program().setMVPUniform(opengl_transform_.transformMatrix());
+	plan_->program().setCUniform(shader_uniforms_->get_c(), shader_uniforms_->channels);
+	plan_->program().setZUniform(shader_uniforms_->get_z(), shader_uniforms_->channels);
 
-	texture_->bind(OpenGLShaderProgram::image_texture_index);
+	plan_->imageTexture().bind(OpenGLShaderProgram::image_texture_index);
 	colormaps_[colormap_index_]->bind(OpenGLShaderProgram::colormap_texture_index);
 
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
@@ -326,7 +267,7 @@ void OpenGLWidget::setRotation(double angle) {
 	auto new_view = viewrect_.view();
 	new_view.moveCenter(new_view_center);
 	viewrect_.setView(new_view);
-	viewrect_.setBorder(plane_->borderRect(angle));
+	viewrect_.setBorder(plan_->plane().borderRect(angle));
 
 	opengl_transform_.setRotation(angle);
 	widget_to_fits_.setRotation(angle);

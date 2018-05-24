@@ -36,6 +36,7 @@
 #include <array>
 #include <cmath>
 
+#include <abstractopenglplan.h>
 #include <fits.h>
 #include <openglcolormap.h>
 #include <openglerrors.h>
@@ -50,6 +51,22 @@
 class OpenGLWidget: public QOpenGLWidget, protected QOpenGLFunctions {
 	Q_OBJECT
 public:
+	class PlanCreationError: public Utils::Exception {
+	public:
+		PlanCreationError();
+
+		virtual void raise() const override;
+		virtual QException* clone() const override;
+	};
+
+	class PlanInitializationError: public Utils::Exception {
+	public:
+		explicit PlanInitializationError(const AbstractOpenGLPlan& plan);
+
+		virtual void raise() const override;
+		virtual QException* clone() const override;
+	};
+
 	class ShaderLoadError: public OpenGLException {
 	public:
 		ShaderLoadError(GLenum gl_error_code);
@@ -102,7 +119,7 @@ private:
 	void initializeGLObjects();
 
 signals:
-	void textureInitialized(const AbstractOpenGLTexture* texture);
+	void planInitialized(const AbstractOpenGLPlan& plan);
 
 protected:
 	virtual void initializeGL() override;
@@ -117,11 +134,7 @@ public:
 
 private:
 	const FITS::AbstractHeaderDataUnit* hdu_;
-	openGL_unique_ptr<AbstractOpenGLTexture> texture_;
-	openGL_unique_ptr<OpenGLShaderProgram> program_;
-
-private:
-	std::unique_ptr<OpenGLPlane> plane_;
+	openGL_unique_ptr<AbstractOpenGLPlan> plan_;
 private:
 	Viewrect viewrect_;
 public:
