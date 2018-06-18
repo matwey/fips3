@@ -20,6 +20,7 @@
 #include <QPoint>
 
 #include <openglplan.h>
+#include <openglplanfactory.h>
 #include <openglwidget.h>
 #include <openglshaderprogram.h>
 #include <utils/swapbytes.h>
@@ -124,33 +125,9 @@ void OpenGLWidget::initializeGL() {
 }
 
 void OpenGLWidget::initializeGLObjects() {
-	struct PlanCreator {
-		OpenGLWidget* parent;
+	OpenGLPlanFactory plan_factory{*context()};
 
-		AbstractOpenGLPlan* operator() (const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu) const {
-			return new Uint8OpenGLPlan(hdu, parent);
-		}
-		AbstractOpenGLPlan* operator() (const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu) const {
-			return new Int16OpenGLPlan(hdu, parent);
-		}
-		AbstractOpenGLPlan* operator() (const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu) const {
-			return new Int32OpenGLPlan(hdu, parent);
-		}
-		AbstractOpenGLPlan* operator() (const FITS::HeaderDataUnit<FITS::DataUnit<qint64>>& hdu) const {
-			return new Int64OpenGLPlan(hdu, parent);
-		}
-		AbstractOpenGLPlan* operator() (const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu) const {
-			return new FloatOpenGLPlan(hdu, parent);
-		}
-		AbstractOpenGLPlan* operator() (const FITS::HeaderDataUnit<FITS::DataUnit<double>>&) const {
-			return Q_NULLPTR;
-		}
-		AbstractOpenGLPlan* operator() (const FITS::HeaderDataUnit<FITS::EmptyDataUnit>&) const {
-			return Q_NULLPTR;
-		}
-	};
-
-	openGL_unique_ptr<AbstractOpenGLPlan> new_plan{hdu_->apply(PlanCreator{this}), OpenGLDeleter<AbstractOpenGLPlan>(this)};
+	openGL_unique_ptr<AbstractOpenGLPlan> new_plan{hdu_->apply(plan_factory), OpenGLDeleter<AbstractOpenGLPlan>(this)};
 	if (!new_plan) throw PlanCreationError();
 
 	if (!new_plan->initialize()) throw PlanInitializationError(*new_plan);
