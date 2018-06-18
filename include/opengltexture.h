@@ -38,6 +38,23 @@ public:
 	virtual ~Uint8OpenGLTexture() override = default;
 };
 
+class Uint8OpenGL3Texture:
+	public AbstractOpenGLTexture {
+private:
+	const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>* hdu_;
+protected:
+	virtual const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu() const override {
+		return *hdu_;
+	}
+
+	virtual void setFormat() override;
+	virtual void allocateStorage() override;
+	virtual void setData() override;
+public:
+	explicit Uint8OpenGL3Texture(const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu);
+	virtual ~Uint8OpenGL3Texture() override = default;
+};
+
 class Int16OpenGLTexture:
 	public AbstractOpenGLTexture {
 private:

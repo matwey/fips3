@@ -31,6 +31,12 @@ struct OpenGL21BasedPlan {
 	}
 };
 
+struct OpenGL33BasedPlan {
+	constexpr static bool satisfied(const OpenGLFeatures& features) {
+		return OpenGLRequiredFeatures{}.requireOpenGL33().satisfied(features);
+	}
+};
+
 } // detail
 
 class Uint8OpenGLPlan:
@@ -44,6 +50,21 @@ public:
 
 	virtual QString fragmentShaderSourceCode() override;
 	virtual Uint8OpenGLTexture& imageTexture() override {
+		return image_texture_;
+	}
+};
+
+class Uint8OpenGL33Plan:
+	public AbstractOpenGL33Plan,
+	public detail::OpenGL33BasedPlan {
+private:
+	Uint8OpenGL3Texture image_texture_;
+public:
+	Uint8OpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu, QObject* parent = Q_NULLPTR);
+	virtual ~Uint8OpenGL33Plan() override = default;
+
+	virtual QString fragmentShaderSourceCode() override;
+	virtual Uint8OpenGL3Texture& imageTexture() override {
 		return image_texture_;
 	}
 };
