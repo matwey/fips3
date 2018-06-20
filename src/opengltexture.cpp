@@ -81,6 +81,25 @@ void Int16OpenGLTexture::setData() {
 	QOpenGLTexture::setData(QOpenGLTexture::LuminanceAlpha, QOpenGLTexture::UInt8, hdu_->data().data(), &pto);
 }
 
+Int16OpenGL3Texture::Int16OpenGL3Texture(const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu):
+	AbstractOpenGLTexture(), hdu_(&hdu) {
+}
+
+void Int16OpenGL3Texture::setFormat() {
+	QOpenGLTexture::setFormat(QOpenGLTexture::R16_UNorm);
+}
+
+void Int16OpenGL3Texture::allocateStorage() {
+	QOpenGLTexture::allocateStorage(QOpenGLTexture::Red, QOpenGLTexture::UInt16);
+}
+
+void Int16OpenGL3Texture::setData() {
+	QOpenGLPixelTransferOptions pto{};
+	pto.setAlignment(Utils::row_align(hdu_->data().width() * 2));
+	pto.setSwapBytesEnabled(true);
+	QOpenGLTexture::setData(QOpenGLTexture::Red, QOpenGLTexture::UInt16, hdu_->data().data(), &pto);
+}
+
 Int32OpenGLTexture::Int32OpenGLTexture(const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu):
 	AbstractOpenGLTexture(), hdu_(&hdu) {
 }

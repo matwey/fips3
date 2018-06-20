@@ -11,7 +11,7 @@ AbstractOpenGLPlan* OpenGLPlanFactory::operator() (const FITS::HeaderDataUnit<FI
 }
 
 AbstractOpenGLPlan* OpenGLPlanFactory::operator() (const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu) const {
-	return resolveOpenGLPlan<Int16OpenGLPlan>(features_, hdu);
+	return resolveOpenGLPlan<Int16OpenGL33Plan, Int16OpenGLPlan>(features_, hdu);
 }
 
 AbstractOpenGLPlan* OpenGLPlanFactory::operator() (const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu) const {

@@ -106,6 +106,32 @@ QString Int16OpenGLPlan::fragmentShaderSourceCode() {
 	return source;
 }
 
+Int16OpenGL33Plan::Int16OpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu, QObject* parent):
+	AbstractOpenGL33Plan("int16-opengl3", hdu, makeMinMax(hdu), makeInstrumentalMinMax(hdu), 1, 2, parent),
+	image_texture_(hdu) {
+}
+
+QString Int16OpenGL33Plan::fragmentShaderSourceCode() {
+	static const QString source = R"(
+	#version 330
+	in vec2 UV;
+	out vec4 color;
+	uniform sampler2D image_texture;
+	uniform sampler1D colormap;
+	uniform float c;
+	uniform float z;
+
+	void main() {
+		float raw_value = texture(image_texture, UV).r;
+		raw_value -= float(raw_value > 0.5) * 1.0000152590218967; // 65536.0 / 65535.0
+		float value = c * (raw_value - z);
+		color = texture(colormap, clamp(value, 0.0, 1.0));
+	}
+	)";
+
+	return source;
+}
+
 Int32OpenGLPlan::Int32OpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu, QObject* parent):
 	AbstractOpenGLPlan("int32", hdu, makeMinMax(hdu), makeInstrumentalMinMax(hdu), 4, 1, parent),
 	image_texture_(hdu) {
