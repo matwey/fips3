@@ -140,7 +140,7 @@ public:
 	virtual ~Int64OpenGLTexture() override = default;
 };
 
-class FloatOpenGLTexture:
+class FloatOpenGL3Texture:
 	public AbstractOpenGLTexture {
 private:
 	const FITS::HeaderDataUnit<FITS::DataUnit<float>>* hdu_;
@@ -153,8 +153,8 @@ protected:
 		return *hdu_;
 	}
 public:
-	explicit FloatOpenGLTexture(const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu);
-	virtual ~FloatOpenGLTexture() override = default;
+	explicit FloatOpenGL3Texture(const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu);
+	virtual ~FloatOpenGL3Texture() override = default;
 };
 
 #endif //_OPENGLTEXTURE_H

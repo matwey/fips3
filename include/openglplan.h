@@ -159,19 +159,19 @@ public:
 	}
 };
 
-class FloatOpenGLPlan:
-	public AbstractOpenGLPlan,
-	public detail::OpenGL21BasedPlan {
+class FloatOpenGL33Plan:
+	public AbstractOpenGL33Plan,
+	public detail::OpenGL33BasedPlan {
 private:
-	FloatOpenGLTexture image_texture_;
+	FloatOpenGL3Texture image_texture_;
 
-	FloatOpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu, const std::pair<double, double>& minmax, QObject* parent);
+	FloatOpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu, const std::pair<double, double>& minmax, QObject* parent);
 public:
-	FloatOpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu, QObject* parent = Q_NULLPTR);
-	virtual ~FloatOpenGLPlan() override = default;
+	FloatOpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu, QObject* parent = Q_NULLPTR);
+	virtual ~FloatOpenGL33Plan() override = default;
 
 	virtual QString fragmentShaderSourceCode() override;
-	virtual FloatOpenGLTexture& imageTexture() override {
+	virtual FloatOpenGL3Texture& imageTexture() override {
 		return image_texture_;
 	}
 };

@@ -250,33 +250,26 @@ QString Int64OpenGL33Plan::fragmentShaderSourceCode() {
 	return source;
 }
 
-FloatOpenGLPlan::FloatOpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu, const std::pair<double, double>& minmax, QObject* parent):
-	AbstractOpenGLPlan("float32", hdu, minmax, minmax, 1, 0, parent),
+FloatOpenGL33Plan::FloatOpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu, const std::pair<double, double>& minmax, QObject* parent):
+	AbstractOpenGL33Plan("float32-opengl3", hdu, minmax, minmax, 1, 0, parent),
 	image_texture_(hdu) {
 }
-FloatOpenGLPlan::FloatOpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu, QObject* parent):
-	FloatOpenGLPlan(hdu, makeMinMax(hdu), parent) {
+FloatOpenGL33Plan::FloatOpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu, QObject* parent):
+	FloatOpenGL33Plan(hdu, makeMinMax(hdu), parent) {
 }
 
-QString FloatOpenGLPlan::fragmentShaderSourceCode() {
+QString FloatOpenGL33Plan::fragmentShaderSourceCode() {
 	static const QString source = R"(
-	#ifdef GL_ES
-		#ifdef GL_FRAGMENT_PRECISION_HIGH
-			precision highp float;
-			precision highp sampler2D;
-		#else
-			precision mediump float;
-			precision mediump sampler2D;
-		#endif
-	#endif
-	varying vec2 UV;
+	#version 330
+	in vec2 UV;
+	out vec4 color;
 	uniform sampler2D image_texture;
 	uniform sampler1D colormap;
 	uniform float c;
 	uniform float z;
 	void main() {
-		float value = c * (texture2D(image_texture, UV).a - z);
-		gl_FragColor = texture1D(colormap, clamp(value, 0.0, 1.0));
+		float value = c * (texture(image_texture, UV).r - z);
+		color = texture(colormap, clamp(value, 0.0, 1.0));
 	}
 	)";
 
