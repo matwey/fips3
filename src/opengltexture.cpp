@@ -175,3 +175,22 @@ void FloatOpenGL3Texture::setData() {
 	pto.setSwapBytesEnabled(true);
 	QOpenGLTexture::setData(QOpenGLTexture::Red, QOpenGLTexture::Float32, hdu_->data().data(), &pto);
 }
+
+DoubleOpenGL3Texture::DoubleOpenGL3Texture(const FITS::HeaderDataUnit<FITS::DataUnit<double>>& hdu):
+	AbstractOpenGLTexture(), hdu_(&hdu) {
+}
+
+void DoubleOpenGL3Texture::setFormat() {
+	QOpenGLTexture::setFormat(QOpenGLTexture::RG32U);
+}
+
+void DoubleOpenGL3Texture::allocateStorage() {
+	QOpenGLTexture::allocateStorage(QOpenGLTexture::RG_Integer, QOpenGLTexture::UInt32);
+}
+
+void DoubleOpenGL3Texture::setData() {
+	QOpenGLPixelTransferOptions pto{};
+	pto.setAlignment(Utils::row_align(hdu_->data().width() * 8));
+	pto.setSwapBytesEnabled(true);
+	QOpenGLTexture::setData(QOpenGLTexture::RG_Integer, QOpenGLTexture::UInt32, hdu_->data().data(), &pto);
+}

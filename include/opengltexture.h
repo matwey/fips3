@@ -157,4 +157,21 @@ public:
 	virtual ~FloatOpenGL3Texture() override = default;
 };
 
+class DoubleOpenGL3Texture:
+	public AbstractOpenGLTexture {
+private:
+	const FITS::HeaderDataUnit<FITS::DataUnit<double>>* hdu_;
+
+	virtual void setFormat() override;
+	virtual void allocateStorage() override;
+	virtual void setData() override;
+protected:
+	virtual const FITS::HeaderDataUnit<FITS::DataUnit<double>>& hdu() const override {
+		return *hdu_;
+	}
+public:
+	explicit DoubleOpenGL3Texture(const FITS::HeaderDataUnit<FITS::DataUnit<double>>& hdu);
+	virtual ~DoubleOpenGL3Texture() override = default;
+};
+
 #endif //_OPENGLTEXTURE_H

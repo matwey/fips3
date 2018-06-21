@@ -176,4 +176,24 @@ public:
 	}
 };
 
+class DoubleOpenGL33Plan:
+	public AbstractOpenGL33Plan {
+private:
+	DoubleOpenGL3Texture image_texture_;
+
+	DoubleOpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<double>>& hdu, const std::pair<double, double>& minmax, QObject* parent);
+public:
+	DoubleOpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<double>>& hdu, QObject* parent = Q_NULLPTR);
+	virtual ~DoubleOpenGL33Plan() override = default;
+
+	constexpr static bool satisfied(const ::OpenGLFeatures& features) {
+		return OpenGLRequiredFeatures{}.requireOpenGL33().requireARB_gpu_shader_fp64().satisfied(features);
+	}
+
+	virtual QString fragmentShaderSourceCode() override;
+	virtual DoubleOpenGL3Texture& imageTexture() override {
+		return image_texture_;
+	}
+};
+
 #endif // _OPENGLPLAN_H

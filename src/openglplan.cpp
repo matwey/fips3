@@ -275,3 +275,31 @@ QString FloatOpenGL33Plan::fragmentShaderSourceCode() {
 
 	return source;
 }
+
+DoubleOpenGL33Plan::DoubleOpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<double>>& hdu, const std::pair<double, double>& minmax, QObject* parent):
+		AbstractOpenGL33Plan("float64-opengl3", hdu, minmax, minmax, 1, 0, parent),
+		image_texture_(hdu) {
+}
+DoubleOpenGL33Plan::DoubleOpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<double>>& hdu, QObject* parent):
+		DoubleOpenGL33Plan(hdu, makeMinMax(hdu), parent) {
+}
+
+QString DoubleOpenGL33Plan::fragmentShaderSourceCode() {
+	static const QString source = R"(
+	#version 330
+	#extension GL_ARB_gpu_shader_fp64 : require
+	in vec2 UV;
+	out vec4 color;
+	uniform usampler2D image_texture;
+	uniform sampler1D colormap;
+	uniform float c;
+	uniform float z;
+	void main() {
+		double raw_value = packDouble2x32(texture(image_texture, UV).gr);
+		double value = c * (raw_value - z);
+		color = texture(colormap, float(clamp(value, 0.0, 1.0)));
+	}
+	)";
+
+	return source;
+}
