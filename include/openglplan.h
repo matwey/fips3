@@ -114,6 +114,21 @@ public:
 	}
 };
 
+class Int32OpenGL33Plan:
+	public AbstractOpenGL33Plan,
+	public detail::OpenGL33BasedPlan {
+private:
+	Int32OpenGL3Texture image_texture_;
+public:
+	Int32OpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu, QObject* parent = Q_NULLPTR);
+	virtual ~Int32OpenGL33Plan() override = default;
+
+	virtual QString fragmentShaderSourceCode() override;
+	virtual Int32OpenGL3Texture& imageTexture() override {
+		return image_texture_;
+	}
+};
+
 class Int64OpenGLPlan:
 	public AbstractOpenGLPlan,
 	public detail::OpenGL21BasedPlan {
