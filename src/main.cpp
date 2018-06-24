@@ -23,10 +23,14 @@
 #include <application.h>
 
 int main(int argc, char** argv) {
-	// See related note on http://doc.qt.io/qt-5/qopenglwidget.html
-	QSurfaceFormat surface_format;
-	surface_format.setVersion(2, 1);
-	QSurfaceFormat::setDefaultFormat(surface_format);
+	/*
+	 * OpenGL version cannot be required per widget on MacOS
+	 * systems. We have to require it globaly.
+	 */
+	QSurfaceFormat format;
+	format.setVersion(2, 1);
+	format.setProfile(QSurfaceFormat::CoreProfile);
+	QSurfaceFormat::setDefaultFormat(format);
 
 	try {
 		Application app(argc, argv);

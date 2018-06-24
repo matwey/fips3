@@ -20,10 +20,22 @@
 #define _OPENGLPLAN_H
 
 #include <abstractopenglplan.h>
+#include <openglfeatures.h>
 #include <opengltexture.h>
 
+namespace detail {
+
+struct OpenGL21BasedPlan {
+	constexpr static bool satisfied(const OpenGLFeatures& features) {
+		return OpenGLRequiredFeatures{}.requireOpenGL21().satisfied(features);
+	}
+};
+
+} // detail
+
 class Uint8OpenGLPlan:
-	public AbstractOpenGLPlan {
+	public AbstractOpenGLPlan,
+	public detail::OpenGL21BasedPlan {
 private:
 	Uint8OpenGLTexture image_texture_;
 public:
@@ -37,7 +49,8 @@ public:
 };
 
 class Int16OpenGLPlan:
-	public AbstractOpenGLPlan {
+	public AbstractOpenGLPlan,
+	public detail::OpenGL21BasedPlan {
 private:
 	Int16OpenGLTexture image_texture_;
 public:
@@ -51,7 +64,8 @@ public:
 };
 
 class Int32OpenGLPlan:
-	public AbstractOpenGLPlan {
+	public AbstractOpenGLPlan,
+	public detail::OpenGL21BasedPlan {
 private:
 	Int32OpenGLTexture image_texture_;
 public:
@@ -65,7 +79,8 @@ public:
 };
 
 class Int64OpenGLPlan:
-	public AbstractOpenGLPlan {
+	public AbstractOpenGLPlan,
+	public detail::OpenGL21BasedPlan {
 private:
 	Int64OpenGLTexture image_texture_;
 public:
@@ -79,7 +94,8 @@ public:
 };
 
 class FloatOpenGLPlan:
-	public AbstractOpenGLPlan {
+	public AbstractOpenGLPlan,
+	public detail::OpenGL21BasedPlan {
 private:
 	FloatOpenGLTexture image_texture_;
 
