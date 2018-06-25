@@ -25,10 +25,7 @@
 
 #include <array>
 
-class OpenGLPlane:
-	public QObject {
-	Q_OBJECT
-
+class OpenGLPlane: public QObject {
 private:
 	QSize image_size_;
 	qreal scale_;
@@ -37,22 +34,18 @@ private:
 
 	void updateVertexArray();
 	void updateScale();
+	void setImageSize(const QSize& image_size);
 public:
 	OpenGLPlane(const QSize& image_size, QObject* parent = Q_NULLPTR);
 	virtual ~OpenGLPlane();
 
 	inline const qreal& scale() const { return scale_; }
 
-	void setImageSize(const QSize& image_size);
-
 	QRectF planeRect() const;
 	QRectF borderRect(float angle) const;
 
 	inline const float* vertexArray() const { return vertices_.data(); }
 	inline std::size_t vertexArraySize() const { return vertices_.size(); }
-signals:
-	void scaleChanged(qreal scale);
-	void vertexArrayChanged(const float* array);
 public:
 	// UV coordinates for triangle fan. See vertex_data_
 	static constexpr const GLfloat uv_data[] = {

@@ -39,8 +39,6 @@ void OpenGLPlane::updateScale() {
 	if (scale_ == scale) return;
 
 	scale_ = scale;
-
-	emit scaleChanged(scale_);
 }
 
 void OpenGLPlane::updateVertexArray() {
@@ -57,8 +55,6 @@ void OpenGLPlane::updateVertexArray() {
 
 	vertices_[6] = p.right();
 	vertices_[7] = p.top();
-
-	emit vertexArrayChanged(vertices_.data());
 }
 
 void OpenGLPlane::setImageSize(const QSize& image_size) {
