@@ -18,6 +18,13 @@
 
 #include <openglshaderprogram.h>
 
+void OpenGLShaderProgram::setAttribPointerHelper(QOpenGLBuffer& buffer, const int index) {
+	buffer.bind();
+
+	setAttributeArray(index, (const GLfloat*)0, 2, 0);
+	enableAttributeArray(index);
+}
+
 OpenGLShaderProgram::OpenGLShaderProgram(QObject *parent):
 	QOpenGLShaderProgram(parent) {
 }
@@ -32,14 +39,6 @@ bool OpenGLShaderProgram::addVertexShaderFromSourceCode(const QString& source) {
 	return addShaderFromSourceCode(QOpenGLShader::Vertex, source);
 }
 
-void OpenGLShaderProgram::setVertexCoordArray(const GLfloat *values, int tupleSize) {
-	setAttributeArray(OpenGLShaderProgram::vertex_coord_index, values, tupleSize);
-}
-
-void OpenGLShaderProgram::setVertexUVArray(const GLfloat *values, int tupleSize) {
-	setAttributeArray(OpenGLShaderProgram::vertex_UV_index, values, tupleSize);
-}
-
 void OpenGLShaderProgram::setMVPUniform(const QMatrix4x4& mvp) {
 	setUniformValue("MVP", mvp);
 }
@@ -52,15 +51,19 @@ void OpenGLShaderProgram::setZUniform(const std::array<GLfloat, 4>& array, const
 	setUniformValueArray("z", array.data(), 1, channels);
 }
 
+void OpenGLShaderProgram::setVertexCoordAttribPointer(QOpenGLBuffer& buffer) {
+	setAttribPointerHelper(buffer, vertex_coord_index);
+}
+
+void OpenGLShaderProgram::setVertexUVAttribPointer(QOpenGLBuffer& buffer) {
+	setAttribPointerHelper(buffer, vertex_UV_index);
+}
+
 bool OpenGLShaderProgram::link() {
 	bindAttributeLocation(vertex_coord_name, vertex_coord_index);
 	bindAttributeLocation(vertex_UV_name, vertex_UV_index);
 
 	if (!QOpenGLShaderProgram::link()) return false;
-
-	enableAttributeArray(vertex_coord_index);
-	enableAttributeArray(vertex_UV_index);
-
 	if (!bind()) return false;
 
 	setUniformValue("texture", image_texture_index);

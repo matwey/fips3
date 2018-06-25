@@ -21,10 +21,13 @@
 
 #include <array>
 
+#include <QOpenGLBuffer>
 #include <QOpenGLShaderProgram>
 #include <QString>
 
 class OpenGLShaderProgram: public QOpenGLShaderProgram {
+private:
+	void setAttribPointerHelper(QOpenGLBuffer& buffer, const int index);
 public:
 	OpenGLShaderProgram(QObject *parent = Q_NULLPTR);
 	virtual ~OpenGLShaderProgram() override;
@@ -32,12 +35,12 @@ public:
 	bool addFragmentShaderFromSourceCode(const QString& source);
 	bool addVertexShaderFromSourceCode(const QString& source);
 
-	void setVertexCoordArray(const GLfloat *values, int tupleSize);
-	void setVertexUVArray(const GLfloat *values, int tupleSize);
-
 	void setMVPUniform(const QMatrix4x4& mvp);
 	void setCUniform(const std::array<GLfloat, 4>& array, const quint8& channels);
 	void setZUniform(const std::array<GLfloat, 4>& array, const quint8& channels);
+
+	void setVertexCoordAttribPointer(QOpenGLBuffer& buffer);
+	void setVertexUVAttribPointer(QOpenGLBuffer& buffer);
 
 	virtual bool link() override;
 
