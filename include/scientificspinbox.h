@@ -51,6 +51,9 @@ public:
 	inline double minimum() const { return minimum_; }
 	inline double maximum() const { return maximum_; }
 
+private slots:
+	void updateValueFromText();
+
 public slots:
 	void setValue(double value);
 	inline void setMinimum(double min) { setRange(min, maximum_); }
