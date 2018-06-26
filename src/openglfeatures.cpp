@@ -42,7 +42,7 @@ bool OpenGLFeatures::checkHasOpenGL21(const QOpenGLContext& opengl_context) {
 	return checkHasOpenGLHelper(opengl_context, 2, 1, mask_hasOpenGL21);
 }
 
-OpenGLFeatures::OpenGLFeatures(const QOpenGLContext& opengl_context) {
+OpenGLFeatures::OpenGLFeatures(const QOpenGLContext& opengl_context): bitmask_(0) {
 	checkHasOpenGL33(opengl_context)
 		|| checkHasOpenGL30(opengl_context)
 		|| checkHasOpenGL21(opengl_context);
