@@ -30,8 +30,13 @@ constexpr const int ScientificSpinBox::log10_steps_in_range_;
 ScientificSpinBox::ScientificSpinBox(QWidget* parent, int decimals):
 	QAbstractSpinBox(parent),
 	decimals_(decimals) {
+	connect(this, SIGNAL(editingFinished()), this, SLOT(updateValueFromText()));
 	const auto font = QFontDatabase::systemFont(QFontDatabase::GeneralFont);
 	const auto family = font.family();
+}
+
+void ScientificSpinBox::updateValueFromText() {
+	setValue(valueFromText(text()));
 }
 
 QSize ScientificSpinBox::sizeHint() const {
@@ -48,8 +53,11 @@ QSize ScientificSpinBox::minimumSizeHint() const {
 }
 
 void ScientificSpinBox::setValue(double value) {
+	const auto old_text = textFromValue(value_);
 	const auto new_text = textFromValue(value);
-	if (new_text == text()) return;
+	if ((new_text == old_text) && (new_text == text())) {
+		return;
+	}
 	value_ = valueFromText(new_text);
 	lineEdit()->setText(new_text);
 	emit valueChanged(value_);
@@ -90,15 +98,15 @@ double ScientificSpinBox::valueFromText(const QString& text) const {
 }
 
 QValidator::State ScientificSpinBox::validate(QString& text, int&) const {
-	const auto decimal_point = QString(locale().decimalPoint());
-	const auto e = QString(locale().exponential());
-	const auto minus = QString(locale().negativeSign());
-	const auto plus = QString(locale().positiveSign());
 	bool ok = false;
 	locale().toDouble(text, &ok);
 	if (ok) {
 		return QValidator::Acceptable;
 	}
+	const auto decimal_point = QString(locale().decimalPoint());
+	const auto e = QString(locale().exponential());
+	const auto minus = QString(locale().negativeSign());
+	const auto plus = QString(locale().positiveSign());
 	if (text.isEmpty()) {
 		return QValidator::Intermediate;
 	}
