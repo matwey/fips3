@@ -21,7 +21,6 @@
 
 #include <QtGlobal>
 #include <QtGui/qopengl.h>
-#include <QDebug>
 
 #include <array>
 #include <cmath>

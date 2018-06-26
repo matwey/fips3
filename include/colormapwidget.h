@@ -21,7 +21,6 @@
 
 #include <QtGui/qopengl.h>
 #include <QButtonGroup>
-#include <QDebug>
 #include <QRadioButton>
 #include <QVBoxLayout>
 #include <QWidget>

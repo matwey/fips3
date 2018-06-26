@@ -19,7 +19,6 @@
 #ifndef _OPENGL_COLORMAP_H
 #define _OPENGL_COLORMAP_H
 
-#include <QDebug>
 #include <QOpenGLTexture>
 
 #include <array>

@@ -18,7 +18,6 @@
 
 #include <cmath>
 
-#include <QDebug>
 #include <QFontDatabase>
 #include <QLineEdit>
 
