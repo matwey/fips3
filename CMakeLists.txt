@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0.0)
 cmake_policy(SET CMP0048 NEW)
-project(fips LANGUAGES C CXX VERSION 3.2.2)
+project(fips LANGUAGES C CXX VERSION 3.2.3)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
