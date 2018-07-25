@@ -133,11 +133,7 @@ elseif(WIN32)
 	")
 	include(CPack)
 elseif(UNIX)
-	find_path(XDG_PREFIX
-		NAMES applications icons
-		HINTS ENV XDG_DATA_DIRS
-		PATHS /usr/share /usr/local/share
-		NO_DEFAULT_PATH)
+	set(XDG_PREFIX "${CMAKE_INSTALL_PREFIX}/share")
 	set(XDG_DESKTOP_DIR "${XDG_PREFIX}/applications")
 	set(XDG_ICONS_DIR "${XDG_PREFIX}/icons")
 
