@@ -42,7 +42,7 @@ public:
 	virtual bool event(QEvent* event) override;
 #endif
 public slots:
-	static void openFile();
+	static std::size_t openFile();
 };
 
 #endif // _APPLICATION_H_
