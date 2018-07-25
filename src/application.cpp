@@ -40,7 +40,10 @@ Application::Application(int &argc, char **argv):
 #ifdef Q_OS_MAC
 		QTimer::singleShot(0, this, [this] () { if (root_.children().length() == 0) openFile(); });
 #else
-		openFile();
+		if (openFile() == 0) {
+			/* Remember that showHelp() exits applications */
+			parser.showHelp();
+		}
 #endif // Q_OS_MAC
 	} else {
 		for (const auto& x: args) addInstance(x);
@@ -53,16 +56,20 @@ void Application::addInstance(const QString& filename) {
 	new Instance(&root_, filename);
 }
 
-void Application::openFile() {
+std::size_t Application::openFile() {
 	QString filename = QFileDialog::getOpenFileName(Q_NULLPTR, tr("Open FITS file"));
 
-	if (filename.isEmpty()) return;
+	if (filename.isEmpty()) return 0;
 
 	try {
 		Application::instance()->addInstance(filename);
+
+		return 1;
 	} catch (const std::exception& e) {
 		QMessageBox::critical(Q_NULLPTR, "An error occured", e.what());
 	}
+
+	return 0;
 }
 
 #ifdef Q_OS_MAC
