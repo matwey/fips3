@@ -20,17 +20,19 @@
 #define _ABSTRACTOPENGLPLAN_H
 
 #include <QObject>
-#include <QString>
+#include <QOpenGLFunctions>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLWidget>
+#include <QString>
 
-#include <fits.h>
 #include <abstractopengltexture.h>
+#include <fits.h>
 #include <openglplane.h>
 #include <openglshaderprogram.h>
 
 class AbstractOpenGLPlan:
-	public QObject {
+	public QObject,
+	protected QOpenGLFunctions {
 private:
 	QString name_;
 	OpenGLPlane plane_;
@@ -91,6 +93,7 @@ public:
 	virtual AbstractOpenGLTexture& imageTexture() = 0;
 
 	bool initialize();
+	virtual void draw();
 };
 
 #endif // _ABSTRACTOPENGLPLAN_H

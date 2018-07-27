@@ -51,6 +51,8 @@ QString AbstractOpenGLPlan::vertexShaderSourceCode() {
 }
 
 bool AbstractOpenGLPlan::initialize() {
+	QOpenGLFunctions::initializeOpenGLFunctions();
+
 	const QString vsrc = vertexShaderSourceCode();
 	const QString fsrc = fragmentShaderSourceCode();
 
@@ -66,4 +68,8 @@ bool AbstractOpenGLPlan::initialize() {
 	program_.setVertexUVArray(plane().uv_data, 2);
 
 	return program_.link();
+}
+
+void AbstractOpenGLPlan::draw() {
+	this->glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
