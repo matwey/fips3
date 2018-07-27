@@ -30,8 +30,7 @@ bool OpenGLFeatures::checkHasOpenGLHelper(const QOpenGLContext& opengl_context, 
 }
 
 bool OpenGLFeatures::checkHasOpenGL33(const QOpenGLContext& opengl_context) {
-	return checkHasOpenGLHelper(opengl_context, 3, 3,
-		mask_hasOpenGL33 | mask_hasOpenGL30 | mask_hasOpenGL21);
+	return checkHasOpenGLHelper(opengl_context, 3, 3, mask_hasOpenGL33);
 }
 
 bool OpenGLFeatures::checkHasOpenGL30(const QOpenGLContext& opengl_context) {
