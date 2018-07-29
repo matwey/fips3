@@ -293,3 +293,8 @@ void OpenGLWidget::setVerticalFlip(bool flip) {
 
 	emit verticalFlipChanged(verticalFlip());
 }
+
+const QString& OpenGLWidget::planName() const {
+	static const QString none("(none)");
+	return (plan_ ? plan_->name() : none);
+}

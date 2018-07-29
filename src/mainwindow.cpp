@@ -321,6 +321,7 @@ void MainWindow::about() {
 #endif
 			tr("<b>Qt version:</b> Runtime ") + qVersion() +
 			tr(", Compile ") + QT_VERSION_STR +
+			tr("<br/><b>Plan:</b> ") + scrollZoomArea()->viewport()->planName() +
 			tr("<br/>Copyright © 2017 Matwey Kornilov, Konstantin Malanchev<br/>") + QString(homePageURL())
 	);
 }
