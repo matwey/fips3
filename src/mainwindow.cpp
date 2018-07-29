@@ -26,6 +26,7 @@
 #include <QFileInfo>
 #include <QListWidget>
 #include <QMessageBox>
+#include <QtGlobal>
 
 #include <application.h>
 #include <flipwidget.h>
@@ -318,7 +319,9 @@ void MainWindow::about() {
 			 * have to write fips version separately */
 			tr("<b>Fips ") + PROJECT_VERSION + tr("</b><br/>") +
 #endif
-			tr("Copyright © 2017 Matwey Kornilov, Konstantin Malanchev. ") + QString(homePageURL())
+			tr("<b>Qt version:</b> Runtime ") + qVersion() +
+			tr(", Compile ") + QT_VERSION_STR +
+			tr("<br/>Copyright © 2017 Matwey Kornilov, Konstantin Malanchev<br/>") + QString(homePageURL())
 	);
 }
 
