@@ -53,6 +53,7 @@ else()
 endif(APPLE)
 
 target_link_libraries(${TARGET} Qt5::Widgets)
+target_compile_definitions(${TARGET} PUBLIC PROJECT_VERSION="${PROJECT_VERSION}")
 
 if(APPLE OR WIN32)
 	set(CPACK_PACKAGE_NAME Fips)
