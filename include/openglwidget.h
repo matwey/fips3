@@ -174,6 +174,8 @@ public:
 	inline int colorMapIndex() const {return colormap_index_; }
 public slots:
 	void changeColorMap(int colormap_index);
+public:
+	const QString& planName() const;
 };
 
 

@@ -26,6 +26,7 @@
 #include <QFileInfo>
 #include <QListWidget>
 #include <QMessageBox>
+#include <QtGlobal>
 
 #include <application.h>
 #include <flipwidget.h>
@@ -312,8 +313,17 @@ void MainWindow::resizeEvent(QResizeEvent *event) {
 void MainWindow::about() {
 	QMessageBox::about(
 			this,
-			tr("Fips"),
-			tr("<b>Fips.</b> Copyright © 2017 Matwey Kornilov, Konstantin Malanchev. ") + QString(homePageURL())
+			tr("Fips ") + PROJECT_VERSION,
+#ifdef Q_OS_MAC
+			/* QMessageBox window title is ignored on MacOS, so we
+			 * have to write fips version separately */
+			tr("<b>Fips ") + PROJECT_VERSION + tr("</b><br/>") +
+#endif
+			tr("<b>Qt version:</b> Runtime ") + qVersion() +
+			tr(", Compile ") + QT_VERSION_STR +
+			tr("<br/><b>Plan:</b> ") + scrollZoomArea()->viewport()->planName() +
+			tr("<br/>Copyright &copy; 2017 Matwey&nbsp;Kornilov, Konstantin&nbsp;Malanchev<br/>") +
+			tr("<a href=\"") + homePageURL() + tr("\">") + QString(homePageURL()) + tr("</a>")
 	);
 }
 
