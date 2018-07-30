@@ -24,7 +24,9 @@
 #include <openglplane.h>
 
 OpenGLPlane::OpenGLPlane(const QSize& image_size, QObject* parent):
-	QObject(parent) {
+	QObject(parent),
+	vertex_buffer_(QOpenGLBuffer::VertexBuffer),
+	UV_buffer_(QOpenGLBuffer::VertexBuffer) {
 
 	setImageSize(image_size);
 }
@@ -39,8 +41,6 @@ void OpenGLPlane::updateScale() {
 	if (scale_ == scale) return;
 
 	scale_ = scale;
-
-	emit scaleChanged(scale_);
 }
 
 void OpenGLPlane::updateVertexArray() {
@@ -57,8 +57,6 @@ void OpenGLPlane::updateVertexArray() {
 
 	vertices_[6] = p.right();
 	vertices_[7] = p.top();
-
-	emit vertexArrayChanged(vertices_.data());
 }
 
 void OpenGLPlane::setImageSize(const QSize& image_size) {
@@ -88,6 +86,41 @@ QRectF OpenGLPlane::borderRect(float angle) const {
 	rotation_matrix.rotate(-angle, 0, 0, 1);
 	// Arguments are top left and bottom right corners in viewrect coordinates:
 	return rotation_matrix.mapRect(p);
+}
+
+bool OpenGLPlane::initializeBufferHelper(QOpenGLBuffer& buffer, const void* data, int count, GLuint index) {
+	Q_ASSERT(&buffer == &vertex_buffer_ || &buffer == &UV_buffer_);
+
+	if (!buffer.create()) {
+		return false;
+	}
+
+	buffer.bind();
+	buffer.setUsagePattern(QOpenGLBuffer::StaticDraw);
+	buffer.allocate(data, count);
+	buffer.release();
+
+	return true;
+}
+
+bool OpenGLPlane::initializeVertexBuffer() {
+	return initializeBufferHelper(vertex_buffer_, vertices_.data(), sizeof(float) * vertices_.size(), OpenGLShaderProgram::vertex_coord_index);
+}
+
+bool OpenGLPlane::initializeUVBuffer() {
+	return initializeBufferHelper(UV_buffer_, OpenGLPlane::uv_data, sizeof(OpenGLPlane::uv_data), OpenGLShaderProgram::vertex_UV_index);
+
+}
+
+bool OpenGLPlane::initialize() {
+	if (!initializeVertexBuffer()) {
+		return false;
+	}
+	if (!initializeUVBuffer()) {
+		return false;
+	}
+
+	return true;
 }
 
 constexpr const GLfloat OpenGLPlane::uv_data[];

@@ -21,15 +21,18 @@
 
 #include <QObject>
 #include <QSize>
+#include <QOpenGLBuffer>
 #include <QOpenGLShaderProgram>
 
 #include <array>
 
-class OpenGLPlane:
-	public QObject {
-	Q_OBJECT
+#include "openglshaderprogram.h"
 
+class OpenGLPlane: public QObject {
 private:
+	QOpenGLBuffer vertex_buffer_;
+	QOpenGLBuffer UV_buffer_;
+
 	QSize image_size_;
 	qreal scale_;
 
@@ -37,22 +40,26 @@ private:
 
 	void updateVertexArray();
 	void updateScale();
+	void setImageSize(const QSize& image_size);
+
+	bool initializeBufferHelper(QOpenGLBuffer& buffer, const void* data, int count, GLuint index);
+	bool initializeVertexBuffer();
+	bool initializeUVBuffer();
 public:
 	OpenGLPlane(const QSize& image_size, QObject* parent = Q_NULLPTR);
-	virtual ~OpenGLPlane();
+	virtual ~OpenGLPlane() override;
 
 	inline const qreal& scale() const { return scale_; }
-
-	void setImageSize(const QSize& image_size);
 
 	QRectF planeRect() const;
 	QRectF borderRect(float angle) const;
 
-	inline const float* vertexArray() const { return vertices_.data(); }
-	inline std::size_t vertexArraySize() const { return vertices_.size(); }
-signals:
-	void scaleChanged(qreal scale);
-	void vertexArrayChanged(const float* array);
+	inline const QOpenGLBuffer& vertexCoordBuffer() const { return vertex_buffer_; }
+	inline QOpenGLBuffer&       vertexCoordBuffer()       { return vertex_buffer_; }
+	inline const QOpenGLBuffer& vertexUVBuffer() const { return UV_buffer_; }
+	inline QOpenGLBuffer&       vertexUVBuffer()       { return UV_buffer_; }
+
+	bool initialize();
 public:
 	// UV coordinates for triangle fan. See vertex_data_
 	static constexpr const GLfloat uv_data[] = {

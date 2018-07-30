@@ -20,25 +20,66 @@
 #define _ABSTRACTOPENGLPLAN_H
 
 #include <QObject>
-#include <QString>
+#include <QOpenGLFunctions>
 #include <QOpenGLShaderProgram>
+#include <QOpenGLVertexArrayObject>
 #include <QOpenGLWidget>
+#include <QString>
 
-#include <fits.h>
 #include <abstractopengltexture.h>
+#include <fits.h>
 #include <openglplane.h>
 #include <openglshaderprogram.h>
 
 class AbstractOpenGLPlan:
-	public QObject {
+	public QObject,
+	protected QOpenGLFunctions {
+private:
+	class AbstractDrawer {
+	private:
+		QString name_;
+	public:
+		explicit AbstractDrawer(const QString& name);
+		virtual ~AbstractDrawer() = 0;
+
+		virtual bool initialize(AbstractOpenGLPlan& plan) const = 0;
+		virtual void draw(AbstractOpenGLPlan& plan) const = 0;
+
+		inline const QString& name() const { return name_; }
+	};
+
+	class SimpleDrawer:
+		public AbstractDrawer {
+	public:
+		SimpleDrawer();
+		~SimpleDrawer() override = default;
+
+		bool initialize(AbstractOpenGLPlan& plan) const override;
+		void draw(AbstractOpenGLPlan& plan) const override;
+	};
+
+	class VAODrawer:
+		public AbstractDrawer {
+	public:
+		VAODrawer();
+		~VAODrawer() override = default;
+
+		bool initialize(AbstractOpenGLPlan& plan) const override;
+		void draw(AbstractOpenGLPlan& plan) const override;
+	};
 private:
 	QString name_;
 	OpenGLPlane plane_;
+	QOpenGLVertexArrayObject vao_;
 	OpenGLShaderProgram program_;
 	std::pair<double, double> hdu_minmax_;
 	std::pair<double, double> instrumental_minmax_;
 	quint8 channels_;
 	quint8 channel_size_;
+	const AbstractDrawer* drawer_;
+private:
+	static const SimpleDrawer simple_drawer;
+	static const VAODrawer vao_drawer;
 protected:
 	template<class T>
 	static inline std::pair<double, double> makeMinMax(const FITS::HeaderDataUnit<FITS::DataUnit<T>>& hdu) {
@@ -78,7 +119,8 @@ public:
 	virtual ~AbstractOpenGLPlan() = 0;
 
 	inline const QString& name() const { return name_; }
-	inline const OpenGLPlane& plane() const { return plane_; }
+	inline const QString& drawerName() const { return drawer_->name(); }
+	inline OpenGLPlane& plane() { return plane_; }
 	inline OpenGLShaderProgram& program() { return program_; }
 
 	inline const std::pair<double, double>& hduMinMax() const { return hdu_minmax_; }
@@ -91,6 +133,11 @@ public:
 	virtual AbstractOpenGLTexture& imageTexture() = 0;
 
 	bool initialize();
+	virtual void draw() {
+		Q_ASSERT(drawer_ != Q_NULLPTR);
+
+		drawer_->draw(*this);
+	}
 };
 
 #endif // _ABSTRACTOPENGLPLAN_H

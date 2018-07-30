@@ -176,7 +176,7 @@ void OpenGLWidget::paintGL() {
 	plan_->imageTexture().bind(OpenGLShaderProgram::image_texture_index);
 	colormaps_[colormap_index_]->bind(OpenGLShaderProgram::colormap_texture_index);
 
-	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+	plan_->draw();
 }
 
 void OpenGLWidget::setHDU(const FITS::AbstractHeaderDataUnit &hdu) {
