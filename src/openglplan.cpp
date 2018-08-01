@@ -50,7 +50,7 @@ QString Uint8OpenGLPlan::fragmentShaderSourceCode() const {
 }
 
 Uint8OpenGL33Plan::Uint8OpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu):
-	AbstractOpenGL33Plan("uint8-opengl3", hdu, makeMinMax(hdu), makeInstrumentalMinMax(hdu), 1, 1),
+	AbstractOpenGL33Plan("uint8-opengl3.3", hdu, makeMinMax(hdu), makeInstrumentalMinMax(hdu), 1, 1),
 	image_texture_(hdu) {
 }
 
@@ -107,7 +107,7 @@ QString Int16OpenGLPlan::fragmentShaderSourceCode() const {
 }
 
 Int16OpenGL33Plan::Int16OpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu):
-	AbstractOpenGL33Plan("int16-opengl3", hdu, makeMinMax(hdu), makeInstrumentalMinMax(hdu), 1, 2),
+	AbstractOpenGL33Plan("int16-opengl3.3", hdu, makeMinMax(hdu), makeInstrumentalMinMax(hdu), 1, 2),
 	image_texture_(hdu) {
 }
 
@@ -166,7 +166,7 @@ QString Int32OpenGLPlan::fragmentShaderSourceCode() const {
 }
 
 Int32OpenGL33Plan::Int32OpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu):
-	AbstractOpenGL33Plan("int32-opengl3", hdu, makeMinMax(hdu), makeInstrumentalMinMax(hdu), 2, 2),
+	AbstractOpenGL33Plan("int32-opengl3.3", hdu, makeMinMax(hdu), makeInstrumentalMinMax(hdu), 2, 2),
 	image_texture_(hdu) {
 }
 
@@ -225,7 +225,7 @@ QString Int64OpenGLPlan::fragmentShaderSourceCode() const {
 }
 
 Int64OpenGL33Plan::Int64OpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<qint64>>& hdu):
-	AbstractOpenGL33Plan("int64-opengl3", hdu, makeMinMax(hdu), makeInstrumentalMinMax(hdu), 4, 2),
+	AbstractOpenGL33Plan("int64-opengl3.3", hdu, makeMinMax(hdu), makeInstrumentalMinMax(hdu), 4, 2),
 	image_texture_(hdu) {
 }
 
@@ -251,7 +251,7 @@ QString Int64OpenGL33Plan::fragmentShaderSourceCode() const {
 }
 
 FloatOpenGL33Plan::FloatOpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu, const std::pair<double, double>& minmax):
-	AbstractOpenGL33Plan("float32-opengl3", hdu, minmax, minmax, 1, 0),
+	AbstractOpenGL33Plan("float32-opengl3.3", hdu, minmax, minmax, 1, 0),
 	image_texture_(hdu) {
 }
 
@@ -278,7 +278,7 @@ QString FloatOpenGL33Plan::fragmentShaderSourceCode() const {
 }
 
 DoubleOpenGL33Plan::DoubleOpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<double>>& hdu, const std::pair<double, double>& minmax):
-	AbstractOpenGL33Plan("float64-opengl3", hdu, minmax, minmax, 1, 0),
+	AbstractOpenGL33Plan("float64-opengl3.3", hdu, minmax, minmax, 1, 0),
 	image_texture_(hdu) {
 }
 
