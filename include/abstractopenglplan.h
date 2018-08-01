@@ -126,8 +126,8 @@ public:
 	inline const quint8& channels() const { return channels_; }
 	inline const quint8& channel_size() const { return channel_size_; };
 
-	virtual QString fragmentShaderSourceCode() = 0;
-	virtual QString vertexShaderSourceCode();
+	virtual QString fragmentShaderSourceCode() const = 0;
+	virtual QString vertexShaderSourceCode() const;
 	virtual AbstractOpenGLTexture& imageTexture() = 0;
 
 	bool initialize();
@@ -145,7 +145,7 @@ public:
 		const std::pair<double, double>& hdu_minmax,
 		const std::pair<double, double>& instrumental_minmax,
 		quint8 channels, quint8 channel_size);
-	virtual QString vertexShaderSourceCode() override;
+	virtual QString vertexShaderSourceCode() const override;
 	virtual ~AbstractOpenGL33Plan() = 0;
 };
 

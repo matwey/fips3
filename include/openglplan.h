@@ -48,7 +48,7 @@ public:
 	explicit Uint8OpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu);
 	virtual ~Uint8OpenGLPlan() override = default;
 
-	virtual QString fragmentShaderSourceCode() override;
+	virtual QString fragmentShaderSourceCode() const override;
 	virtual Uint8OpenGLTexture& imageTexture() override {
 		return image_texture_;
 	}
@@ -63,7 +63,7 @@ public:
 	explicit Uint8OpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu);
 	virtual ~Uint8OpenGL33Plan() override = default;
 
-	virtual QString fragmentShaderSourceCode() override;
+	virtual QString fragmentShaderSourceCode() const override;
 	virtual Uint8OpenGL3Texture& imageTexture() override {
 		return image_texture_;
 	}
@@ -78,7 +78,7 @@ public:
 	explicit Int16OpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu);
 	virtual ~Int16OpenGLPlan() override = default;
 
-	virtual QString fragmentShaderSourceCode() override;
+	virtual QString fragmentShaderSourceCode() const override;
 	virtual Int16OpenGLTexture& imageTexture() override {
 		return image_texture_;
 	}
@@ -93,7 +93,7 @@ public:
 	explicit Int16OpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu);
 	virtual ~Int16OpenGL33Plan() override = default;
 
-	virtual QString fragmentShaderSourceCode() override;
+	virtual QString fragmentShaderSourceCode() const override;
 	virtual Int16OpenGL3Texture& imageTexture() override {
 		return image_texture_;
 	}
@@ -108,7 +108,7 @@ public:
 	explicit Int32OpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu);
 	virtual ~Int32OpenGLPlan() override = default;
 
-	virtual QString fragmentShaderSourceCode() override;
+	virtual QString fragmentShaderSourceCode() const override;
 	virtual Int32OpenGLTexture& imageTexture() override {
 		return image_texture_;
 	}
@@ -123,7 +123,7 @@ public:
 	explicit Int32OpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu);
 	virtual ~Int32OpenGL33Plan() override = default;
 
-	virtual QString fragmentShaderSourceCode() override;
+	virtual QString fragmentShaderSourceCode() const override;
 	virtual Int32OpenGL3Texture& imageTexture() override {
 		return image_texture_;
 	}
@@ -138,7 +138,7 @@ public:
 	explicit Int64OpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<qint64>>& hdu);
 	virtual ~Int64OpenGLPlan() override = default;
 
-	virtual QString fragmentShaderSourceCode() override;
+	virtual QString fragmentShaderSourceCode() const override;
 	virtual Int64OpenGLTexture& imageTexture() override {
 		return image_texture_;
 	}
@@ -153,7 +153,7 @@ public:
 	explicit Int64OpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<qint64>>& hdu);
 	virtual ~Int64OpenGL33Plan() override = default;
 
-	virtual QString fragmentShaderSourceCode() override;
+	virtual QString fragmentShaderSourceCode() const override;
 	virtual Int64OpenGLTexture& imageTexture() override {
 		return image_texture_;
 	}
@@ -170,7 +170,7 @@ public:
 	explicit FloatOpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu);
 	virtual ~FloatOpenGL33Plan() override = default;
 
-	virtual QString fragmentShaderSourceCode() override;
+	virtual QString fragmentShaderSourceCode() const override;
 	virtual FloatOpenGL3Texture& imageTexture() override {
 		return image_texture_;
 	}
@@ -190,7 +190,7 @@ public:
 		return OpenGLRequiredFeatures{}.requireOpenGL33().requireARB_gpu_shader_fp64().satisfied(features);
 	}
 
-	virtual QString fragmentShaderSourceCode() override;
+	virtual QString fragmentShaderSourceCode() const override;
 	virtual DoubleOpenGL3Texture& imageTexture() override {
 		return image_texture_;
 	}

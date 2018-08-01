@@ -23,7 +23,7 @@ Uint8OpenGLPlan::Uint8OpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<quint
 	image_texture_(hdu) {
 }
 
-QString Uint8OpenGLPlan::fragmentShaderSourceCode() {
+QString Uint8OpenGLPlan::fragmentShaderSourceCode() const {
 	static const QString source = R"(
 	#ifdef GL_ES
 		#ifdef GL_FRAGMENT_PRECISION_HIGH
@@ -54,7 +54,7 @@ Uint8OpenGL33Plan::Uint8OpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<q
 	image_texture_(hdu) {
 }
 
-QString Uint8OpenGL33Plan::fragmentShaderSourceCode() {
+QString Uint8OpenGL33Plan::fragmentShaderSourceCode() const {
 	static const QString source = R"(
 	#version 330
 	in vec2 UV;
@@ -78,7 +78,7 @@ Int16OpenGLPlan::Int16OpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<qint1
 	image_texture_(hdu) {
 }
 
-QString Int16OpenGLPlan::fragmentShaderSourceCode() {
+QString Int16OpenGLPlan::fragmentShaderSourceCode() const {
 	static const QString source = R"(
 	#ifdef GL_ES
 		#ifdef GL_FRAGMENT_PRECISION_HIGH
@@ -111,7 +111,7 @@ Int16OpenGL33Plan::Int16OpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<q
 	image_texture_(hdu) {
 }
 
-QString Int16OpenGL33Plan::fragmentShaderSourceCode() {
+QString Int16OpenGL33Plan::fragmentShaderSourceCode() const {
 	static const QString source = R"(
 	#version 330
 	in vec2 UV;
@@ -137,7 +137,7 @@ Int32OpenGLPlan::Int32OpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<qint3
 	image_texture_(hdu) {
 }
 
-QString Int32OpenGLPlan::fragmentShaderSourceCode() {
+QString Int32OpenGLPlan::fragmentShaderSourceCode() const {
 	static const QString source = R"(
 	#ifdef GL_ES
 		#ifdef GL_FRAGMENT_PRECISION_HIGH
@@ -170,7 +170,7 @@ Int32OpenGL33Plan::Int32OpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<q
 	image_texture_(hdu) {
 }
 
-QString Int32OpenGL33Plan::fragmentShaderSourceCode() {
+QString Int32OpenGL33Plan::fragmentShaderSourceCode() const {
 	static const QString source = R"(
 	#version 330
 	in vec2 UV;
@@ -196,7 +196,7 @@ Int64OpenGLPlan::Int64OpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<qint6
 	image_texture_(hdu) {
 }
 
-QString Int64OpenGLPlan::fragmentShaderSourceCode() {
+QString Int64OpenGLPlan::fragmentShaderSourceCode() const {
 	static const QString source = R"(
 	#ifdef GL_ES
 		#ifdef GL_FRAGMENT_PRECISION_HIGH
@@ -229,7 +229,7 @@ Int64OpenGL33Plan::Int64OpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<q
 	image_texture_(hdu) {
 }
 
-QString Int64OpenGL33Plan::fragmentShaderSourceCode() {
+QString Int64OpenGL33Plan::fragmentShaderSourceCode() const {
 	static const QString source = R"(
 	#version 330
 	in vec2 UV;
@@ -259,7 +259,7 @@ FloatOpenGL33Plan::FloatOpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<f
 	FloatOpenGL33Plan(hdu, makeMinMax(hdu)) {
 }
 
-QString FloatOpenGL33Plan::fragmentShaderSourceCode() {
+QString FloatOpenGL33Plan::fragmentShaderSourceCode() const {
 	static const QString source = R"(
 	#version 330
 	in vec2 UV;
@@ -286,7 +286,7 @@ DoubleOpenGL33Plan::DoubleOpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit
 	DoubleOpenGL33Plan(hdu, makeMinMax(hdu)) {
 }
 
-QString DoubleOpenGL33Plan::fragmentShaderSourceCode() {
+QString DoubleOpenGL33Plan::fragmentShaderSourceCode() const {
 	static const QString source = R"(
 	#version 330
 	#extension GL_ARB_gpu_shader_fp64 : require

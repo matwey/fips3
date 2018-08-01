@@ -78,7 +78,7 @@ AbstractOpenGLPlan::AbstractOpenGLPlan(const QString& name, const FITS::Abstract
 
 AbstractOpenGLPlan::~AbstractOpenGLPlan() = default;
 
-QString AbstractOpenGLPlan::vertexShaderSourceCode() {
+QString AbstractOpenGLPlan::vertexShaderSourceCode() const {
 	static const QString source = R"(
 		attribute vec2 vertexCoord;
 		attribute vec2 vertexUV;
@@ -130,7 +130,7 @@ AbstractOpenGL33Plan::AbstractOpenGL33Plan(
 
 AbstractOpenGL33Plan::~AbstractOpenGL33Plan() = default;
 
-QString AbstractOpenGL33Plan::vertexShaderSourceCode() {
+QString AbstractOpenGL33Plan::vertexShaderSourceCode() const {
 	static const QString source = R"(
 		#version 330
 
