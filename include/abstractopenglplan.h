@@ -140,4 +140,15 @@ public:
 	}
 };
 
+class AbstractOpenGL33Plan:
+	public AbstractOpenGLPlan {
+public:
+	AbstractOpenGL33Plan(const QString& name, const FITS::AbstractHeaderDataUnit& hdu,
+		const std::pair<double, double>& hdu_minmax,
+		const std::pair<double, double>& instrumental_minmax,
+		quint8 channels, quint8 channel_size, QObject* parent = Q_NULLPTR);
+	virtual QString vertexShaderSourceCode() override;
+	virtual ~AbstractOpenGL33Plan() = 0;
+};
+
 #endif // _ABSTRACTOPENGLPLAN_H

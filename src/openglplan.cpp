@@ -35,14 +35,38 @@ QString Uint8OpenGLPlan::fragmentShaderSourceCode() {
 		#endif
 	#endif
 	varying vec2 UV;
-	uniform sampler2D texture;
+	uniform sampler2D image_texture;
 	uniform sampler1D colormap;
 	uniform float c;
 	uniform float z;
 
 	void main() {
-		float value = c * (texture2D(texture, UV).a - z);
+		float value = c * (texture2D(image_texture, UV).a - z);
 		gl_FragColor = texture1D(colormap, clamp(value, 0.0, 1.0));
+	}
+	)";
+
+	return source;
+}
+
+Uint8OpenGL33Plan::Uint8OpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu, QObject* parent):
+	AbstractOpenGL33Plan("uint8-opengl3", hdu, makeMinMax(hdu), makeInstrumentalMinMax(hdu), 1, 1, parent),
+	image_texture_(hdu) {
+}
+
+QString Uint8OpenGL33Plan::fragmentShaderSourceCode() {
+	static const QString source = R"(
+	#version 330
+	in vec2 UV;
+	out vec4 color;
+	uniform sampler2D image_texture;
+	uniform sampler1D colormap;
+	uniform float c;
+	uniform float z;
+
+	void main() {
+		float value = c * (texture(image_texture, UV).r - z);
+		color = texture(colormap, clamp(value, 0.0, 1.0));
 	}
 	)";
 
@@ -66,16 +90,42 @@ QString Int16OpenGLPlan::fragmentShaderSourceCode() {
 		#endif
 	#endif
 	varying vec2 UV;
-	uniform sampler2D texture;
+	uniform sampler2D image_texture;
 	uniform sampler1D colormap;
 	uniform vec2 c;
 	uniform vec2 z;
 
 	void main() {
-		vec2 raw_value = texture2D(texture, UV).ga;
+		vec2 raw_value = texture2D(image_texture, UV).ga;
 		raw_value.x -= float(raw_value.x > 0.5) * 1.003921568627451; // 256.0 / 255.0
 		float value = dot(c, raw_value - z);
 		gl_FragColor = texture1D(colormap, clamp(value, 0.0, 1.0));
+	}
+	)";
+
+	return source;
+}
+
+Int16OpenGL33Plan::Int16OpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu, QObject* parent):
+	AbstractOpenGL33Plan("int16-opengl3", hdu, makeMinMax(hdu), makeInstrumentalMinMax(hdu), 1, 2, parent),
+	image_texture_(hdu) {
+}
+
+QString Int16OpenGL33Plan::fragmentShaderSourceCode() {
+	static const QString source = R"(
+	#version 330
+	in vec2 UV;
+	out vec4 color;
+	uniform sampler2D image_texture;
+	uniform sampler1D colormap;
+	uniform float c;
+	uniform float z;
+
+	void main() {
+		float raw_value = texture(image_texture, UV).r;
+		raw_value -= float(raw_value > 0.5) * 1.0000152590218967; // 65536.0 / 65535.0
+		float value = c * (raw_value - z);
+		color = texture(colormap, clamp(value, 0.0, 1.0));
 	}
 	)";
 
@@ -99,16 +149,42 @@ QString Int32OpenGLPlan::fragmentShaderSourceCode() {
 		#endif
 	#endif
 	varying vec2 UV;
-	uniform sampler2D texture;
+	uniform sampler2D image_texture;
 	uniform sampler1D colormap;
 	uniform vec4 c;
 	uniform vec4 z;
 
 	void main() {
-		vec4 raw_value = texture2D(texture, UV);
+		vec4 raw_value = texture2D(image_texture, UV);
 		raw_value.x -= float(raw_value.x > 0.5) * 1.003921568627451; // 256.0 / 255.0
 		float value = dot(c, raw_value - z);
 		gl_FragColor = texture1D(colormap, clamp(value, 0.0, 1.0));
+	}
+	)";
+
+	return source;
+}
+
+Int32OpenGL33Plan::Int32OpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu, QObject* parent):
+	AbstractOpenGL33Plan("int32-opengl3", hdu, makeMinMax(hdu), makeInstrumentalMinMax(hdu), 2, 2, parent),
+	image_texture_(hdu) {
+}
+
+QString Int32OpenGL33Plan::fragmentShaderSourceCode() {
+	static const QString source = R"(
+	#version 330
+	in vec2 UV;
+	out vec4 color;
+	uniform sampler2D image_texture;
+	uniform sampler1D colormap;
+	uniform vec2 c;
+	uniform vec2 z;
+
+	void main() {
+		vec2 raw_value = texture(image_texture, UV).rg;
+		raw_value.x -= float(raw_value.x > 0.5) * 1.0000152590218967; // 65536.0 / 65535.0
+		float value = dot(c, raw_value - z);
+		color = texture(colormap, clamp(value, 0.0, 1.0));
 	}
 	)";
 
@@ -132,13 +208,13 @@ QString Int64OpenGLPlan::fragmentShaderSourceCode() {
 		#endif
 	#endif
 	varying vec2 UV;
-	uniform sampler2D texture;
+	uniform sampler2D image_texture;
 	uniform sampler1D colormap;
 	uniform vec4 c;
 	uniform vec4 z;
 
 	void main() {
-		vec4 raw_value = texture2D(texture, UV);
+		vec4 raw_value = texture2D(image_texture, UV);
 		raw_value.x -= float(raw_value.x > 0.5) * 1.0000152590218967; // 65536.0 / 65535.0
 		float value = dot(c, raw_value - z);
 		gl_FragColor = texture1D(colormap, clamp(value, 0.0, 1.0));
@@ -148,33 +224,80 @@ QString Int64OpenGLPlan::fragmentShaderSourceCode() {
 	return source;
 }
 
-FloatOpenGLPlan::FloatOpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu, const std::pair<double, double>& minmax, QObject* parent):
-	AbstractOpenGLPlan("float32", hdu, minmax, minmax, 1, 0, parent),
+Int64OpenGL33Plan::Int64OpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<qint64>>& hdu, QObject* parent):
+	AbstractOpenGL33Plan("int64-opengl3", hdu, makeMinMax(hdu), makeInstrumentalMinMax(hdu), 4, 2, parent),
 	image_texture_(hdu) {
 }
-FloatOpenGLPlan::FloatOpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu, QObject* parent):
-	FloatOpenGLPlan(hdu, makeMinMax(hdu), parent) {
+
+QString Int64OpenGL33Plan::fragmentShaderSourceCode() {
+	static const QString source = R"(
+	#version 330
+	in vec2 UV;
+	out vec4 color;
+	uniform sampler2D image_texture;
+	uniform sampler1D colormap;
+	uniform vec4 c;
+	uniform vec4 z;
+
+	void main() {
+		vec4 raw_value = texture(image_texture, UV);
+		raw_value.x -= float(raw_value.x > 0.5) * 1.0000152590218967; // 65536.0 / 65535.0
+		float value = dot(c, raw_value - z);
+		color = texture(colormap, clamp(value, 0.0, 1.0));
+	}
+	)";
+
+	return source;
 }
 
-QString FloatOpenGLPlan::fragmentShaderSourceCode() {
+FloatOpenGL33Plan::FloatOpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu, const std::pair<double, double>& minmax, QObject* parent):
+	AbstractOpenGL33Plan("float32-opengl3", hdu, minmax, minmax, 1, 0, parent),
+	image_texture_(hdu) {
+}
+FloatOpenGL33Plan::FloatOpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu, QObject* parent):
+	FloatOpenGL33Plan(hdu, makeMinMax(hdu), parent) {
+}
+
+QString FloatOpenGL33Plan::fragmentShaderSourceCode() {
 	static const QString source = R"(
-	#ifdef GL_ES
-		#ifdef GL_FRAGMENT_PRECISION_HIGH
-			precision highp float;
-			precision highp sampler2D;
-		#else
-			precision mediump float;
-			precision mediump sampler2D;
-		#endif
-	#endif
-	varying vec2 UV;
-	uniform sampler2D texture;
+	#version 330
+	in vec2 UV;
+	out vec4 color;
+	uniform sampler2D image_texture;
 	uniform sampler1D colormap;
 	uniform float c;
 	uniform float z;
 	void main() {
-		float value = c * (texture2D(texture, UV).a - z);
-		gl_FragColor = texture1D(colormap, clamp(value, 0.0, 1.0));
+		float value = c * (texture(image_texture, UV).r - z);
+		color = texture(colormap, clamp(value, 0.0, 1.0));
+	}
+	)";
+
+	return source;
+}
+
+DoubleOpenGL33Plan::DoubleOpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<double>>& hdu, const std::pair<double, double>& minmax, QObject* parent):
+		AbstractOpenGL33Plan("float64-opengl3", hdu, minmax, minmax, 1, 0, parent),
+		image_texture_(hdu) {
+}
+DoubleOpenGL33Plan::DoubleOpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<double>>& hdu, QObject* parent):
+		DoubleOpenGL33Plan(hdu, makeMinMax(hdu), parent) {
+}
+
+QString DoubleOpenGL33Plan::fragmentShaderSourceCode() {
+	static const QString source = R"(
+	#version 330
+	#extension GL_ARB_gpu_shader_fp64 : require
+	in vec2 UV;
+	out vec4 color;
+	uniform usampler2D image_texture;
+	uniform sampler1D colormap;
+	uniform float c;
+	uniform float z;
+	void main() {
+		double raw_value = packDouble2x32(texture(image_texture, UV).gr);
+		double value = c * (raw_value - z);
+		color = texture(colormap, float(clamp(value, 0.0, 1.0)));
 	}
 	)";
 

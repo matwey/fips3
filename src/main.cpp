@@ -28,7 +28,7 @@ int main(int argc, char** argv) {
 	 * systems. We have to require it globaly.
 	 */
 	QSurfaceFormat format;
-	format.setVersion(2, 1);
+	format.setVersion(4, 1);
 	format.setProfile(QSurfaceFormat::CoreProfile);
 	QSurfaceFormat::setDefaultFormat(format);
 

@@ -7,27 +7,27 @@ OpenGLPlanFactory::OpenGLPlanFactory(const QOpenGLContext& opengl_context):
 }
 
 AbstractOpenGLPlan* OpenGLPlanFactory::operator() (const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu) const {
-	return resolveOpenGLPlan<Uint8OpenGLPlan>(features_, hdu);
+	return resolveOpenGLPlan<Uint8OpenGL33Plan, Uint8OpenGLPlan>(features_, hdu);
 }
 
 AbstractOpenGLPlan* OpenGLPlanFactory::operator() (const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu) const {
-	return resolveOpenGLPlan<Int16OpenGLPlan>(features_, hdu);
+	return resolveOpenGLPlan<Int16OpenGL33Plan, Int16OpenGLPlan>(features_, hdu);
 }
 
 AbstractOpenGLPlan* OpenGLPlanFactory::operator() (const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu) const {
-	return resolveOpenGLPlan<Int32OpenGLPlan>(features_, hdu);
+	return resolveOpenGLPlan<Int32OpenGL33Plan, Int32OpenGLPlan>(features_, hdu);
 }
 
 AbstractOpenGLPlan* OpenGLPlanFactory::operator() (const FITS::HeaderDataUnit<FITS::DataUnit<qint64>>& hdu) const {
-	return resolveOpenGLPlan<Int64OpenGLPlan>(features_, hdu);
+	return resolveOpenGLPlan<Int64OpenGL33Plan, Int64OpenGLPlan>(features_, hdu);
 }
 
 AbstractOpenGLPlan* OpenGLPlanFactory::operator() (const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu) const {
-	return Q_NULLPTR;
+	return resolveOpenGLPlan<FloatOpenGL33Plan>(features_, hdu);
 }
 
-AbstractOpenGLPlan* OpenGLPlanFactory::operator() (const FITS::HeaderDataUnit<FITS::DataUnit<double>>&) const {
-	return Q_NULLPTR;
+AbstractOpenGLPlan* OpenGLPlanFactory::operator() (const FITS::HeaderDataUnit<FITS::DataUnit<double>>& hdu) const {
+	return resolveOpenGLPlan<DoubleOpenGL33Plan>(features_, hdu);
 }
 
 AbstractOpenGLPlan* OpenGLPlanFactory::operator() (const FITS::HeaderDataUnit<FITS::EmptyDataUnit>&) const {
