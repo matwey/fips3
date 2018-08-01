@@ -45,7 +45,7 @@ class Uint8OpenGLPlan:
 private:
 	Uint8OpenGLTexture image_texture_;
 public:
-	Uint8OpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu, QObject* parent = Q_NULLPTR);
+	explicit Uint8OpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu);
 	virtual ~Uint8OpenGLPlan() override = default;
 
 	virtual QString fragmentShaderSourceCode() override;
@@ -60,7 +60,7 @@ class Uint8OpenGL33Plan:
 private:
 	Uint8OpenGL3Texture image_texture_;
 public:
-	Uint8OpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu, QObject* parent = Q_NULLPTR);
+	explicit Uint8OpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu);
 	virtual ~Uint8OpenGL33Plan() override = default;
 
 	virtual QString fragmentShaderSourceCode() override;
@@ -75,7 +75,7 @@ class Int16OpenGLPlan:
 private:
 	Int16OpenGLTexture image_texture_;
 public:
-	Int16OpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu, QObject* parent = Q_NULLPTR);
+	explicit Int16OpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu);
 	virtual ~Int16OpenGLPlan() override = default;
 
 	virtual QString fragmentShaderSourceCode() override;
@@ -90,7 +90,7 @@ class Int16OpenGL33Plan:
 private:
 	Int16OpenGL3Texture image_texture_;
 public:
-	Int16OpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu, QObject* parent = Q_NULLPTR);
+	explicit Int16OpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu);
 	virtual ~Int16OpenGL33Plan() override = default;
 
 	virtual QString fragmentShaderSourceCode() override;
@@ -105,7 +105,7 @@ class Int32OpenGLPlan:
 private:
 	Int32OpenGLTexture image_texture_;
 public:
-	Int32OpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu, QObject* parent = Q_NULLPTR);
+	explicit Int32OpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu);
 	virtual ~Int32OpenGLPlan() override = default;
 
 	virtual QString fragmentShaderSourceCode() override;
@@ -120,7 +120,7 @@ class Int32OpenGL33Plan:
 private:
 	Int32OpenGL3Texture image_texture_;
 public:
-	Int32OpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu, QObject* parent = Q_NULLPTR);
+	explicit Int32OpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu);
 	virtual ~Int32OpenGL33Plan() override = default;
 
 	virtual QString fragmentShaderSourceCode() override;
@@ -135,7 +135,7 @@ class Int64OpenGLPlan:
 private:
 	Int64OpenGLTexture image_texture_;
 public:
-	Int64OpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<qint64>>& hdu, QObject* parent = Q_NULLPTR);
+	explicit Int64OpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<qint64>>& hdu);
 	virtual ~Int64OpenGLPlan() override = default;
 
 	virtual QString fragmentShaderSourceCode() override;
@@ -150,7 +150,7 @@ class Int64OpenGL33Plan:
 private:
 	Int64OpenGLTexture image_texture_;
 public:
-	Int64OpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<qint64>>& hdu, QObject* parent = Q_NULLPTR);
+	explicit Int64OpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<qint64>>& hdu);
 	virtual ~Int64OpenGL33Plan() override = default;
 
 	virtual QString fragmentShaderSourceCode() override;
@@ -165,9 +165,9 @@ class FloatOpenGL33Plan:
 private:
 	FloatOpenGL3Texture image_texture_;
 
-	FloatOpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu, const std::pair<double, double>& minmax, QObject* parent);
+	FloatOpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu, const std::pair<double, double>& minmax);
 public:
-	FloatOpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu, QObject* parent = Q_NULLPTR);
+	explicit FloatOpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu);
 	virtual ~FloatOpenGL33Plan() override = default;
 
 	virtual QString fragmentShaderSourceCode() override;
@@ -181,9 +181,9 @@ class DoubleOpenGL33Plan:
 private:
 	DoubleOpenGL3Texture image_texture_;
 
-	DoubleOpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<double>>& hdu, const std::pair<double, double>& minmax, QObject* parent);
+	DoubleOpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<double>>& hdu, const std::pair<double, double>& minmax);
 public:
-	DoubleOpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<double>>& hdu, QObject* parent = Q_NULLPTR);
+	explicit DoubleOpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<double>>& hdu);
 	virtual ~DoubleOpenGL33Plan() override = default;
 
 	constexpr static bool satisfied(const ::OpenGLFeatures& features) {

@@ -19,7 +19,6 @@
 #ifndef _ABSTRACTOPENGLPLAN_H
 #define _ABSTRACTOPENGLPLAN_H
 
-#include <QObject>
 #include <QOpenGLFunctions>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLVertexArrayObject>
@@ -32,7 +31,6 @@
 #include <openglshaderprogram.h>
 
 class AbstractOpenGLPlan:
-	public QObject,
 	protected QOpenGLFunctions {
 private:
 	class AbstractDrawer {
@@ -115,7 +113,7 @@ public:
 	AbstractOpenGLPlan(const QString& name, const FITS::AbstractHeaderDataUnit& hdu,
 		const std::pair<double, double>& hdu_minmax,
 		const std::pair<double, double>& instrumental_minmax,
-		quint8 channels, quint8 channel_size, QObject* parent = Q_NULLPTR);
+		quint8 channels, quint8 channel_size);
 	virtual ~AbstractOpenGLPlan() = 0;
 
 	inline const QString& name() const { return name_; }
@@ -146,7 +144,7 @@ public:
 	AbstractOpenGL33Plan(const QString& name, const FITS::AbstractHeaderDataUnit& hdu,
 		const std::pair<double, double>& hdu_minmax,
 		const std::pair<double, double>& instrumental_minmax,
-		quint8 channels, quint8 channel_size, QObject* parent = Q_NULLPTR);
+		quint8 channels, quint8 channel_size);
 	virtual QString vertexShaderSourceCode() override;
 	virtual ~AbstractOpenGL33Plan() = 0;
 };

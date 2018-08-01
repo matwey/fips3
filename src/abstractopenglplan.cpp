@@ -65,8 +65,7 @@ const AbstractOpenGLPlan::VAODrawer AbstractOpenGLPlan::vao_drawer;
 AbstractOpenGLPlan::AbstractOpenGLPlan(const QString& name, const FITS::AbstractHeaderDataUnit& hdu,
 	const std::pair<double, double>& hdu_minmax,
 	const std::pair<double, double>& instrumental_minmax,
-	quint8 channels, quint8 channel_size, QObject* parent):
-	QObject(parent),
+	quint8 channels, quint8 channel_size):
 	name_(name),
 	plane_(hdu.data().imageDataUnit()->size()),
 	program_(),
@@ -123,10 +122,10 @@ bool AbstractOpenGLPlan::initialize() {
 
 AbstractOpenGL33Plan::AbstractOpenGL33Plan(
 	const QString& name, const FITS::AbstractHeaderDataUnit& hdu,
-    const std::pair<double, double>& hdu_minmax,
-    const std::pair<double, double>& instrumental_minmax,
-    quint8 channels, quint8 channel_size, QObject* parent):
-	AbstractOpenGLPlan(name, hdu, hdu_minmax, instrumental_minmax, channels, channel_size, parent){
+	const std::pair<double, double>& hdu_minmax,
+	const std::pair<double, double>& instrumental_minmax,
+	quint8 channels, quint8 channel_size):
+	AbstractOpenGLPlan(name, hdu, hdu_minmax, instrumental_minmax, channels, channel_size) {
 }
 
 AbstractOpenGL33Plan::~AbstractOpenGL33Plan() = default;

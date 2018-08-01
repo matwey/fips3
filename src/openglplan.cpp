@@ -18,8 +18,8 @@
 
 #include <openglplan.h>
 
-Uint8OpenGLPlan::Uint8OpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu, QObject* parent):
-	AbstractOpenGLPlan("uint8", hdu, makeMinMax(hdu), makeInstrumentalMinMax(hdu), 1, 1, parent),
+Uint8OpenGLPlan::Uint8OpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu):
+	AbstractOpenGLPlan("uint8", hdu, makeMinMax(hdu), makeInstrumentalMinMax(hdu), 1, 1),
 	image_texture_(hdu) {
 }
 
@@ -49,8 +49,8 @@ QString Uint8OpenGLPlan::fragmentShaderSourceCode() {
 	return source;
 }
 
-Uint8OpenGL33Plan::Uint8OpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu, QObject* parent):
-	AbstractOpenGL33Plan("uint8-opengl3", hdu, makeMinMax(hdu), makeInstrumentalMinMax(hdu), 1, 1, parent),
+Uint8OpenGL33Plan::Uint8OpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu):
+	AbstractOpenGL33Plan("uint8-opengl3", hdu, makeMinMax(hdu), makeInstrumentalMinMax(hdu), 1, 1),
 	image_texture_(hdu) {
 }
 
@@ -73,8 +73,8 @@ QString Uint8OpenGL33Plan::fragmentShaderSourceCode() {
 	return source;
 }
 
-Int16OpenGLPlan::Int16OpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu, QObject* parent):
-	AbstractOpenGLPlan("int16", hdu, makeMinMax(hdu), makeInstrumentalMinMax(hdu), 2, 1, parent),
+Int16OpenGLPlan::Int16OpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu):
+	AbstractOpenGLPlan("int16", hdu, makeMinMax(hdu), makeInstrumentalMinMax(hdu), 2, 1),
 	image_texture_(hdu) {
 }
 
@@ -106,8 +106,8 @@ QString Int16OpenGLPlan::fragmentShaderSourceCode() {
 	return source;
 }
 
-Int16OpenGL33Plan::Int16OpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu, QObject* parent):
-	AbstractOpenGL33Plan("int16-opengl3", hdu, makeMinMax(hdu), makeInstrumentalMinMax(hdu), 1, 2, parent),
+Int16OpenGL33Plan::Int16OpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu):
+	AbstractOpenGL33Plan("int16-opengl3", hdu, makeMinMax(hdu), makeInstrumentalMinMax(hdu), 1, 2),
 	image_texture_(hdu) {
 }
 
@@ -132,8 +132,8 @@ QString Int16OpenGL33Plan::fragmentShaderSourceCode() {
 	return source;
 }
 
-Int32OpenGLPlan::Int32OpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu, QObject* parent):
-	AbstractOpenGLPlan("int32", hdu, makeMinMax(hdu), makeInstrumentalMinMax(hdu), 4, 1, parent),
+Int32OpenGLPlan::Int32OpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu):
+	AbstractOpenGLPlan("int32", hdu, makeMinMax(hdu), makeInstrumentalMinMax(hdu), 4, 1),
 	image_texture_(hdu) {
 }
 
@@ -165,8 +165,8 @@ QString Int32OpenGLPlan::fragmentShaderSourceCode() {
 	return source;
 }
 
-Int32OpenGL33Plan::Int32OpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu, QObject* parent):
-	AbstractOpenGL33Plan("int32-opengl3", hdu, makeMinMax(hdu), makeInstrumentalMinMax(hdu), 2, 2, parent),
+Int32OpenGL33Plan::Int32OpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu):
+	AbstractOpenGL33Plan("int32-opengl3", hdu, makeMinMax(hdu), makeInstrumentalMinMax(hdu), 2, 2),
 	image_texture_(hdu) {
 }
 
@@ -191,8 +191,8 @@ QString Int32OpenGL33Plan::fragmentShaderSourceCode() {
 	return source;
 }
 
-Int64OpenGLPlan::Int64OpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<qint64>>& hdu, QObject* parent):
-	AbstractOpenGLPlan("int64", hdu, makeMinMax(hdu), makeInstrumentalMinMax(hdu), 4, 2, parent),
+Int64OpenGLPlan::Int64OpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<qint64>>& hdu):
+	AbstractOpenGLPlan("int64", hdu, makeMinMax(hdu), makeInstrumentalMinMax(hdu), 4, 2),
 	image_texture_(hdu) {
 }
 
@@ -224,8 +224,8 @@ QString Int64OpenGLPlan::fragmentShaderSourceCode() {
 	return source;
 }
 
-Int64OpenGL33Plan::Int64OpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<qint64>>& hdu, QObject* parent):
-	AbstractOpenGL33Plan("int64-opengl3", hdu, makeMinMax(hdu), makeInstrumentalMinMax(hdu), 4, 2, parent),
+Int64OpenGL33Plan::Int64OpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<qint64>>& hdu):
+	AbstractOpenGL33Plan("int64-opengl3", hdu, makeMinMax(hdu), makeInstrumentalMinMax(hdu), 4, 2),
 	image_texture_(hdu) {
 }
 
@@ -250,12 +250,13 @@ QString Int64OpenGL33Plan::fragmentShaderSourceCode() {
 	return source;
 }
 
-FloatOpenGL33Plan::FloatOpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu, const std::pair<double, double>& minmax, QObject* parent):
-	AbstractOpenGL33Plan("float32-opengl3", hdu, minmax, minmax, 1, 0, parent),
+FloatOpenGL33Plan::FloatOpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu, const std::pair<double, double>& minmax):
+	AbstractOpenGL33Plan("float32-opengl3", hdu, minmax, minmax, 1, 0),
 	image_texture_(hdu) {
 }
-FloatOpenGL33Plan::FloatOpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu, QObject* parent):
-	FloatOpenGL33Plan(hdu, makeMinMax(hdu), parent) {
+
+FloatOpenGL33Plan::FloatOpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu):
+	FloatOpenGL33Plan(hdu, makeMinMax(hdu)) {
 }
 
 QString FloatOpenGL33Plan::fragmentShaderSourceCode() {
@@ -276,12 +277,13 @@ QString FloatOpenGL33Plan::fragmentShaderSourceCode() {
 	return source;
 }
 
-DoubleOpenGL33Plan::DoubleOpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<double>>& hdu, const std::pair<double, double>& minmax, QObject* parent):
-		AbstractOpenGL33Plan("float64-opengl3", hdu, minmax, minmax, 1, 0, parent),
-		image_texture_(hdu) {
+DoubleOpenGL33Plan::DoubleOpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<double>>& hdu, const std::pair<double, double>& minmax):
+	AbstractOpenGL33Plan("float64-opengl3", hdu, minmax, minmax, 1, 0),
+	image_texture_(hdu) {
 }
-DoubleOpenGL33Plan::DoubleOpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<double>>& hdu, QObject* parent):
-		DoubleOpenGL33Plan(hdu, makeMinMax(hdu), parent) {
+
+DoubleOpenGL33Plan::DoubleOpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<double>>& hdu):
+	DoubleOpenGL33Plan(hdu, makeMinMax(hdu)) {
 }
 
 QString DoubleOpenGL33Plan::fragmentShaderSourceCode() {
