@@ -7,7 +7,7 @@ OpenGLPlanFactory::OpenGLPlanFactory(const QOpenGLContext& opengl_context):
 }
 
 AbstractOpenGLPlan* OpenGLPlanFactory::operator() (const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu) const {
-	return resolveOpenGLPlan<Uint8OpenGL33Plan, Uint8OpenGLPlan>(features_, hdu);
+	return resolveOpenGLPlan<Uint8OpenGL33Plan, Uint8OpenGL30Plan, Uint8OpenGLPlan>(features_, hdu);
 }
 
 AbstractOpenGLPlan* OpenGLPlanFactory::operator() (const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu) const {

@@ -31,6 +31,12 @@ struct OpenGL21BasedPlan {
 	}
 };
 
+struct OpenGL30BasedPlan {
+	constexpr static bool satisfied(const OpenGLFeatures& features) {
+		return OpenGLRequiredFeatures{}.requireOpenGL30().satisfied(features);
+	}
+};
+
 struct OpenGL33BasedPlan {
 	constexpr static bool satisfied(const OpenGLFeatures& features) {
 		return OpenGLRequiredFeatures{}.requireOpenGL33().satisfied(features);
@@ -45,6 +51,16 @@ class Uint8OpenGLPlan:
 public:
 	explicit Uint8OpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu);
 	virtual ~Uint8OpenGLPlan() override = default;
+
+	virtual QString fragmentShaderSourceCode() const override;
+};
+
+class Uint8OpenGL30Plan:
+	public AbstractOpenGL2Plan<Uint8OpenGL3Texture>,
+	public detail::OpenGL30BasedPlan {
+public:
+	explicit Uint8OpenGL30Plan(const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu);
+	virtual ~Uint8OpenGL30Plan() override = default;
 
 	virtual QString fragmentShaderSourceCode() const override;
 };
