@@ -78,22 +78,6 @@ AbstractOpenGLPlan::AbstractOpenGLPlan(const QString& name, const FITS::Abstract
 
 AbstractOpenGLPlan::~AbstractOpenGLPlan() = default;
 
-QString AbstractOpenGLPlan::vertexShaderSourceCode() const {
-	static const QString source = R"(
-		attribute vec2 vertexCoord;
-		attribute vec2 vertexUV;
-		varying vec2 UV;
-		uniform mat4 MVP;
-
-		void main() {
-			gl_Position = MVP * vec4(vertexCoord,0,1);
-			UV = vertexUV;
-		}
-	)";
-
-	return source;
-}
-
 bool AbstractOpenGLPlan::initialize() {
 	QOpenGLFunctions::initializeOpenGLFunctions();
 
@@ -118,32 +102,4 @@ bool AbstractOpenGLPlan::initialize() {
 	}
 
 	return true;
-}
-
-AbstractOpenGL33Plan::AbstractOpenGL33Plan(
-	const QString& name, const FITS::AbstractHeaderDataUnit& hdu,
-	const std::pair<double, double>& hdu_minmax,
-	const std::pair<double, double>& instrumental_minmax,
-	quint8 channels, quint8 channel_size):
-	AbstractOpenGLPlan(name, hdu, hdu_minmax, instrumental_minmax, channels, channel_size) {
-}
-
-AbstractOpenGL33Plan::~AbstractOpenGL33Plan() = default;
-
-QString AbstractOpenGL33Plan::vertexShaderSourceCode() const {
-	static const QString source = R"(
-		#version 330
-
-		in vec2 vertexCoord;
-		in vec2 vertexUV;
-		out vec2 UV;
-		uniform mat4 MVP;
-
-		void main() {
-			gl_Position = MVP * vec4(vertexCoord,0,1);
-			UV = vertexUV;
-		}
-	)";
-
-	return source;
 }
