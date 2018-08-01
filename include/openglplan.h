@@ -85,6 +85,16 @@ public:
 	virtual QString fragmentShaderSourceCode() const override;
 };
 
+class Int16OpenGL30Plan:
+	public AbstractOpenGL2Plan<Int16OpenGL3Texture>,
+	public detail::OpenGL30BasedPlan {
+public:
+	explicit Int16OpenGL30Plan(const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu);
+	virtual ~Int16OpenGL30Plan() override = default;
+
+	virtual QString fragmentShaderSourceCode() const override;
+};
+
 class Int16OpenGL33Plan:
 	public AbstractOpenGL33Plan<Int16OpenGL3Texture>,
 	public detail::OpenGL33BasedPlan {
