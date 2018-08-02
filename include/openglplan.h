@@ -155,6 +155,18 @@ public:
 	virtual QString fragmentShaderSourceCode() const override;
 };
 
+class FloatOpenGL30Plan:
+	public AbstractOpenGL2Plan<FloatOpenGL3Texture>,
+	public detail::OpenGL30BasedPlan {
+private:
+	FloatOpenGL30Plan(const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu, const std::pair<double, double>& minmax);
+public:
+	explicit FloatOpenGL30Plan(const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu);
+	virtual ~FloatOpenGL30Plan() override = default;
+
+	virtual QString fragmentShaderSourceCode() const override;
+};
+
 class FloatOpenGL33Plan:
 	public AbstractOpenGL33Plan<FloatOpenGL3Texture>,
 	public detail::OpenGL33BasedPlan {

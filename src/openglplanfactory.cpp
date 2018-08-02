@@ -23,7 +23,7 @@ AbstractOpenGLPlan* OpenGLPlanFactory::operator() (const FITS::HeaderDataUnit<FI
 }
 
 AbstractOpenGLPlan* OpenGLPlanFactory::operator() (const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu) const {
-	return resolveOpenGLPlan<FloatOpenGL33Plan>(features_, hdu);
+	return resolveOpenGLPlan<FloatOpenGL33Plan, FloatOpenGL30Plan>(features_, hdu);
 }
 
 AbstractOpenGLPlan* OpenGLPlanFactory::operator() (const FITS::HeaderDataUnit<FITS::DataUnit<double>>& hdu) const {
