@@ -179,6 +179,21 @@ public:
 	virtual QString fragmentShaderSourceCode() const override;
 };
 
+class DoubleOpenGL30Plan:
+	public AbstractOpenGL2Plan<DoubleOpenGL3Texture> {
+private:
+	DoubleOpenGL30Plan(const FITS::HeaderDataUnit<FITS::DataUnit<double>>& hdu, const std::pair<double, double>& minmax);
+public:
+	explicit DoubleOpenGL30Plan(const FITS::HeaderDataUnit<FITS::DataUnit<double>>& hdu);
+	virtual ~DoubleOpenGL30Plan() override = default;
+
+	constexpr static bool satisfied(const ::OpenGLFeatures& features) {
+		return OpenGLRequiredFeatures{}.requireOpenGL30().requireARB_gpu_shader_fp64().satisfied(features);
+	}
+
+	virtual QString fragmentShaderSourceCode() const override;
+};
+
 class DoubleOpenGL33Plan:
 	public AbstractOpenGL33Plan<DoubleOpenGL3Texture> {
 private:
