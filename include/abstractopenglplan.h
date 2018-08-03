@@ -19,7 +19,6 @@
 #ifndef _ABSTRACTOPENGLPLAN_H
 #define _ABSTRACTOPENGLPLAN_H
 
-#include <QObject>
 #include <QOpenGLFunctions>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLVertexArrayObject>
@@ -32,7 +31,6 @@
 #include <openglshaderprogram.h>
 
 class AbstractOpenGLPlan:
-	public QObject,
 	protected QOpenGLFunctions {
 private:
 	class AbstractDrawer {
@@ -115,7 +113,7 @@ public:
 	AbstractOpenGLPlan(const QString& name, const FITS::AbstractHeaderDataUnit& hdu,
 		const std::pair<double, double>& hdu_minmax,
 		const std::pair<double, double>& instrumental_minmax,
-		quint8 channels, quint8 channel_size, QObject* parent = Q_NULLPTR);
+		quint8 channels, quint8 channel_size);
 	virtual ~AbstractOpenGLPlan() = 0;
 
 	inline const QString& name() const { return name_; }
@@ -128,8 +126,8 @@ public:
 	inline const quint8& channels() const { return channels_; }
 	inline const quint8& channel_size() const { return channel_size_; };
 
-	virtual QString fragmentShaderSourceCode() = 0;
-	virtual QString vertexShaderSourceCode();
+	virtual QString fragmentShaderSourceCode() const = 0;
+	virtual QString vertexShaderSourceCode() const = 0;
 	virtual AbstractOpenGLTexture& imageTexture() = 0;
 
 	bool initialize();
@@ -140,15 +138,104 @@ public:
 	}
 };
 
-class AbstractOpenGL33Plan:
+template<class T>
+class AbstractOpenGLPlanTexture:
 	public AbstractOpenGLPlan {
 public:
-	AbstractOpenGL33Plan(const QString& name, const FITS::AbstractHeaderDataUnit& hdu,
+	typedef T texture_type;
+private:
+	texture_type image_texture_;
+public:
+	template<class U>
+	AbstractOpenGLPlanTexture(const QString& name, const FITS::HeaderDataUnit<FITS::DataUnit<U>>& hdu,
 		const std::pair<double, double>& hdu_minmax,
 		const std::pair<double, double>& instrumental_minmax,
-		quint8 channels, quint8 channel_size, QObject* parent = Q_NULLPTR);
-	virtual QString vertexShaderSourceCode() override;
-	virtual ~AbstractOpenGL33Plan() = 0;
+		quint8 channels, quint8 channel_size):
+		AbstractOpenGLPlan(name, hdu, hdu_minmax, instrumental_minmax, channels, channel_size),
+		image_texture_(hdu) {
+	}
+	virtual ~AbstractOpenGLPlanTexture() override = 0;
+
+	virtual texture_type& imageTexture() override {
+		return image_texture_;
+	}
 };
+
+template<class T>
+AbstractOpenGLPlanTexture<T>::~AbstractOpenGLPlanTexture() = default;
+
+template<class T>
+class AbstractOpenGL2Plan:
+	public AbstractOpenGLPlanTexture<T> {
+public:
+	template<class U>
+	AbstractOpenGL2Plan(const QString& name, const FITS::HeaderDataUnit<FITS::DataUnit<U>>& hdu,
+		const std::pair<double, double>& hdu_minmax,
+		const std::pair<double, double>& instrumental_minmax,
+		quint8 channels, quint8 channel_size):
+		AbstractOpenGLPlanTexture<T>(name, hdu, hdu_minmax, instrumental_minmax, channels, channel_size) {
+	}
+	virtual ~AbstractOpenGL2Plan() override = 0;
+
+	virtual QString vertexShaderSourceCode() const override;
+};
+
+template<class T>
+QString AbstractOpenGL2Plan<T>::vertexShaderSourceCode() const {
+	static const QString source = R"(
+		attribute vec2 vertexCoord;
+		attribute vec2 vertexUV;
+		varying vec2 UV;
+		uniform mat4 MVP;
+
+		void main() {
+			gl_Position = MVP * vec4(vertexCoord,0,1);
+			UV = vertexUV;
+		}
+	)";
+
+	return source;
+}
+
+template<class T>
+AbstractOpenGL2Plan<T>::~AbstractOpenGL2Plan() = default;
+
+template<class T>
+class AbstractOpenGL33Plan:
+	public AbstractOpenGLPlanTexture<T> {
+public:
+	template<class U>
+	AbstractOpenGL33Plan(const QString& name, const FITS::HeaderDataUnit<FITS::DataUnit<U>>& hdu,
+		const std::pair<double, double>& hdu_minmax,
+		const std::pair<double, double>& instrumental_minmax,
+		quint8 channels, quint8 channel_size):
+		AbstractOpenGLPlanTexture<T>(name, hdu, hdu_minmax, instrumental_minmax, channels, channel_size) {
+	}
+	virtual ~AbstractOpenGL33Plan() override = 0;
+
+	virtual QString vertexShaderSourceCode() const override;
+};
+
+template<class T>
+QString AbstractOpenGL33Plan<T>::vertexShaderSourceCode() const {
+	static const QString source = R"(
+		#version 330
+
+		in vec2 vertexCoord;
+		in vec2 vertexUV;
+		out vec2 UV;
+		uniform mat4 MVP;
+
+		void main() {
+			gl_Position = MVP * vec4(vertexCoord,0,1);
+			UV = vertexUV;
+		}
+	)";
+
+	return source;
+}
+
+template<class T>
+AbstractOpenGL33Plan<T>::~AbstractOpenGL33Plan() = default;
 
 #endif // _ABSTRACTOPENGLPLAN_H
