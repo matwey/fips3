@@ -15,6 +15,8 @@ FIPS supports [all](http://archive.stsci.edu/fits/users_guide/) 2D image formats
 except of 64-bit floating point numbers (`BITPIX=-64`). FITS image extension has
 basic limited support.
 
+![Screenshot](/.screenshot/1.png)
+
 Build requirements
 ------------------
 
