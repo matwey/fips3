@@ -138,13 +138,13 @@ elseif(UNIX)
 	set(XDG_DESKTOP_DIR "${XDG_PREFIX}/applications")
 	set(XDG_ICONS_DIR "${XDG_PREFIX}/icons")
 
-	configure_file("dist/freedesktop/fips.desktop.in" "fips.desktop" @ONLY)
+	configure_file("dist/freedesktop/space.fips.Fips.desktop.in" "space.fips.Fips.desktop" @ONLY)
 
 	install(TARGETS "${TARGET}" DESTINATION bin)
-	install(FILES "${CMAKE_CURRENT_BINARY_DIR}/fips.desktop" DESTINATION ${XDG_DESKTOP_DIR})
-	install(FILES "${PROJECT_SOURCE_DIR}/dist/freedesktop/scalable/fips.svg" DESTINATION "${XDG_ICONS_DIR}/hicolor/scalable/apps")
-	install(FILES "${PROJECT_SOURCE_DIR}/dist/freedesktop/128x128/fips.png" DESTINATION "${XDG_ICONS_DIR}/hicolor/128x128/apps")
-	install(FILES "${PROJECT_SOURCE_DIR}/dist/freedesktop/256x256/fips.png" DESTINATION "${XDG_ICONS_DIR}/hicolor/256x256/apps")
+	install(FILES "${CMAKE_CURRENT_BINARY_DIR}/space.fips.Fips.desktop" DESTINATION ${XDG_DESKTOP_DIR})
+	install(FILES "${PROJECT_SOURCE_DIR}/dist/freedesktop/scalable/space.fips.Fips.svg" DESTINATION "${XDG_ICONS_DIR}/hicolor/scalable/apps")
+	install(FILES "${PROJECT_SOURCE_DIR}/dist/freedesktop/128x128/space.fips.Fips.png" DESTINATION "${XDG_ICONS_DIR}/hicolor/128x128/apps")
+	install(FILES "${PROJECT_SOURCE_DIR}/dist/freedesktop/256x256/space.fips.Fips.png" DESTINATION "${XDG_ICONS_DIR}/hicolor/256x256/apps")
 endif(APPLE)
 
 enable_testing()
