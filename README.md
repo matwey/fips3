@@ -12,7 +12,7 @@ OpenGL to provide usual functionality such as zooming, panning and level
 adjustments. OpenGL 2.1 and later is supported.
 
 FIPS supports [all](http://archive.stsci.edu/fits/users_guide/) 2D image formats
-except of 64-bit floating point numbers (`BITPIX=-64`). FITS image extension has
+(except for floating point formats on OpenGL 2.1). FITS image extension has
 basic limited support.
 
 Build requirements
