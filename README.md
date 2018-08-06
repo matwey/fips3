@@ -1,4 +1,4 @@
-![LOGO](/dist/freedesktop/128x128/fips.png)
+![LOGO](/dist/freedesktop/128x128/space.fips.Fips.png)
 
 [![Build Status](https://travis-ci.org/matwey/fips3.svg?branch=master)](https://travis-ci.org/matwey/fips3)
 [![Build Status](https://ci.appveyor.com/api/projects/status/github/matwey/fips3?branch=master&svg=true)](https://ci.appveyor.com/project/matwey/fips3)
@@ -14,6 +14,8 @@ adjustments. OpenGL 2.1 and later is supported.
 FIPS supports [all](http://archive.stsci.edu/fits/users_guide/) 2D image formats
 (except for floating point formats on OpenGL 2.1). FITS image extension has
 basic limited support.
+
+![Screenshot](/.screenshot/1.png)
 
 Build requirements
 ------------------
