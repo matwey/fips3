@@ -40,6 +40,16 @@ zypper ar -f obs://science fips
 zypper in fips
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+#### FlatPak
+[FlatPak](https://flatpak.org) is cross-distribution Linux desktop package
+manager with isolation.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+flatpak install flathub space.fips.Fips
+flatpak run space.fips.Fips
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 #### macOS
 
 Download [release package](https://github.com/matwey/fips3/releases/latest) or
