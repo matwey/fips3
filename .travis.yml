@@ -69,4 +69,11 @@ script:
 - docker run test
 
 notifications:
-  webhooks: https://fathomless-fjord-24024.herokuapp.com/notify
+  webhooks:
+    urls:
+    - https://fathomless-fjord-24024.herokuapp.com/notify
+    on_success: always
+    on_start: change
+  email:
+    on_success: never
+
