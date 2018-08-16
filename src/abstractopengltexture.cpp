@@ -46,3 +46,5 @@ void AbstractOpenGLTexture::initialize() {
 	setData();
 	throwIfGLError<TextureCreateError>();
 }
+
+constexpr const bool AbstractOpenGLTexture::is_little_endian;
