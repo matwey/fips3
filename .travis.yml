@@ -67,3 +67,6 @@ install:
 - docker build . -t test
 script:
 - docker run test
+
+notifications:
+  webhooks: https://fathomless-fjord-24024.herokuapp.com/notify
