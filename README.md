@@ -92,3 +92,10 @@ $env:PATH = "$QtDir\bin;$env:PATH"
 cmake -G"$Generator" . -DFIPS_CONFIGURATION="$Configuration"
 cmake --build . --config $Configuration --target PACKAGE
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Community
+---------
+
+- Report bugs on [GitHub](https://github.com/matwey/fips3/issues)
+- Join us on Telegram [@fips_space](https://t.me/fips_space)
+
