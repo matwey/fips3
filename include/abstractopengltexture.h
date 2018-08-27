@@ -39,6 +39,13 @@ protected:
 	virtual void setFormat() = 0;
 	virtual void allocateStorage() = 0;
 	virtual void setData() = 0;
+
+#if Q_BYTE_ORDER == Q_LITTLE_ENDIAN
+	constexpr static const bool is_little_endian = true;
+#else
+	constexpr static const bool is_little_endian = false;
+#endif
+
 public:
 	AbstractOpenGLTexture();
 	virtual ~AbstractOpenGLTexture() = 0;

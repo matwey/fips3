@@ -96,7 +96,7 @@ void Int16OpenGL3Texture::allocateStorage() {
 void Int16OpenGL3Texture::setData() {
 	QOpenGLPixelTransferOptions pto{};
 	pto.setAlignment(Utils::row_align(hdu_->data().width() * 2));
-	pto.setSwapBytesEnabled(true);
+	pto.setSwapBytesEnabled(is_little_endian);
 	QOpenGLTexture::setData(QOpenGLTexture::Red, QOpenGLTexture::UInt16, hdu_->data().data(), &pto);
 }
 
@@ -134,7 +134,7 @@ void Int32OpenGL3Texture::allocateStorage() {
 void Int32OpenGL3Texture::setData() {
 	QOpenGLPixelTransferOptions pto{};
 	pto.setAlignment(Utils::row_align(hdu_->data().width() * 4));
-	pto.setSwapBytesEnabled(true);
+	pto.setSwapBytesEnabled(is_little_endian);
 	QOpenGLTexture::setData(QOpenGLTexture::RG, QOpenGLTexture::UInt16, hdu_->data().data(), &pto);
 }
 
@@ -153,7 +153,7 @@ void Int64OpenGLTexture::allocateStorage() {
 void Int64OpenGLTexture::setData() {
 	QOpenGLPixelTransferOptions pto{};
 	pto.setAlignment(Utils::row_align(hdu_->data().width() * 8));
-	pto.setSwapBytesEnabled(true);
+	pto.setSwapBytesEnabled(is_little_endian);
 	QOpenGLTexture::setData(QOpenGLTexture::RGBA, QOpenGLTexture::UInt16, hdu_->data().data(), &pto);
 }
 
@@ -172,7 +172,7 @@ void FloatOpenGL3Texture::allocateStorage() {
 void FloatOpenGL3Texture::setData() {
 	QOpenGLPixelTransferOptions pto{};
 	pto.setAlignment(Utils::row_align(hdu_->data().width() * 4));
-	pto.setSwapBytesEnabled(true);
+	pto.setSwapBytesEnabled(is_little_endian);
 	QOpenGLTexture::setData(QOpenGLTexture::Red, QOpenGLTexture::Float32, hdu_->data().data(), &pto);
 }
 
@@ -191,6 +191,6 @@ void DoubleOpenGL3Texture::allocateStorage() {
 void DoubleOpenGL3Texture::setData() {
 	QOpenGLPixelTransferOptions pto{};
 	pto.setAlignment(Utils::row_align(hdu_->data().width() * 8));
-	pto.setSwapBytesEnabled(true);
+	pto.setSwapBytesEnabled(is_little_endian);
 	QOpenGLTexture::setData(QOpenGLTexture::RG_Integer, QOpenGLTexture::UInt32, hdu_->data().data(), &pto);
 }

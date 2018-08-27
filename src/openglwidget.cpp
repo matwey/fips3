@@ -27,17 +27,23 @@
 
 namespace {
 struct HDUValueGetter {
-	const FITS::AbstractHeaderDataUnit* hdu;
-	const QPoint* image_position;
-	double* value;
+	const QPoint& image_position;
 
-	template<class T> void operator() (const FITS::DataUnit<T>& data) const {
-		using Utils::swap_bytes;
-		const auto raw_value = static_cast<double>(swap_bytes(*(data.data() + image_position->y() * data.width() + image_position->x())));
-		*value = raw_value * hdu->header().bscale() + hdu->header().bzero();
+	template<class T> double operator() (const FITS::DataUnit<T>& data) const {
+		const auto data_ptr = data.data() + image_position.y() * data.width() + image_position.x();
+
+#if Q_BYTE_ORDER == Q_LITTLE_ENDIAN
+		const auto raw_value = Utils::swap_bytes(*data_ptr);
+#else
+		const auto raw_value = *data_ptr;
+#endif
+
+		return raw_value;
 	}
-	void operator() (const FITS::EmptyDataUnit&) const {
+
+	double operator() (const FITS::EmptyDataUnit&) const {
 		Q_ASSERT(0);
+		Q_UNREACHABLE();
 	}
 };
 }
@@ -222,12 +228,12 @@ Pixel OpenGLWidget::pixelFromWidgetCoordinate(const QPoint &widget_coord) {
 	const QPoint position(p.x(), p.y());
 
 	const bool inside_image = QRect({0, 0}, image_size()).contains(position);
-	if (inside_image) {
-		double value;
-		hdu_->data().apply(HDUValueGetter{hdu_, &position, &value});
-		return Pixel(position, value);
+	if (!inside_image) {
+		return Pixel(position);
 	}
-	return Pixel(position);
+
+	const auto value = hdu_->header().bscale() * hdu_->data().apply(HDUValueGetter{position}) + hdu_->header().bzero();
+	return Pixel(position, value);
 }
 
 void OpenGLWidget::viewChanged(const QRectF& view_rect) {
