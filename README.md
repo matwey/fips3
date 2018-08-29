@@ -2,6 +2,7 @@
 
 [![Build Status](https://travis-ci.org/matwey/fips3.svg?branch=master)](https://travis-ci.org/matwey/fips3)
 [![Build Status](https://ci.appveyor.com/api/projects/status/github/matwey/fips3?branch=master&svg=true)](https://ci.appveyor.com/project/matwey/fips3)
+[![ascl:1808.006](https://img.shields.io/badge/ascl-1808.006-blue.svg?colorB=262255)](https://ascl.net/1808.006)
 
 FIPS — OpenGL based FITS image viewer
 =====================================
