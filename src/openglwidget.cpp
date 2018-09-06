@@ -25,6 +25,8 @@
 #include <openglshaderprogram.h>
 #include <utils/swapbytes.h>
 
+#include <chrono>
+
 namespace {
 struct HDUValueGetter {
 	const QPoint& image_position;
@@ -173,6 +175,7 @@ void OpenGLWidget::resizeEvent(QResizeEvent* event) {
 
 void OpenGLWidget::paintGL() {
 	glClear(GL_COLOR_BUFFER_BIT);
+	glFinish();
 
 	plan_->program().bind();
 	plan_->program().setMVPUniform(opengl_transform_.transformMatrix());
@@ -182,7 +185,16 @@ void OpenGLWidget::paintGL() {
 	plan_->imageTexture().bind(OpenGLShaderProgram::image_texture_index);
 	colormaps_[colormap_index_]->bind(OpenGLShaderProgram::colormap_texture_index);
 
+	auto t1 = std::chrono::high_resolution_clock::now();
+
 	plan_->draw();
+	glFlush();
+	glFinish();
+
+	auto t2 = std::chrono::high_resolution_clock::now();
+
+	std::chrono::duration<double> diff{t2-t1};
+	qDebug() << "Render " << diff.count();
 }
 
 void OpenGLWidget::setHDU(const FITS::AbstractHeaderDataUnit &hdu) {

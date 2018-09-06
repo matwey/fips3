@@ -18,6 +18,10 @@
 
 #include <abstractopengltexture.h>
 
+#include <chrono>
+
+#include <QDebug>
+
 AbstractOpenGLTexture::TextureCreateError::TextureCreateError(GLenum gl_error_code):
 		OpenGLException("Cannot create texture", gl_error_code) {
 }
@@ -43,8 +47,12 @@ void AbstractOpenGLTexture::initialize() {
 	throwIfGLError<TextureCreateError>();
 	allocateStorage();
 	throwIfGLError<TextureCreateError>();
+	auto t1 = std::chrono::high_resolution_clock::now();
 	setData();
+	auto t2 = std::chrono::high_resolution_clock::now();
 	throwIfGLError<TextureCreateError>();
+	std::chrono::duration<double> diff{t2-t1};
+	qDebug() << "Load " << diff.count();
 }
 
 constexpr const bool AbstractOpenGLTexture::is_little_endian;
