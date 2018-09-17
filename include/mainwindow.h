@@ -38,11 +38,11 @@
 #include <scrollzoomarea.h>
 #include <utils/exception.h>
 
-class MouseMoveEventFilter: public QObject {
+class MousePositionEventFilter: public QObject {
 private:
 	MousePositionWidget* mouse_position_widget_;
 public:
-	MouseMoveEventFilter(MousePositionWidget* mouse_position_widget, QObject* parent = Q_NULLPTR);
+	MousePositionEventFilter(MousePositionWidget* mouse_position_widget, QObject* parent = Q_NULLPTR);
 protected:
 	virtual bool eventFilter(QObject* open_gl_widget, QEvent* event) override;
 };
@@ -102,7 +102,7 @@ private:
 	static constexpr const char homepage_url_[] = "http://fips.space";
 
 	std::unique_ptr<MainWindowState> state_;
-	std::unique_ptr<MouseMoveEventFilter> mouse_move_event_filter_;
+	std::unique_ptr<MousePositionEventFilter> mouse_position_event_filter_;
 	Playback playback_;
 private:
 	void setState(MainWindowState* state);

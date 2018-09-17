@@ -35,11 +35,11 @@
 #include <playbackwidget.h>
 #include <rotationwidget.h>
 
-MouseMoveEventFilter::MouseMoveEventFilter(MousePositionWidget *mouse_position_widget, QObject* parent):
+MousePositionEventFilter::MousePositionEventFilter(MousePositionWidget *mouse_position_widget, QObject* parent):
 		QObject(parent),
 		mouse_position_widget_(mouse_position_widget) {}
 
-bool MouseMoveEventFilter::eventFilter(QObject* open_gl_widget, QEvent* event) {
+bool MousePositionEventFilter::eventFilter(QObject* open_gl_widget, QEvent* event) {
 	auto watched = static_cast<OpenGLWidget*>(open_gl_widget);
 	switch (event->type()) {
 		case QEvent::MouseMove: {
@@ -249,8 +249,8 @@ MainWindow::MainWindow(const QString& fits_filename, QWidget *parent):
 
 	std::unique_ptr<QStatusBar> status_bar{new QStatusBar(this)};
 	std::unique_ptr<MousePositionWidget> mouse_position_widget{new MousePositionWidget(this)};
-	mouse_move_event_filter_.reset(new MouseMoveEventFilter(mouse_position_widget.get(), this));
-	scrollZoomArea()->viewport()->installEventFilter(mouse_move_event_filter_.get());
+	mouse_position_event_filter_.reset(new MousePositionEventFilter(mouse_position_widget.get(), this));
+	scrollZoomArea()->viewport()->installEventFilter(mouse_position_event_filter_.get());
 	status_bar->addWidget(mouse_position_widget.release());
 	setStatusBar(status_bar.release());
 	setWindowTitle(state_->filename());
