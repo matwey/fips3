@@ -34,7 +34,7 @@ Installation
 
 ### Installing from package manager
 
-#### openSUSE Tumbleweed
+#### openSUSE Leap 15.1 (and later) and openSUSE Tumbleweed
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 zypper in fips
