@@ -100,6 +100,14 @@ public:
 				qvariant_cast<T>(it->second) : def);
 		}
 
+		typedef std::map<QString, QString>::const_iterator const_iterator;
+
+		const_iterator begin() const { return headers_.cbegin(); }
+		const_iterator end() const { return headers_.cend(); }
+		const_iterator cbegin() const { return headers_.cbegin(); }
+		const_iterator cend() const { return headers_.cend(); }
+		std::size_t size() const { return headers_.size(); }
+
 		inline double bscale() const { return header_as<double>("BSCALE", 1.0); }
 		inline double bzero()  const { return header_as<double>("BZERO", 0.0); }
 	};

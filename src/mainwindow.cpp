@@ -27,6 +27,9 @@
 #include <QListWidget>
 #include <QMessageBox>
 #include <QtGlobal>
+#include <QTableWidget>
+#include <QTableWidgetItem>
+#include <QHeaderView>
 
 #include <application.h>
 #include <flipwidget.h>
@@ -140,6 +143,7 @@ MainWindow::MainWindow(const QString& fits_filename, QWidget *parent):
 	file_open_here_action->setShortcut(QKeySequence::Open);
 	auto file_open_action = file_menu->addAction(tr("&Open in new window"), Application::instance(), SLOT(openFile(void)));
 	file_open_action->setShortcut(tr("ctrl+shift+o"));
+	file_menu->addAction(tr("View &headers"), this, SLOT(viewHeaders()));
 	auto file_close_action = file_menu->addAction(tr("&Close"), this, SLOT(close()));
 	file_close_action->setShortcut(QKeySequence::Close);
 	file_menu->addSeparator();
@@ -270,6 +274,31 @@ void MainWindow::openFileHere() {
 	} catch (const std::exception& e) {
 		QMessageBox::critical(this, "An error occured", e.what());
 	}
+}
+
+void MainWindow::viewHeaders() {
+	const auto& header_unit = state_->fits().header_unit();
+	auto size = header_unit.size();
+
+	std::unique_ptr<QDialog> headers_dialog(new QDialog(this, Qt::WindowCloseButtonHint));
+	headers_dialog->setWindowTitle(QString("Headers for ") + QFileInfo(state_->filename()).fileName());
+
+	auto table = new QTableWidget(size, 2);
+	Q_ASSERT(table->rowCount() == size);
+	table->setHorizontalHeaderLabels(QStringList() << "Key" << "Value");
+	table->setEditTriggers(QTableWidget::NoEditTriggers);
+	table->horizontalHeader()->setStretchLastSection(true);
+
+	auto iter = header_unit.cbegin();
+	for (int i = 0; i < table->rowCount() && iter != header_unit.cend(); ++i, ++iter) {
+		table->setItem(i, 0, new QTableWidgetItem(iter->first));
+		table->setItem(i, 1, new QTableWidgetItem(iter->second));
+	}
+
+	auto layout = new QBoxLayout(QBoxLayout::LeftToRight, headers_dialog.get());
+	layout->addWidget(table);
+	headers_dialog->setLayout(layout);
+	headers_dialog->exec();
 }
 
 void MainWindow::refresh() {
