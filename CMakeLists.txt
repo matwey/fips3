@@ -112,7 +112,7 @@ elseif(WIN32)
 		FILES_MATCHING PATTERN *.dll)
 	install(DIRECTORY $<TARGET_FILE_DIR:${TARGET}>/ DESTINATION bin
 		FILES_MATCHING PATTERN *.qm)
-	if(${FIPS_CONFIGURATION} STREQUAL "Release")
+	if("${FIPS_CONFIGURATION}" STREQUAL "Release")
 		# Debug version of VC++ redistributable doesn't exist, so windeployqt
 		# simply copies the debug runtime DLLs in that case. We need to deploy
 		# the redistributable only in Release configuration.
