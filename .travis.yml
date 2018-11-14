@@ -1,5 +1,5 @@
 sudo: required
-language: cpp
+language: minimal
 services:
 - docker
 os:
