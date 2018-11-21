@@ -89,15 +89,24 @@ public:
 			return (it != headers_.end() ? it->second : def);
 		}
 		template<class T> inline T header_as(const QString& key) const {
-			QVariant v(headers_.at(key));
-			if (!v.canConvert<T>())
-				throw WrongHeaderValue(key, v.value<QString>());
+			const auto& str_v = headers_.at(key);
+
+			QVariant v(str_v);
+			if (!v.convert(qMetaTypeId<T>()))
+				throw WrongHeaderValue(key, str_v);
+
 			return v.value<T>();
 		}
 		template<class T> inline T header_as(const QString& key, const T& def) const {
-			auto it = headers_.find(key);
-			return (it != headers_.end() && QVariant(it->second).canConvert<T>() ?
-				qvariant_cast<T>(it->second) : def);
+			const auto it = headers_.find(key);
+			if (it == headers_.end())
+				return def;
+
+			QVariant v(it->second);
+			if (!v.convert(qMetaTypeId<T>()))
+				throw WrongHeaderValue(key, it->second);
+
+			return v.value<T>();
 		}
 
 		inline double bscale() const { return header_as<double>("BSCALE", 1.0); }

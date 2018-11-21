@@ -19,6 +19,10 @@ private slots:
 	void parseHeaderBscale1();
 	void parseDataUnitShape();
 	void visitDataUnit1();
+	void header1();
+	void header2();
+	void header_as1();
+	void header_as2();
 };
 
 void TestFits::pageAdvance1() {
@@ -145,6 +149,48 @@ void TestFits::visitDataUnit1() {
 		}
 	};
 	fits.data_unit().apply(test_fun{});
+}
+void TestFits::header1() {
+	QFile* file = new QFile(DATA_ROOT "/header_end.fits");
+	file->open(QIODevice::ReadOnly);
+	FITS fits(file);
+
+	QCOMPARE(fits.header_unit().header("SIMPLE"), QString("T"));
+	QVERIFY_EXCEPTION_THROWN(
+		fits.header_unit().header("NOT_EXISTS"),
+		std::out_of_range);
+}
+void TestFits::header2() {
+	QFile* file = new QFile(DATA_ROOT "/header_end.fits");
+	file->open(QIODevice::ReadOnly);
+	FITS fits(file);
+
+	QCOMPARE(fits.header_unit().header("SIMPLE"), QString("T"));
+	QCOMPARE(fits.header_unit().header("NOT_EXISTS", "Default"), QString("Default"));
+}
+void TestFits::header_as1() {
+	QFile* file = new QFile(DATA_ROOT "/header_end.fits");
+	file->open(QIODevice::ReadOnly);
+	FITS fits(file);
+
+	QCOMPARE(fits.header_unit().header_as<int>("NAXIS2"), 10);
+	QVERIFY_EXCEPTION_THROWN(
+		fits.header_unit().header_as<int>("NAXIS3"),
+		std::out_of_range);
+	QVERIFY_EXCEPTION_THROWN(
+		fits.header_unit().header_as<int>("SIMPLE"),
+		FITS::WrongHeaderValue);
+}
+void TestFits::header_as2() {
+	QFile* file = new QFile(DATA_ROOT "/header_end.fits");
+	file->open(QIODevice::ReadOnly);
+	FITS fits(file);
+
+	QCOMPARE(fits.header_unit().header_as<int>("NAXIS2"), 10);
+	QCOMPARE(fits.header_unit().header_as<int>("NAXIS3", 1), 1);
+	QVERIFY_EXCEPTION_THROWN(
+		fits.header_unit().header_as<int>("SIMPLE"),
+		FITS::WrongHeaderValue);
 }
 
 QTEST_MAIN(TestFits)
