@@ -35,7 +35,9 @@ public:
 		virtual void raise() const override;
 		virtual QException* clone() const override;
 	};
+
 protected:
+	virtual void setSize();
 	virtual void setFormat() = 0;
 	virtual void allocateStorage() = 0;
 	virtual void setData() = 0;
