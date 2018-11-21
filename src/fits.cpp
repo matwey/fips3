@@ -136,28 +136,17 @@ FITS::AbstractDataUnit::AbstractDataUnit() = default;
 FITS::AbstractDataUnit::~AbstractDataUnit() = default;
 
 FITS::AbstractDataUnit* FITS::AbstractDataUnit::createFromPages(AbstractFITSStorage::Page& begin, AbstractFITSStorage::Page end, const HeaderUnit& header) {
-	bool ok = false;
-
 	const auto bitpix = header.header("BITPIX");
+	const auto naxis = header.header_as<unsigned int>("NAXIS");
 
-	const auto naxis = header.header("NAXIS").toInt(&ok);
-	if (!ok || (naxis != 0 && naxis != 2)) {
+	if (naxis == 0) {
+		return new EmptyDataUnit{};
+	} else if (naxis != 2) {
 		throw FITS::WrongHeaderValue("NAXIS", header.header("NAXIS"));
 	}
 
-	if (!naxis) {
-		return new EmptyDataUnit{};
-	}
-
-	const auto width = header.header("NAXIS1").toULongLong(&ok);
-	if (!ok) {
-		throw FITS::WrongHeaderValue("NAXIS1", header.header("NAXIS1"));
-	}
-
-	const auto height = header.header("NAXIS2").toULongLong(&ok);
-	if (!ok) {
-		throw FITS::WrongHeaderValue("NAXIS2", header.header("NAXIS2"));
-	}
+	const auto width = header.header_as<quint64>("NAXIS1");
+	const auto height = header.header_as<quint64>("NAXIS2");
 
 	return ImageDataUnit::createFromPages(begin, end, bitpix, height, width);
 }
