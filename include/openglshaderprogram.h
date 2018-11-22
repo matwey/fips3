@@ -38,6 +38,7 @@ public:
 	void setMVPUniform(const QMatrix4x4& mvp);
 	void setCUniform(const std::array<GLfloat, 4>& array, const quint8& channels);
 	void setZUniform(const std::array<GLfloat, 4>& array, const quint8& channels);
+	void setLayerUniform(float layer);
 
 	void setVertexCoordAttribPointer(QOpenGLBuffer& buffer);
 	void setVertexUVAttribPointer(QOpenGLBuffer& buffer);

@@ -178,6 +178,7 @@ void OpenGLWidget::paintGL() {
 	plan_->program().setMVPUniform(opengl_transform_.transformMatrix());
 	plan_->program().setCUniform(shader_uniforms_->get_c(), shader_uniforms_->channels);
 	plan_->program().setZUniform(shader_uniforms_->get_z(), shader_uniforms_->channels);
+	plan_->program().setLayerUniform(0.0);
 
 	plan_->imageTexture().bind(OpenGLShaderProgram::image_texture_index);
 	colormaps_[colormap_index_]->bind(OpenGLShaderProgram::colormap_texture_index);

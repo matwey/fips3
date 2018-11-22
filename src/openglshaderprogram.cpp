@@ -51,6 +51,10 @@ void OpenGLShaderProgram::setZUniform(const std::array<GLfloat, 4>& array, const
 	setUniformValueArray("z", array.data(), 1, channels);
 }
 
+void OpenGLShaderProgram::setLayerUniform(float layer) {
+	setUniformValue("layer", layer);
+}
+
 void OpenGLShaderProgram::setVertexCoordAttribPointer(QOpenGLBuffer& buffer) {
 	setAttribPointerHelper(buffer, vertex_coord_index);
 }
