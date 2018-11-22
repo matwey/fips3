@@ -28,8 +28,8 @@ QException* AbstractOpenGLTexture::TextureCreateError::clone() const {
 	return new AbstractOpenGLTexture::TextureCreateError(*this);
 }
 
-AbstractOpenGLTexture::AbstractOpenGLTexture():
-	QOpenGLTexture(QOpenGLTexture::Target2D) {
+AbstractOpenGLTexture::AbstractOpenGLTexture(QOpenGLTexture::Target target):
+	QOpenGLTexture(target) {
 }
 
 AbstractOpenGLTexture::~AbstractOpenGLTexture() = default;

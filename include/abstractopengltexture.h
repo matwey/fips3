@@ -64,7 +64,7 @@ protected:
 #endif
 
 public:
-	AbstractOpenGLTexture();
+	explicit AbstractOpenGLTexture(QOpenGLTexture::Target target = QOpenGLTexture::Target2D);
 	virtual ~AbstractOpenGLTexture() = 0;
 
 	virtual void initialize();

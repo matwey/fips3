@@ -24,8 +24,8 @@
 #include <utils/swapbytes.h>
 #include <utils/openglrowalign.h>
 
-Uint8OpenGLTexture::Uint8OpenGLTexture(const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu):
-	AbstractOpenGLTexture(), hdu_(&hdu) {
+Uint8OpenGLTexture::Uint8OpenGLTexture(const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu, QOpenGLTexture::Target target):
+	AbstractOpenGLTexture(target), hdu_(&hdu) {
 }
 
 void Uint8OpenGLTexture::setFormat() {
@@ -43,8 +43,8 @@ void Uint8OpenGLTexture::setData() {
 	AbstractOpenGLTexture::setData(QOpenGLTexture::Alpha, QOpenGLTexture::UInt8, hdu().data(), &pto);
 }
 
-Uint8OpenGL3Texture::Uint8OpenGL3Texture(const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu):
-	AbstractOpenGLTexture(), hdu_(&hdu) {
+Uint8OpenGL3Texture::Uint8OpenGL3Texture(const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu, QOpenGLTexture::Target target):
+	AbstractOpenGLTexture(target), hdu_(&hdu) {
 }
 
 void Uint8OpenGL3Texture::setFormat() {
@@ -62,8 +62,8 @@ void Uint8OpenGL3Texture::setData() {
 	AbstractOpenGLTexture::setData(QOpenGLTexture::Red, QOpenGLTexture::UInt8, hdu().data(), &pto);
 }
 
-Int16OpenGLTexture::Int16OpenGLTexture(const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu):
-	AbstractOpenGLTexture(), hdu_(&hdu) {
+Int16OpenGLTexture::Int16OpenGLTexture(const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu, QOpenGLTexture::Target target):
+	AbstractOpenGLTexture(target), hdu_(&hdu) {
 }
 
 void Int16OpenGLTexture::setFormat() {
@@ -81,8 +81,8 @@ void Int16OpenGLTexture::setData() {
 	AbstractOpenGLTexture::setData(QOpenGLTexture::LuminanceAlpha, QOpenGLTexture::UInt8, hdu().data(), &pto);
 }
 
-Int16OpenGL3Texture::Int16OpenGL3Texture(const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu):
-	AbstractOpenGLTexture(), hdu_(&hdu) {
+Int16OpenGL3Texture::Int16OpenGL3Texture(const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu, QOpenGLTexture::Target target):
+	AbstractOpenGLTexture(target), hdu_(&hdu) {
 }
 
 void Int16OpenGL3Texture::setFormat() {
@@ -100,8 +100,8 @@ void Int16OpenGL3Texture::setData() {
 	AbstractOpenGLTexture::setData(QOpenGLTexture::Red, QOpenGLTexture::UInt16, hdu().data(), &pto);
 }
 
-Int32OpenGLTexture::Int32OpenGLTexture(const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu):
-	AbstractOpenGLTexture(), hdu_(&hdu) {
+Int32OpenGLTexture::Int32OpenGLTexture(const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu, QOpenGLTexture::Target target):
+	AbstractOpenGLTexture(target), hdu_(&hdu) {
 }
 
 void Int32OpenGLTexture::setFormat() {
@@ -119,8 +119,8 @@ void Int32OpenGLTexture::setData() {
 	AbstractOpenGLTexture::setData(QOpenGLTexture::RGBA, QOpenGLTexture::UInt8, hdu().data(), &pto);
 }
 
-Int32OpenGL3Texture::Int32OpenGL3Texture(const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu):
-	AbstractOpenGLTexture(), hdu_(&hdu) {
+Int32OpenGL3Texture::Int32OpenGL3Texture(const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu, QOpenGLTexture::Target target):
+	AbstractOpenGLTexture(target), hdu_(&hdu) {
 }
 
 void Int32OpenGL3Texture::setFormat() {
@@ -138,8 +138,8 @@ void Int32OpenGL3Texture::setData() {
 	AbstractOpenGLTexture::setData(QOpenGLTexture::RG, QOpenGLTexture::UInt16, hdu().data(), &pto);
 }
 
-Int64OpenGLTexture::Int64OpenGLTexture(const FITS::HeaderDataUnit<FITS::DataUnit<qint64>>& hdu):
-	AbstractOpenGLTexture(), hdu_(&hdu) {
+Int64OpenGLTexture::Int64OpenGLTexture(const FITS::HeaderDataUnit<FITS::DataUnit<qint64>>& hdu, QOpenGLTexture::Target target):
+	AbstractOpenGLTexture(target), hdu_(&hdu) {
 }
 
 void Int64OpenGLTexture::setFormat() {
@@ -157,8 +157,8 @@ void Int64OpenGLTexture::setData() {
 	AbstractOpenGLTexture::setData(QOpenGLTexture::RGBA, QOpenGLTexture::UInt16, hdu().data(), &pto);
 }
 
-FloatOpenGL3Texture::FloatOpenGL3Texture(const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu):
-	AbstractOpenGLTexture(), hdu_(&hdu) {
+FloatOpenGL3Texture::FloatOpenGL3Texture(const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu, QOpenGLTexture::Target target):
+	AbstractOpenGLTexture(target), hdu_(&hdu) {
 }
 
 void FloatOpenGL3Texture::setFormat() {
@@ -176,8 +176,8 @@ void FloatOpenGL3Texture::setData() {
 	AbstractOpenGLTexture::setData(QOpenGLTexture::Red, QOpenGLTexture::Float32, hdu().data(), &pto);
 }
 
-DoubleOpenGL3Texture::DoubleOpenGL3Texture(const FITS::HeaderDataUnit<FITS::DataUnit<double>>& hdu):
-	AbstractOpenGLTexture(), hdu_(&hdu) {
+DoubleOpenGL3Texture::DoubleOpenGL3Texture(const FITS::HeaderDataUnit<FITS::DataUnit<double>>& hdu, QOpenGLTexture::Target target):
+	AbstractOpenGLTexture(target), hdu_(&hdu) {
 }
 
 void DoubleOpenGL3Texture::setFormat() {

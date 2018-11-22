@@ -34,7 +34,7 @@ protected:
 	virtual void allocateStorage() override;
 	virtual void setData() override;
 public:
-	explicit Uint8OpenGLTexture(const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu);
+	Uint8OpenGLTexture(const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu, QOpenGLTexture::Target target = QOpenGLTexture::Target2D);
 	virtual ~Uint8OpenGLTexture() override = default;
 };
 
@@ -51,7 +51,7 @@ protected:
 	virtual void allocateStorage() override;
 	virtual void setData() override;
 public:
-	explicit Uint8OpenGL3Texture(const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu);
+	Uint8OpenGL3Texture(const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu, QOpenGLTexture::Target target = QOpenGLTexture::Target2D);
 	virtual ~Uint8OpenGL3Texture() override = default;
 };
 
@@ -68,7 +68,7 @@ protected:
 	virtual void allocateStorage() override;
 	virtual void setData() override;
 public:
-	explicit Int16OpenGLTexture(const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu);
+	Int16OpenGLTexture(const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu, QOpenGLTexture::Target target = QOpenGLTexture::Target2D);
 	virtual ~Int16OpenGLTexture() override = default;
 };
 
@@ -85,7 +85,7 @@ protected:
 	virtual void allocateStorage() override;
 	virtual void setData() override;
 public:
-	explicit Int16OpenGL3Texture(const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu);
+	Int16OpenGL3Texture(const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu, QOpenGLTexture::Target target = QOpenGLTexture::Target2D);
 	virtual ~Int16OpenGL3Texture() override = default;
 };
 
@@ -102,7 +102,7 @@ protected:
 	virtual void allocateStorage() override;
 	virtual void setData() override;
 public:
-	explicit Int32OpenGLTexture(const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu);
+	Int32OpenGLTexture(const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu, QOpenGLTexture::Target target = QOpenGLTexture::Target2D);
 	virtual ~Int32OpenGLTexture() override = default;
 };
 
@@ -119,7 +119,7 @@ protected:
 	virtual void allocateStorage() override;
 	virtual void setData() override;
 public:
-	explicit Int32OpenGL3Texture(const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu);
+	Int32OpenGL3Texture(const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu, QOpenGLTexture::Target target = QOpenGLTexture::Target2D);
 	virtual ~Int32OpenGL3Texture() override = default;
 };
 
@@ -136,7 +136,7 @@ protected:
 	virtual void allocateStorage() override;
 	virtual void setData() override;
 public:
-	explicit Int64OpenGLTexture(const FITS::HeaderDataUnit<FITS::DataUnit<qint64>>& hdu);
+	Int64OpenGLTexture(const FITS::HeaderDataUnit<FITS::DataUnit<qint64>>& hdu, QOpenGLTexture::Target target = QOpenGLTexture::Target2D);
 	virtual ~Int64OpenGLTexture() override = default;
 };
 
@@ -153,7 +153,7 @@ protected:
 		return *hdu_;
 	}
 public:
-	explicit FloatOpenGL3Texture(const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu);
+	FloatOpenGL3Texture(const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu, QOpenGLTexture::Target target = QOpenGLTexture::Target2D);
 	virtual ~FloatOpenGL3Texture() override = default;
 };
 
@@ -170,7 +170,7 @@ protected:
 		return *hdu_;
 	}
 public:
-	explicit DoubleOpenGL3Texture(const FITS::HeaderDataUnit<FITS::DataUnit<double>>& hdu);
+	DoubleOpenGL3Texture(const FITS::HeaderDataUnit<FITS::DataUnit<double>>& hdu, QOpenGLTexture::Target target = QOpenGLTexture::Target2D);
 	virtual ~DoubleOpenGL3Texture() override = default;
 };
 
