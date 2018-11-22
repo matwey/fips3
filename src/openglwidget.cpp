@@ -28,9 +28,13 @@
 namespace {
 struct HDUValueGetter {
 	const QPoint& image_position;
+	std::size_t layer;
 
 	template<class T> double operator() (const FITS::DataUnit<T>& data) const {
-		const auto data_ptr = data.data() + image_position.y() * data.width() + image_position.x();
+		const auto w = data.width();
+		const auto h = data.height();
+		const auto f = w * h;
+		const auto data_ptr = data.data() + layer * f + image_position.y() * w + image_position.x();
 
 #if Q_BYTE_ORDER == Q_LITTLE_ENDIAN
 		const auto raw_value = Utils::swap_bytes(*data_ptr);
@@ -233,7 +237,7 @@ Pixel OpenGLWidget::pixelFromWidgetCoordinate(const QPoint &widget_coord) {
 		return Pixel(position);
 	}
 
-	const auto value = hdu_->header().bscale() * hdu_->data().apply(HDUValueGetter{position}) + hdu_->header().bzero();
+	const auto value = hdu_->header().bscale() * hdu_->data().apply(HDUValueGetter{position, 0}) + hdu_->header().bzero();
 	return Pixel(position, value);
 }
 
