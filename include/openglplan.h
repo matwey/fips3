@@ -43,6 +43,12 @@ struct OpenGL33BasedPlan {
 	}
 };
 
+struct OpenGL33fp64BasedPlan {
+	constexpr static bool satisfied(const ::OpenGLFeatures& features) {
+		return OpenGLRequiredFeatures{}.requireOpenGL33().requireARB_gpu_shader_fp64().satisfied(features);
+	}
+};
+
 } // detail
 
 class Uint8OpenGLPlan:
@@ -71,6 +77,16 @@ class Uint8OpenGL33Plan:
 public:
 	explicit Uint8OpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu);
 	virtual ~Uint8OpenGL33Plan() override = default;
+
+	virtual QString fragmentShaderSourceCode() const override;
+};
+
+class Uint8OpenGL33ArrayPlan:
+	public AbstractOpenGL33Plan<Uint8OpenGL3TextureArray>,
+	public detail::OpenGL33BasedPlan {
+public:
+	explicit Uint8OpenGL33ArrayPlan(const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu);
+	virtual ~Uint8OpenGL33ArrayPlan() override = default;
 
 	virtual QString fragmentShaderSourceCode() const override;
 };
@@ -105,6 +121,16 @@ public:
 	virtual QString fragmentShaderSourceCode() const override;
 };
 
+class Int16OpenGL33ArrayPlan:
+	public AbstractOpenGL33Plan<Int16OpenGL3TextureArray>,
+	public detail::OpenGL33BasedPlan {
+public:
+	explicit Int16OpenGL33ArrayPlan(const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu);
+	virtual ~Int16OpenGL33ArrayPlan() override = default;
+
+	virtual QString fragmentShaderSourceCode() const override;
+};
+
 class Int32OpenGLPlan:
 	public AbstractOpenGL2Plan<Int32OpenGLTexture>,
 	public detail::OpenGL21BasedPlan {
@@ -135,6 +161,16 @@ public:
 	virtual QString fragmentShaderSourceCode() const override;
 };
 
+class Int32OpenGL33ArrayPlan:
+	public AbstractOpenGL33Plan<Int32OpenGL3TextureArray>,
+	public detail::OpenGL33BasedPlan {
+public:
+	explicit Int32OpenGL33ArrayPlan(const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu);
+	virtual ~Int32OpenGL33ArrayPlan() override = default;
+
+	virtual QString fragmentShaderSourceCode() const override;
+};
+
 class Int64OpenGLPlan:
 	public AbstractOpenGL2Plan<Int64OpenGLTexture>,
 	public detail::OpenGL21BasedPlan {
@@ -151,6 +187,16 @@ class Int64OpenGL33Plan:
 public:
 	explicit Int64OpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<qint64>>& hdu);
 	virtual ~Int64OpenGL33Plan() override = default;
+
+	virtual QString fragmentShaderSourceCode() const override;
+};
+
+class Int64OpenGL33ArrayPlan:
+	public AbstractOpenGL33Plan<Int64OpenGLTextureArray>,
+	public detail::OpenGL33BasedPlan {
+public:
+	explicit Int64OpenGL33ArrayPlan(const FITS::HeaderDataUnit<FITS::DataUnit<qint64>>& hdu);
+	virtual ~Int64OpenGL33ArrayPlan() override = default;
 
 	virtual QString fragmentShaderSourceCode() const override;
 };
@@ -179,6 +225,18 @@ public:
 	virtual QString fragmentShaderSourceCode() const override;
 };
 
+class FloatOpenGL33ArrayPlan:
+	public AbstractOpenGL33Plan<FloatOpenGL3TextureArray>,
+	public detail::OpenGL33BasedPlan {
+private:
+	FloatOpenGL33ArrayPlan(const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu, const std::pair<double, double>& minmax);
+public:
+	explicit FloatOpenGL33ArrayPlan(const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu);
+	virtual ~FloatOpenGL33ArrayPlan() override = default;
+
+	virtual QString fragmentShaderSourceCode() const override;
+};
+
 class DoubleOpenGL30Plan:
 	public AbstractOpenGL2Plan<DoubleOpenGL3Texture> {
 private:
@@ -195,16 +253,25 @@ public:
 };
 
 class DoubleOpenGL33Plan:
-	public AbstractOpenGL33Plan<DoubleOpenGL3Texture> {
+	public AbstractOpenGL33Plan<DoubleOpenGL3Texture>,
+	public detail::OpenGL33fp64BasedPlan {
 private:
 	DoubleOpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<double>>& hdu, const std::pair<double, double>& minmax);
 public:
 	explicit DoubleOpenGL33Plan(const FITS::HeaderDataUnit<FITS::DataUnit<double>>& hdu);
 	virtual ~DoubleOpenGL33Plan() override = default;
 
-	constexpr static bool satisfied(const ::OpenGLFeatures& features) {
-		return OpenGLRequiredFeatures{}.requireOpenGL33().requireARB_gpu_shader_fp64().satisfied(features);
-	}
+	virtual QString fragmentShaderSourceCode() const override;
+};
+
+class DoubleOpenGL33ArrayPlan:
+	public AbstractOpenGL33Plan<DoubleOpenGL3TextureArray>,
+	public detail::OpenGL33fp64BasedPlan {
+private:
+	DoubleOpenGL33ArrayPlan(const FITS::HeaderDataUnit<FITS::DataUnit<double>>& hdu, const std::pair<double, double>& minmax);
+public:
+	explicit DoubleOpenGL33ArrayPlan(const FITS::HeaderDataUnit<FITS::DataUnit<double>>& hdu);
+	virtual ~DoubleOpenGL33ArrayPlan() override = default;
 
 	virtual QString fragmentShaderSourceCode() const override;
 };
