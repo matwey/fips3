@@ -117,6 +117,7 @@ public:
 	inline const char* homePageURL() const { return "http://fips.space"; }
 public slots:
 	void openFileHere();
+	void viewHeaders();
 	void refresh();
 	void setAutoRefresh(bool autorefresh);
 	void zoomIn();
