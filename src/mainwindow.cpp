@@ -32,6 +32,7 @@
 #include <application.h>
 #include <flipwidget.h>
 #include <mainwindow.h>
+#include <playbackwidget.h>
 #include <rotationwidget.h>
 
 MouseMoveEventFilter::MouseMoveEventFilter(MousePositionWidget *mouse_position_widget, QObject* parent):
@@ -243,6 +244,12 @@ MainWindow::MainWindow(const QString& fits_filename, QWidget *parent):
 	status_bar->addWidget(mouse_position_widget.release());
 	setStatusBar(status_bar.release());
 	setWindowTitle(state_->filename());
+
+	std::unique_ptr<QDockWidget> playback_dock{new QDockWidget(tr("Playback"), this)};
+	playback_dock->setAllowedAreas(Qt::AllDockWidgetAreas);
+	std::unique_ptr<PlaybackWidget> playback_widget{new PlaybackWidget(playback_dock.get())};
+	playback_dock->setWidget(playback_widget.release());
+	addDockWidget(Qt::RightDockWidgetArea, playback_dock.release());
 }
 
 void MainWindow::setWindowTitle(const QString& filename) {
