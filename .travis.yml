@@ -46,11 +46,11 @@ matrix:
           all_branches: true
 
 env:
+- BASE_IMAGE_TAG=gcc8-qt512
 - BASE_IMAGE_TAG=gcc8-qt511
-- BASE_IMAGE_TAG=gcc8-qt510
 - BASE_IMAGE_TAG=gcc8-qt59
+- BASE_IMAGE_TAG=gcc7-qt512
 - BASE_IMAGE_TAG=gcc7-qt511
-- BASE_IMAGE_TAG=gcc7-qt510
 - BASE_IMAGE_TAG=gcc7-qt59
 - BASE_IMAGE_TAG=gcc4.8-qt511
 - BASE_IMAGE_TAG=gcc4.8-qt510
@@ -59,19 +59,16 @@ env:
 - BASE_IMAGE_TAG=gcc4.8-qt57
 - BASE_IMAGE_TAG=gcc4.8-qt56
 - BASE_IMAGE_TAG=gcc4.8-qt55
+- BASE_IMAGE_TAG=clang6-qt512
 - BASE_IMAGE_TAG=clang6-qt511
-- BASE_IMAGE_TAG=clang6-qt510
 - BASE_IMAGE_TAG=clang6-qt59
+- BASE_IMAGE_TAG=clang5-qt512
 - BASE_IMAGE_TAG=clang5-qt511
-- BASE_IMAGE_TAG=clang5-qt510
 - BASE_IMAGE_TAG=clang5-qt59
+- BASE_IMAGE_TAG=clang4-qt512
 - BASE_IMAGE_TAG=clang4-qt511
-- BASE_IMAGE_TAG=clang4-qt510
 - BASE_IMAGE_TAG=clang4-qt59
-- BASE_IMAGE_TAG=clang4-qt58
-- BASE_IMAGE_TAG=clang4-qt57
 - BASE_IMAGE_TAG=clang4-qt56
-- BASE_IMAGE_TAG=clang4-qt55
 install:
 - cat Dockerfile.in | m4 -DBASE_IMAGE_TAG=${BASE_IMAGE_TAG} > Dockerfile
 - docker build . -t test
