@@ -29,6 +29,8 @@
 #include <fits.h>
 #include <openglplane.h>
 #include <openglshaderprogram.h>
+#include <utils/minmax.h>
+#include <utils/swapbytes.h>
 
 class AbstractOpenGLPlan:
 	protected QOpenGLFunctions {
@@ -88,21 +90,20 @@ protected:
 		const auto begin = dataunit.data();
 		const auto end   = begin + dataunit.length();
 
-		using value_type = decltype(*begin);
-
-		auto e = std::minmax_element(
+		const auto e = std::accumulate(
 			begin, end,
+			std::make_pair(*begin, *begin),
+			[](const std::pair<T, T>& acc, const T& element) {
 #if Q_BYTE_ORDER == Q_LITTLE_ENDIAN
-			[](value_type x, value_type y) { return swap_bytes(x) < swap_bytes(y); }
+				const T& x = swap_bytes(element);
 #else
-			[](value_type x, value_type y) { return x < y; }
+				const T& x = element;
 #endif
+				return std::make_pair(Utils::min(acc.first, x), Utils::max(acc.second, x));
+			}
 		);
-#if Q_BYTE_ORDER == Q_LITTLE_ENDIAN
-		return std::make_pair(hdu.FITSToInstrumental(swap_bytes(*(e.first))), hdu.FITSToInstrumental(swap_bytes(*(e.second))));
-#else
-		return std::make_pair(hdu.FITSToInstrumental(*(e.first)), hdu.FITSToInstrumental(*(e.second)));
-#endif
+
+		return std::make_pair(hdu.FITSToInstrumental(e.first), hdu.FITSToInstrumental(e.second));
 	}
 
 	template<class T>
