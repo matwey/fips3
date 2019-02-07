@@ -87,8 +87,6 @@ private:
 protected:
 	template<class T>
 	static inline std::pair<double, double> makeMinMax(const FITS::HeaderDataUnit<FITS::DataUnit<T>>& hdu) {
-		using Utils::swap_bytes;
-
 		const auto& dataunit = hdu.data();
 
 		const auto begin = dataunit.data();
@@ -99,7 +97,7 @@ protected:
 			std::make_pair(std::numeric_limits<T>::max(), std::numeric_limits<T>::lowest()),
 			[](const std::pair<T, T>& acc, const T& element) {
 #if Q_BYTE_ORDER == Q_LITTLE_ENDIAN
-				const T& x = swap_bytes(element);
+				const T& x = Utils::swap_bytes(element);
 #else
 				const T& x = element;
 #endif
