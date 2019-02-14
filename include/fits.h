@@ -81,6 +81,10 @@ public:
 
 		static HeaderUnit createFromPages(AbstractFITSStorage::Page& begin, AbstractFITSStorage::Page end);
 
+		inline std::size_t count(const QString& key) const {
+			return headers_.count(key);
+		}
+
 		inline const QString& header(const QString& key) const {
 			return headers_.at(key);
 		}

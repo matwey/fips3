@@ -23,6 +23,7 @@ private slots:
 	void header2();
 	void header_as1();
 	void header_as2();
+	void count1();
 };
 
 void TestFits::pageAdvance1() {
@@ -191,6 +192,14 @@ void TestFits::header_as2() {
 	QVERIFY_EXCEPTION_THROWN(
 		fits.header_unit().header_as<int>("SIMPLE"),
 		FITS::WrongHeaderValue);
+}
+void TestFits::count1() {
+	QFile* file = new QFile(DATA_ROOT "/header_end.fits");
+	file->open(QIODevice::ReadOnly);
+	FITS fits(file);
+
+	QCOMPARE(fits.header_unit().count("NAXIS2"), std::size_t(1));
+	QCOMPARE(fits.header_unit().count("NAXIS3"), std::size_t(0));
 }
 
 QTEST_MAIN(TestFits)
