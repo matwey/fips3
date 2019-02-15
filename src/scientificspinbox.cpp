@@ -20,11 +20,12 @@
 
 #include <QFontDatabase>
 #include <QLineEdit>
+#include <QDebug>
 
 #include <scientificspinbox.h>
 
 constexpr const char ScientificSpinBox::text_format_;
-constexpr const int ScientificSpinBox::log10_steps_in_range_;
+constexpr const double ScientificSpinBox::steps_in_range_;
 
 ScientificSpinBox::ScientificSpinBox(QWidget* parent, int decimals):
 	QAbstractSpinBox(parent),
@@ -91,7 +92,13 @@ QString ScientificSpinBox::textFromValue(double value) const {
 
 double ScientificSpinBox::valueFromText(const QString& text) const {
 	bool ok = false;
-	const auto value = locale().toDouble(text, &ok);
+	double value = locale().toDouble(text, &ok);
+	qDebug() << text << value;
+	if (!ok && std::isinf(value)) {
+		value = std::copysign(std::numeric_limits<double>::max(), value);
+		ok = true;
+	}
+	qDebug() << value;
 	Q_ASSERT(ok);
 	return value;
 }
@@ -139,7 +146,7 @@ void ScientificSpinBox::setRange(double min, double max) {
 	Q_ASSERT(min < max);
 	minimum_ = min;
 	maximum_ = max;
-	// This is the maximum value of the form 1eN that smaller than (max - min) / 10**log10_steps_in_range_
-	single_step_ = std::pow(10.0, std::floor(std::log10(max - min)) - log10_steps_in_range_);
+	// This is the maximum value of the form 1eN that smaller than (max - min) / steps_in_range_
+	single_step_ = std::pow(10.0, std::floor(std::log10(max/steps_in_range_ - min/steps_in_range_)));
 	emit rangeChanged(min, max);
 }

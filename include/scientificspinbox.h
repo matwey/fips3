@@ -26,7 +26,7 @@ class ScientificSpinBox: public QAbstractSpinBox {
 	Q_OBJECT
 private:
 	static constexpr const char text_format_ = 'g';
-	static constexpr const int log10_steps_in_range_ = 2;
+	static constexpr const double steps_in_range_ = 100;
 	double value_ = 0;
 	const int decimals_;
 	double minimum_ = 0;
