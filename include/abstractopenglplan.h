@@ -19,6 +19,10 @@
 #ifndef _ABSTRACTOPENGLPLAN_H
 #define _ABSTRACTOPENGLPLAN_H
 
+#include <algorithm>
+#include <limits>
+#include <utility>
+
 #include <QOpenGLFunctions>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLVertexArrayObject>
@@ -88,9 +92,9 @@ protected:
 		const auto begin = dataunit.data();
 		const auto end   = begin + dataunit.length();
 
-		const auto e = std::accumulate(
+		auto e = std::accumulate(
 			begin, end,
-			std::make_pair(*begin, *begin),
+			std::make_pair(std::numeric_limits<T>::max(), std::numeric_limits<T>::lowest()),
 			[](const std::pair<T, T>& acc, const T& element) {
 #if Q_BYTE_ORDER == Q_LITTLE_ENDIAN
 				const T& x = Utils::swap_bytes(element);
@@ -100,6 +104,10 @@ protected:
 				return std::make_pair(Utils::min(acc.first, x), Utils::max(acc.second, x));
 			}
 		);
+		// Swap max and lowest if data contains only NaNs
+		if (e.first > e.second) {
+			std::swap(e.first, e.second);
+		}
 
 		return std::make_pair(hdu.FITSToInstrumental(e.first), hdu.FITSToInstrumental(e.second));
 	}
