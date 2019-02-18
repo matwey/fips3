@@ -19,6 +19,10 @@
 #ifndef _ABSTRACTOPENGLPLAN_H
 #define _ABSTRACTOPENGLPLAN_H
 
+#include <algorithm>
+#include <limits>
+#include <utility>
+
 #include <QOpenGLFunctions>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLVertexArrayObject>
@@ -29,6 +33,8 @@
 #include <fits.h>
 #include <openglplane.h>
 #include <openglshaderprogram.h>
+#include <utils/minmax.h>
+#include <utils/swapbytes.h>
 
 class AbstractOpenGLPlan:
 	protected QOpenGLFunctions {
@@ -81,28 +87,29 @@ private:
 protected:
 	template<class T>
 	static inline std::pair<double, double> makeMinMax(const FITS::HeaderDataUnit<FITS::DataUnit<T>>& hdu) {
-		using Utils::swap_bytes;
-
 		const auto& dataunit = hdu.data();
 
 		const auto begin = dataunit.data();
 		const auto end   = begin + dataunit.length();
 
-		using value_type = decltype(*begin);
-
-		auto e = std::minmax_element(
+		auto e = std::accumulate(
 			begin, end,
+			std::make_pair(std::numeric_limits<T>::max(), std::numeric_limits<T>::lowest()),
+			[](const std::pair<T, T>& acc, const T& element) {
 #if Q_BYTE_ORDER == Q_LITTLE_ENDIAN
-			[](value_type x, value_type y) { return swap_bytes(x) < swap_bytes(y); }
+				const T& x = Utils::swap_bytes(element);
 #else
-			[](value_type x, value_type y) { return x < y; }
+				const T& x = element;
 #endif
+				return std::make_pair(Utils::min(acc.first, x), Utils::max(acc.second, x));
+			}
 		);
-#if Q_BYTE_ORDER == Q_LITTLE_ENDIAN
-		return std::make_pair(hdu.FITSToInstrumental(swap_bytes(*(e.first))), hdu.FITSToInstrumental(swap_bytes(*(e.second))));
-#else
-		return std::make_pair(hdu.FITSToInstrumental(*(e.first)), hdu.FITSToInstrumental(*(e.second)));
-#endif
+		// Swap max and lowest if data contains only NaNs
+		if (e.first > e.second) {
+			std::swap(e.first, e.second);
+		}
+
+		return std::make_pair(hdu.FITSToInstrumental(e.first), hdu.FITSToInstrumental(e.second));
 	}
 
 	template<class T>

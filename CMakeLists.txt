@@ -172,6 +172,10 @@ add_executable(test_opengltransform test/opengltransform.cpp src/abstractopenglt
 target_link_libraries(test_opengltransform Qt5::Test Qt5::Gui)
 add_test(test_opengltransform test_opengltransform)
 
+add_executable(test_utils_minmax test/utils/minmax.cpp)
+target_link_libraries(test_utils_minmax Qt5::Test)
+add_test(test_utils_minmax test_utils_minmax)
+
 add_executable(test_utils_openglrowalign test/utils/openglrowalign.cpp src/utils/openglrowalign.cpp)
 target_link_libraries(test_utils_openglrowalign Qt5::Test)
 add_test(test_utils_openglrowalign test_utils_openglrowalign)
