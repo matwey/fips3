@@ -34,8 +34,6 @@ if(APPLE)
 
 	list(APPEND SOURCES ${ICON_FILE} ${DOC_ICON_FILE})
 	add_executable(${TARGET} MACOSX_BUNDLE ${SOURCES})
-
-	set(CMAKE_OSX_DEPLOYMENT_TARGET 10.12)
 elseif(WIN32)
 	set(TARGET fips)
 
