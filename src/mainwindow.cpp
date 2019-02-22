@@ -160,8 +160,13 @@ MainWindow::MainWindow(const QString& fits_filename, QWidget *parent):
 	zoomIn_action->setShortcut(QKeySequence::ZoomIn);
 	auto zoomOut_action = view_menu->addAction(tr("Zoom &Out"), this, SLOT(zoomOut(void)));
 	zoomOut_action->setShortcut(QKeySequence::ZoomOut);
-	auto fit_to_window_action = view_menu->addAction(tr("&Fit to Window"), this, SLOT(fitToWindow(void)));
+	auto fit_to_window_action = view_menu->addAction(tr("&Fit to Window"), this, SLOT(fitRegimeChanged(bool)));
 	fit_to_window_action->setShortcut(tr("Ctrl+F"));
+	fit_to_window_action->setCheckable(true);
+	connect(
+		scrollZoomArea()->viewport(), SIGNAL(fitChanged(bool)),
+		fit_to_window_action, SLOT(setChecked(bool))
+	);
 	view_menu->addSeparator();
 	// To be continued in docks block
 	// Help menu
@@ -329,8 +334,12 @@ void MainWindow::zoomOut() {
 	scrollZoomArea()->zoomViewport(zoomOut_factor_);
 }
 
-void MainWindow::fitToWindow() {
-	scrollZoomArea()->fitToViewport();
+void MainWindow::fitRegimeChanged(bool fitted) {
+	if (fitted) {
+		scrollZoomArea()->fitToViewport();
+	} else {
+		scrollZoomArea()->viewport()->unfitViewrect();
+	}
 }
 
 void MainWindow::closeEvent(QCloseEvent* event) {

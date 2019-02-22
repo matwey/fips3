@@ -152,8 +152,14 @@ void OpenGLWidget::initializeGLObjects() {
 }
 
 void OpenGLWidget::fitViewrect() {
-	fitted_ = true;
+	changeFit(true);
 	viewrect_.fitToBorder(size());
+}
+
+void OpenGLWidget::changeFit(bool fitted) {
+	if (fitted_ == fitted) return;
+	fitted_ = fitted;
+	fitChanged(fitted_);
 }
 
 void OpenGLWidget::resizeEvent(QResizeEvent* event) {

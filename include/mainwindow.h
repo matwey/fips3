@@ -127,7 +127,7 @@ public slots:
 	void setAutoRefresh(bool autorefresh);
 	void zoomIn();
 	void zoomOut();
-	void fitToWindow();
+	void fitRegimeChanged(bool fitted);
 	void about();
 	void homepage();
 signals:

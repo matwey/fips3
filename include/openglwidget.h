@@ -141,9 +141,13 @@ private:
 public:
 	inline Viewrect& viewrect() { return viewrect_; }
 	void fitViewrect();
-	inline void unfitViewrect() { fitted_ = false; }
+	inline void unfitViewrect() { changeFit(false); }
 private slots:
 	void viewChanged(const QRectF& view_rect);
+private:
+	void changeFit(bool fitted);
+signals:
+	void fitChanged(bool fitted);
 
 private:
 	OpenGLTransform opengl_transform_;
