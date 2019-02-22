@@ -18,7 +18,6 @@
 
 #include <QResizeEvent>
 #include <QScrollBar>
-#include <QMessageBox>
 
 #include <scrollzoomarea.h>
 
@@ -39,6 +38,8 @@ void ScrollZoomArea::zoomViewport(double zoom_factor) {
 }
 
 void ScrollZoomArea::zoomViewport(double zoom_factor, const QPoint& fixed_point) {
+	viewport()->unfitViewrect();
+
 	const QPointF fixed_point4{
 		static_cast<double>(fixed_point.x()) / (viewport()->width() - 1),
 		static_cast<double>(fixed_point.y()) / (viewport()->height() - 1)};

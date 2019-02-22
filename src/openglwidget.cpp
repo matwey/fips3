@@ -22,8 +22,6 @@
 #include <openglplan.h>
 #include <openglplanfactory.h>
 #include <openglwidget.h>
-#include <openglshaderprogram.h>
-#include <utils/swapbytes.h>
 
 namespace {
 struct HDUValueGetter {
@@ -99,6 +97,7 @@ QException* OpenGLWidget::ShaderCompileError::clone() const {
 OpenGLWidget::OpenGLWidget(QWidget *parent, const FITS::AbstractHeaderDataUnit& hdu):
 	QOpenGLWidget(parent),
 	hdu_(&hdu),
+	fitted_(false),
 	opengl_transform_(this),
 	widget_to_fits_(this),
 	shader_uniforms_(new OpenGLShaderUniforms(1, 1, 0, 1)),
@@ -152,8 +151,18 @@ void OpenGLWidget::initializeGLObjects() {
 	shader_uniforms_->setColorMapSize(colormaps_[colormap_index_]->width());
 }
 
+void OpenGLWidget::fitViewrect() {
+	fitted_ = true;
+	viewrect_.fitToBorder(size());
+}
+
 void OpenGLWidget::resizeEvent(QResizeEvent* event) {
 	QOpenGLWidget::resizeEvent(event);
+
+	if (fitted_) {
+		fitViewrect();
+		return;
+	}
 
 	const auto new_widget_size = event->size();
 	auto old_widget_size = event->oldSize();

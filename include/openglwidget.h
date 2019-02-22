@@ -137,9 +137,11 @@ private:
 	openGL_unique_ptr<AbstractOpenGLPlan> plan_;
 private:
 	Viewrect viewrect_;
+	bool fitted_;
 public:
 	inline Viewrect& viewrect() { return viewrect_; }
-	inline void fitViewrect() { viewrect_.fitToBorder(size()); };
+	void fitViewrect();
+	inline void unfitViewrect() { fitted_ = false; }
 private slots:
 	void viewChanged(const QRectF& view_rect);
 
