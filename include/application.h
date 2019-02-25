@@ -33,7 +33,7 @@ public:
 	Application(int &argc, char **argv);
 	virtual ~Application() override;
 
-	void addInstance(const QString& filename);
+	std::size_t addInstance(const QString& filename);
 	inline static Application* instance() {
 		return static_cast<Application*>(QCoreApplication::instance());
 	}

@@ -24,7 +24,6 @@
 
 #include <application.h>
 #include <instance.h>
-#include <mainwindow.h>
 
 Application::Application(int &argc, char **argv):
 	QApplication(argc, argv) {
@@ -52,8 +51,19 @@ Application::Application(int &argc, char **argv):
 }
 Application::~Application() = default;
 
-void Application::addInstance(const QString& filename) {
-	new Instance(&root_, filename);
+std::size_t Application::addInstance(const QString& filename) {
+	try {
+		new Instance(&root_, filename);
+
+		return 1;
+	} catch (const std::exception& e) {
+		QMessageBox::critical(
+				Q_NULLPTR, "An error occured",
+				filename + tr("<br/><br/>") + e.what()
+		);
+	}
+
+	return 0;
 }
 
 std::size_t Application::openFile() {
@@ -61,15 +71,7 @@ std::size_t Application::openFile() {
 
 	if (filename.isEmpty()) return 0;
 
-	try {
-		Application::instance()->addInstance(filename);
-
-		return 1;
-	} catch (const std::exception& e) {
-		QMessageBox::critical(Q_NULLPTR, "An error occured", e.what());
-	}
-
-	return 0;
+	return Application::instance()->addInstance(filename);
 }
 
 #ifdef Q_OS_MAC
