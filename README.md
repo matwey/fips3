@@ -108,7 +108,7 @@ Community
 
 Citation
 --------
-If you have used Fips in your research, please cite paper [Kornilov & Malanchev (2019)](http://adsabs.harvard.edu/abs/2019A%26C....26...61K):
+If you have benefited from using Fips in your research, please find an opportunity to cite paper [Kornilov & Malanchev (2019)](http://adsabs.harvard.edu/abs/2019A%26C....26...61K):
 
 ```
 @ARTICLE{FIPS,
