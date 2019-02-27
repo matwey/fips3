@@ -270,7 +270,7 @@ void MainWindow::openFileHere(const QString& filename) {
 	try {
 		setState(new MainWindowState{filename, state_->isWatched()});
 	} catch (const std::exception& e) {
-		QMessageBox::critical(this, "An error occured", e.what());
+		QMessageBox::critical(this, "An error occurred", e.what());
 	}
 }
 
