@@ -106,3 +106,25 @@ Community
 - Report bugs on [GitHub](https://github.com/matwey/fips3/issues)
 - Join us on Telegram [@fips_space](https://t.me/fips_space)
 
+Citation
+--------
+If you have used Fips in your research, please cite paper [Kornilov & Malanchev (2019)](http://adsabs.harvard.edu/abs/2019A%26C....26...61K):
+
+```
+@ARTICLE{FIPS,
+   author = {{Kornilov}, M. and {Malanchev}, K.},
+    title = "{Fips: An OpenGL based FITS viewer}",
+  journal = {Astronomy and Computing},
+archivePrefix = "arXiv",
+   eprint = {1901.10189},
+ primaryClass = "astro-ph.IM",
+ keywords = {Techniques, Image processing, Image-based rendering, Graphical user interfaces},
+     year = 2019,
+    month = jan,
+   volume = 26,
+      eid = {61},
+    pages = {61},
+      doi = {10.1016/j.ascom.2019.01.001},
+   adsurl = {http://adsabs.harvard.edu/abs/2019A%26C....26...61K}
+}
+```
