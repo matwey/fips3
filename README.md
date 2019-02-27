@@ -112,7 +112,7 @@ If you have benefited from using Fips in your research, please find an opportuni
 
 ```
 @ARTICLE{FIPS,
-   author = {{Kornilov}, M. and {Malanchev}, K.},
+   author = {Matwey {Kornilov} and Kosntantin {Malanchev}},
     title = "{Fips: An OpenGL based FITS viewer}",
   journal = {Astronomy and Computing},
 archivePrefix = "arXiv",
