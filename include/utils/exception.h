@@ -20,13 +20,14 @@
 #define _EXCEPTION_H_
 
 #include <QException>
+#include <QByteArray>
 #include <QString>
 
 namespace Utils {
 
 class Exception : public QException {
 private:
-	QString what_;
+	QByteArray what_;
 public:
 	explicit Exception(const QString& what);
 

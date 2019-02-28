@@ -20,7 +20,7 @@
 
 namespace Utils {
 
-Exception::Exception(const QString& what): what_(what) {
+Exception::Exception(const QString& what): what_(what.toLatin1()) {
 }
 
 void Exception::raise() const {
@@ -32,7 +32,7 @@ QException* Exception::clone() const {
 }
 
 const char* Exception::what() const noexcept {
-	return what_.toLatin1().constData();
+	return what_.constData();
 }
 
 } //Utils
