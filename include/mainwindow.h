@@ -20,6 +20,8 @@
 #define _MAINWINDOW_H_
 
 #include <QDockWidget>
+#include <QDragEnterEvent>
+#include <QDropEvent>
 #include <QFileSystemWatcher>
 #include <QMainWindow>
 #include <QMouseEvent>
@@ -105,9 +107,12 @@ private:
 	void setState(std::unique_ptr<MainWindowState>&& state);
 
 	void setWindowTitle(const QString& filename);
+	void openFileHere(const QString& filename);
 protected:
 	virtual void resizeEvent(QResizeEvent* event) override;
 	virtual void closeEvent(QCloseEvent *event) override;
+	virtual void dragEnterEvent(QDragEnterEvent* event) override;
+	virtual void dropEvent(QDropEvent* event) override;
 public:
 	MainWindow(const QString& fits_filename, QWidget *parent = Q_NULLPTR);
 

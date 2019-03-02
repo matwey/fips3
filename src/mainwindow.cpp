@@ -23,12 +23,10 @@
 #include <QDesktopWidget>
 #include <QFile>
 #include <QFileDialog>
-#include <QFileInfo>
 #include <QListWidget>
 #include <QMessageBox>
-#include <QtGlobal>
+#include <QMimeData>
 #include <QTableWidget>
-#include <QTableWidgetItem>
 #include <QHeaderView>
 
 #include <application.h>
@@ -125,6 +123,8 @@ MainWindow::MainWindow(const QString& fits_filename, QWidget *parent):
 	state_{new MainWindowState{fits_filename, false}} {
 
 	connect(state_.get(), SIGNAL(fileChanged()), this, SLOT(refresh()));
+
+	setAcceptDrops(true);
 
 	// Resize window to fit FITS image
 	const auto desktop_size = QApplication::desktop()->screenGeometry();
@@ -263,17 +263,20 @@ void MainWindow::setState(std::unique_ptr<MainWindowState>&& new_state) {
 	connect(state_.get(), SIGNAL(fileChanged()), this, SLOT(refresh()));
 }
 
-void MainWindow::openFileHere() {
-	const auto filename = QFileDialog::getOpenFileName(this, tr("Open FITS file in current window"));
-
+void MainWindow::openFileHere(const QString& filename) {
 	if (filename.isEmpty())
 		return;
 
 	try {
 		setState(new MainWindowState{filename, state_->isWatched()});
 	} catch (const std::exception& e) {
-		QMessageBox::critical(this, "An error occured", e.what());
+		QMessageBox::critical(this, "An error occurred", e.what());
 	}
+}
+
+void MainWindow::openFileHere() {
+	const auto filename = QFileDialog::getOpenFileName(this, tr("Open FITS file in current window"));
+	openFileHere(filename);
 }
 
 void MainWindow::viewHeaders() {
@@ -330,13 +333,33 @@ void MainWindow::fitToWindow() {
 	scrollZoomArea()->fitToViewport();
 }
 
-void MainWindow::closeEvent(QCloseEvent *event) {
+void MainWindow::closeEvent(QCloseEvent* event) {
 	emit closed(*this);
 	QMainWindow::closeEvent(event);
 }
 
-void MainWindow::resizeEvent(QResizeEvent *event) {
+void MainWindow::resizeEvent(QResizeEvent* event) {
 	QMainWindow::resizeEvent(event);
+}
+
+void MainWindow::dragEnterEvent(QDragEnterEvent* event) {
+	if (event->mimeData()->hasUrls()) {
+		event->acceptProposedAction();
+	}
+}
+
+void MainWindow::dropEvent(QDropEvent* event) {
+	const auto urls = event->mimeData()->urls();
+	if (urls.empty()) {
+		return;
+	}
+	if (urls.size() == 1) {
+		openFileHere(urls[0].toLocalFile());
+		return;
+	}
+	for (auto &url : urls) {
+		Application::instance()->addInstance(url.toLocalFile());
+	}
 }
 
 void MainWindow::about() {

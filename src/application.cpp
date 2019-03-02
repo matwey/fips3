@@ -58,7 +58,7 @@ std::size_t Application::addInstance(const QString& filename) {
 		return 1;
 	} catch (const std::exception& e) {
 		QMessageBox::critical(
-				Q_NULLPTR, "An error occured",
+				Q_NULLPTR, "An error occurred",
 				filename + tr("<br/><br/>") + e.what()
 		);
 	}
