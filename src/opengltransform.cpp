@@ -145,3 +145,9 @@ void WidgetToFitsOpenGLTransform::setWidgetSize(const QSize& widget_size) {
 	widget_size_ = widget_size;
 	expired_ = true;
 }
+
+void FitsToWCSOpenGLTransform::setWcsMatrix(const QMatrix4x4& matrix) {
+	if (wcs_matrix_ == matrix) return;
+	
+	wcs_matrix_ = matrix;
+}

@@ -46,6 +46,7 @@
 #include <opengltexture.h>
 #include <opengltransform.h>
 #include <viewrect.h>
+#include <wcsdata.h>
 #include <pixel.h>
 
 class OpenGLWidget: public QOpenGLWidget, protected QOpenGLFunctions {
@@ -146,6 +147,7 @@ private slots:
 private:
 	OpenGLTransform opengl_transform_;
 	WidgetToFitsOpenGLTransform widget_to_fits_;
+	FitsToWCSOpenGLTransform fits_to_wcs_;
 protected:
 	void flipViewrect(Qt::Axis flip_axis);
 public:

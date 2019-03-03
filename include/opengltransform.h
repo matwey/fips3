@@ -77,4 +77,19 @@ public:
 	void setWidgetSize(const QSize& widget_size);
 };
 
+class FitsToWCSOpenGLTransform:
+	public AbstractOpenGLTransform {
+private:
+	QMatrix4x4 wcs_matrix_;
+protected:
+	const QMatrix4x4& transformMatrix() const override { return wcs_matrix_; }
+public:
+	explicit FitsToWCSOpenGLTransform(QObject *parent = Q_NULLPTR):
+		AbstractOpenGLTransform{parent}, wcs_matrix_{} {}
+	FitsToWCSOpenGLTransform(const QMatrix4x4& wcs, QObject* parent = Q_NULLPTR):
+		AbstractOpenGLTransform{parent}, wcs_matrix_{wcs} {}
+	// const QMatrix4x4& wcsMatrix() const { return wcs_matrix_; }
+	void setWcsMatrix(const QMatrix4x4& matrix);
+};
+
 #endif // _OPENGLTRANSFORM_H

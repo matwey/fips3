@@ -101,6 +101,7 @@ OpenGLWidget::OpenGLWidget(QWidget *parent, const FITS::AbstractHeaderDataUnit& 
 	hdu_(&hdu),
 	opengl_transform_(this),
 	widget_to_fits_(this),
+	fits_to_wcs_(this),
 	shader_uniforms_(new OpenGLShaderUniforms(1, 1, 0, 1)),
 	colormaps_{{
 		openGL_unique_ptr<OpenGLColorMap>(new GrayscaleColorMap() , colormap_deleter_type(this)),
@@ -144,6 +145,7 @@ void OpenGLWidget::initializeGLObjects() {
 	viewrect_.setBorder(plan_->plane().borderRect(rotation()));
 	widget_to_fits_.setScale(plan_->plane().scale());
 	widget_to_fits_.setImageSize(image_size());
+	fits_to_wcs_.setWcsMatrix(WcsData(hdu_->header()).matrix());
 
 	emit planInitialized(*plan_);
 
@@ -232,8 +234,10 @@ Pixel OpenGLWidget::pixelFromWidgetCoordinate(const QPoint &widget_coord) {
 		return Pixel(position);
 	}
 
+	const auto wcs_vector = fits_to_wcs_.transform(p);
+	const QPoint wcs_position(wcs_vector.x(), wcs_vector.y());
 	const auto value = hdu_->header().bscale() * hdu_->data().apply(HDUValueGetter{position}) + hdu_->header().bzero();
-	return Pixel(position, value);
+	return Pixel(wcs_position, value);
 }
 
 void OpenGLWidget::viewChanged(const QRectF& view_rect) {
