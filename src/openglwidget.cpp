@@ -235,6 +235,7 @@ Pixel OpenGLWidget::pixelFromWidgetCoordinate(const QPoint &widget_coord) {
 	}
 
 	const auto wcs_vector = fits_to_wcs_.transform(p);
+    qDebug() << wcs_vector.x() << " " << wcs_vector.y();
 	const QPoint wcs_position(wcs_vector.x(), wcs_vector.y());
 	const auto value = hdu_->header().bscale() * hdu_->data().apply(HDUValueGetter{position}) + hdu_->header().bzero();
 	return Pixel(wcs_position, value);
