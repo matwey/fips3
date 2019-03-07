@@ -70,7 +70,7 @@ brew cask install fips
 
 Download [release package](https://github.com/matwey/fips3/releases/latest).
 
-If you haven't found your distro above than you can build from sources or
+If you haven't found your distro above then you can build from sources or
 contribute building packages for your favourite distro. Let us know to insert
 missing instructions.
 
