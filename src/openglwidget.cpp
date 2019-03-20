@@ -28,7 +28,7 @@
 namespace {
 struct HDUValueGetter {
 	const QPoint& image_position;
-	std::size_t layer;
+	int layer;
 
 	template<class T> double operator() (const FITS::DataUnit<T>& data) const {
 		const auto w = data.width();
@@ -110,7 +110,8 @@ OpenGLWidget::OpenGLWidget(QWidget *parent, const FITS::AbstractHeaderDataUnit& 
 		openGL_unique_ptr<OpenGLColorMap>(new GrayscaleColorMap() , colormap_deleter_type(this)),
 		openGL_unique_ptr<OpenGLColorMap>(new PurpleBlueColorMap(), colormap_deleter_type(this)),
 	}},
-	colormap_index_(0) {
+	colormap_index_(0),
+	layer_(0) {
 
 	connect(&viewrect_, SIGNAL(viewChanged(const QRectF&)), this, SLOT(viewChanged(const QRectF&)));
 	connect(&viewrect_, SIGNAL(scrollChanged(const QRect&)), this, SLOT(update()));
@@ -182,7 +183,7 @@ void OpenGLWidget::paintGL() {
 	plan_->program().setMVPUniform(opengl_transform_.transformMatrix());
 	plan_->program().setCUniform(shader_uniforms_->get_c(), shader_uniforms_->channels);
 	plan_->program().setZUniform(shader_uniforms_->get_z(), shader_uniforms_->channels);
-	plan_->program().setLayerUniform(0.0);
+	plan_->program().setLayerUniform(layer());
 
 	plan_->imageTexture().bind(OpenGLShaderProgram::image_texture_index);
 	colormaps_[colormap_index_]->bind(OpenGLShaderProgram::colormap_texture_index);
@@ -193,13 +194,19 @@ void OpenGLWidget::paintGL() {
 void OpenGLWidget::setHDU(const FITS::AbstractHeaderDataUnit &hdu) {
 	const auto old_image_size = image_size();
 	const auto old_hdu = hdu_;
+	const auto old_layer = layer();
+
 	hdu_ = &hdu;
 	try {
 		makeCurrent();
 		initializeGLObjects();
 		if (image_size() != old_image_size) {
+			setLayer(0);
 			fitViewrect();
 		} else {
+			if (old_layer >= depth()) {
+				setLayer(0);
+			}
 			update();
 		}
 		doneCurrent();
@@ -237,7 +244,7 @@ Pixel OpenGLWidget::pixelFromWidgetCoordinate(const QPoint &widget_coord) {
 		return Pixel(position);
 	}
 
-	const auto value = hdu_->header().bscale() * hdu_->data().apply(HDUValueGetter{position, 0}) + hdu_->header().bzero();
+	const auto value = hdu_->header().bscale() * hdu_->data().apply(HDUValueGetter{position, layer()}) + hdu_->header().bzero();
 	return Pixel(position, value);
 }
 
@@ -308,4 +315,15 @@ void OpenGLWidget::setVerticalFlip(bool flip) {
 const QString& OpenGLWidget::planName() const {
 	static const QString none("(none)");
 	return (plan_ ? plan_->name() : none);
+}
+
+void OpenGLWidget::setLayer(int layer) {
+	const auto new_layer = std::min(layer, static_cast<int>(image_depth()) - 1);
+
+	if (new_layer == layer_)
+		return;
+
+	layer_ = new_layer;
+	emit layerChanged(layer_);
+	update();
 }
