@@ -19,6 +19,7 @@
 #ifndef _ABSTRACTOPENGLTEXTURE_H
 #define _ABSTRACTOPENGLTEXTURE_H
 
+#include <QtGlobal>
 #include <QOpenGLTexture>
 
 #include <fits.h>
@@ -37,6 +38,20 @@ public:
 	};
 
 protected:
+	template<class T>
+	void setData(PixelFormat sourceFormat, PixelType sourceType, const FITS::DataUnit<T>& dataUnit, const QOpenGLPixelTransferOptions *const options) {
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 9, 0))
+		QOpenGLTexture::setData(0, 0, layers(), QOpenGLTexture::CubeMapPositiveX, sourceFormat, sourceType, dataUnit.data(), options);
+#else
+		const auto layer_size = width() * height();
+
+		auto data = dataUnit.data();
+		for (std::size_t i = 0; i < layers(); ++i, data += layer_size) {
+			QOpenGLTexture::setData(0, i, sourceFormat, sourceType, data, options);
+		}
+#endif // QT_VERSION
+	}
+
 	virtual void setSize();
 	virtual void setFormat() = 0;
 	virtual void allocateStorage() = 0;

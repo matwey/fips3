@@ -40,7 +40,7 @@ void Uint8OpenGLTexture::setData() {
 	QOpenGLPixelTransferOptions pto{};
 	pto.setAlignment(Utils::row_align(hdu_->data().width()));
 	pto.setSwapBytesEnabled(false);
-	QOpenGLTexture::setData(QOpenGLTexture::Alpha, QOpenGLTexture::UInt8, hdu_->data().data(), &pto);
+	AbstractOpenGLTexture::setData(QOpenGLTexture::Alpha, QOpenGLTexture::UInt8, hdu().data(), &pto);
 }
 
 Uint8OpenGL3Texture::Uint8OpenGL3Texture(const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu):
@@ -59,7 +59,7 @@ void Uint8OpenGL3Texture::setData() {
 	QOpenGLPixelTransferOptions pto{};
 	pto.setAlignment(Utils::row_align(hdu_->data().width()));
 	pto.setSwapBytesEnabled(false);
-	QOpenGLTexture::setData(QOpenGLTexture::Red, QOpenGLTexture::UInt8, hdu_->data().data(), &pto);
+	AbstractOpenGLTexture::setData(QOpenGLTexture::Red, QOpenGLTexture::UInt8, hdu().data(), &pto);
 }
 
 Int16OpenGLTexture::Int16OpenGLTexture(const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu):
@@ -78,7 +78,7 @@ void Int16OpenGLTexture::setData() {
 	QOpenGLPixelTransferOptions pto{};
 	pto.setAlignment(Utils::row_align(hdu_->data().width() * 2));
 	pto.setSwapBytesEnabled(false);
-	QOpenGLTexture::setData(QOpenGLTexture::LuminanceAlpha, QOpenGLTexture::UInt8, hdu_->data().data(), &pto);
+	AbstractOpenGLTexture::setData(QOpenGLTexture::LuminanceAlpha, QOpenGLTexture::UInt8, hdu().data(), &pto);
 }
 
 Int16OpenGL3Texture::Int16OpenGL3Texture(const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu):
@@ -97,7 +97,7 @@ void Int16OpenGL3Texture::setData() {
 	QOpenGLPixelTransferOptions pto{};
 	pto.setAlignment(Utils::row_align(hdu_->data().width() * 2));
 	pto.setSwapBytesEnabled(is_little_endian);
-	QOpenGLTexture::setData(QOpenGLTexture::Red, QOpenGLTexture::UInt16, hdu_->data().data(), &pto);
+	AbstractOpenGLTexture::setData(QOpenGLTexture::Red, QOpenGLTexture::UInt16, hdu().data(), &pto);
 }
 
 Int32OpenGLTexture::Int32OpenGLTexture(const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu):
@@ -116,7 +116,7 @@ void Int32OpenGLTexture::setData() {
 	QOpenGLPixelTransferOptions pto{};
 	pto.setAlignment(Utils::row_align(hdu_->data().width() * 4));
 	pto.setSwapBytesEnabled(false);
-	QOpenGLTexture::setData(QOpenGLTexture::RGBA, QOpenGLTexture::UInt8, hdu_->data().data(), &pto);
+	AbstractOpenGLTexture::setData(QOpenGLTexture::RGBA, QOpenGLTexture::UInt8, hdu().data(), &pto);
 }
 
 Int32OpenGL3Texture::Int32OpenGL3Texture(const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu):
@@ -135,7 +135,7 @@ void Int32OpenGL3Texture::setData() {
 	QOpenGLPixelTransferOptions pto{};
 	pto.setAlignment(Utils::row_align(hdu_->data().width() * 4));
 	pto.setSwapBytesEnabled(is_little_endian);
-	QOpenGLTexture::setData(QOpenGLTexture::RG, QOpenGLTexture::UInt16, hdu_->data().data(), &pto);
+	AbstractOpenGLTexture::setData(QOpenGLTexture::RG, QOpenGLTexture::UInt16, hdu().data(), &pto);
 }
 
 Int64OpenGLTexture::Int64OpenGLTexture(const FITS::HeaderDataUnit<FITS::DataUnit<qint64>>& hdu):
@@ -154,7 +154,7 @@ void Int64OpenGLTexture::setData() {
 	QOpenGLPixelTransferOptions pto{};
 	pto.setAlignment(Utils::row_align(hdu_->data().width() * 8));
 	pto.setSwapBytesEnabled(is_little_endian);
-	QOpenGLTexture::setData(QOpenGLTexture::RGBA, QOpenGLTexture::UInt16, hdu_->data().data(), &pto);
+	AbstractOpenGLTexture::setData(QOpenGLTexture::RGBA, QOpenGLTexture::UInt16, hdu().data(), &pto);
 }
 
 FloatOpenGL3Texture::FloatOpenGL3Texture(const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu):
@@ -173,7 +173,7 @@ void FloatOpenGL3Texture::setData() {
 	QOpenGLPixelTransferOptions pto{};
 	pto.setAlignment(Utils::row_align(hdu_->data().width() * 4));
 	pto.setSwapBytesEnabled(is_little_endian);
-	QOpenGLTexture::setData(QOpenGLTexture::Red, QOpenGLTexture::Float32, hdu_->data().data(), &pto);
+	AbstractOpenGLTexture::setData(QOpenGLTexture::Red, QOpenGLTexture::Float32, hdu().data(), &pto);
 }
 
 DoubleOpenGL3Texture::DoubleOpenGL3Texture(const FITS::HeaderDataUnit<FITS::DataUnit<double>>& hdu):
@@ -192,5 +192,5 @@ void DoubleOpenGL3Texture::setData() {
 	QOpenGLPixelTransferOptions pto{};
 	pto.setAlignment(Utils::row_align(hdu_->data().width() * 8));
 	pto.setSwapBytesEnabled(is_little_endian);
-	QOpenGLTexture::setData(QOpenGLTexture::RG_Integer, QOpenGLTexture::UInt32, hdu_->data().data(), &pto);
+	AbstractOpenGLTexture::setData(QOpenGLTexture::RG_Integer, QOpenGLTexture::UInt32, hdu().data(), &pto);
 }
