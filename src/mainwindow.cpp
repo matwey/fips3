@@ -121,7 +121,8 @@ QException* MainWindow::NoImageInFITS::clone() const {
 
 MainWindow::MainWindow(const QString& fits_filename, QWidget *parent):
 	QMainWindow(parent),
-	state_{new MainWindowState{fits_filename, false}} {
+	state_{new MainWindowState{fits_filename, false}},
+	playback_(this) {
 
 	connect(state_.get(), SIGNAL(fileChanged()), this, SLOT(refresh()));
 
@@ -136,6 +137,18 @@ MainWindow::MainWindow(const QString& fits_filename, QWidget *parent):
 	std::unique_ptr<ScrollZoomArea> scroll_zoom_area{new ScrollZoomArea(this, state_->fits().first_hdu())};
 	/* setCentralWidget promises to take ownership */
 	setCentralWidget(scroll_zoom_area.release());
+	connect(
+		scrollZoomArea()->viewport(), SIGNAL(planInitialized(const AbstractOpenGLPlan&)),
+		this, SLOT(planInitialized(const AbstractOpenGLPlan&))
+	);
+	connect(
+		&playback_, SIGNAL(frameChanged(int)),
+		scrollZoomArea()->viewport(), SLOT(setLayer(int))
+	);
+	connect(
+		scrollZoomArea()->viewport(), SIGNAL(layerChanged(int)),
+		&playback_, SLOT(setFrame(int))
+	);
 
 	std::unique_ptr<QMenuBar> menu_bar{new QMenuBar(this)};
 	// File menu
@@ -174,12 +187,12 @@ MainWindow::MainWindow(const QString& fits_filename, QWidget *parent):
 	levels_dock->setAllowedAreas(Qt::AllDockWidgetAreas);
 	std::unique_ptr<LevelsWidget> levels_widget{new LevelsWidget(levels_dock.get())};
 	connect(
-			scrollZoomArea()->viewport(), SIGNAL(planInitialized(const AbstractOpenGLPlan&)),
-			levels_widget.get(), SLOT(notifyPlanInitialized(const AbstractOpenGLPlan&))
+		scrollZoomArea()->viewport(), SIGNAL(planInitialized(const AbstractOpenGLPlan&)),
+		levels_widget.get(), SLOT(notifyPlanInitialized(const AbstractOpenGLPlan&))
 	);
 	connect(
-			levels_widget.get(), SIGNAL(valuesChanged(const std::pair<double, double>&)),
-			scrollZoomArea()->viewport(), SLOT(changeLevels(const std::pair<double, double>&))
+		levels_widget.get(), SIGNAL(valuesChanged(const std::pair<double, double>&)),
+		scrollZoomArea()->viewport(), SLOT(changeLevels(const std::pair<double, double>&))
 	);
 	levels_dock->setWidget(levels_widget.release());
 	view_menu->addAction(levels_dock->toggleViewAction());
@@ -234,9 +247,6 @@ MainWindow::MainWindow(const QString& fits_filename, QWidget *parent):
 	view_menu->addAction(colormap_dock->toggleViewAction());
 	addDockWidget(Qt::RightDockWidgetArea, colormap_dock.release());
 
-	/* setMenuBar promises to take ownership */
-	setMenuBar(menu_bar.release());
-
 	std::unique_ptr<QStatusBar> status_bar{new QStatusBar(this)};
 	std::unique_ptr<MousePositionWidget> mouse_position_widget{new MousePositionWidget(this)};
 	mouse_move_event_filter_.reset(new MouseMoveEventFilter(mouse_position_widget.get(), this));
@@ -248,8 +258,46 @@ MainWindow::MainWindow(const QString& fits_filename, QWidget *parent):
 	std::unique_ptr<QDockWidget> playback_dock{new QDockWidget(tr("Playback"), this)};
 	playback_dock->setAllowedAreas(Qt::AllDockWidgetAreas);
 	std::unique_ptr<PlaybackWidget> playback_widget{new PlaybackWidget(playback_dock.get())};
+	connect(
+		playback_widget.get(), SIGNAL(frameChanged(int)),
+		&playback_, SLOT(setFrame(int))
+	);
+	connect(
+		&playback_, SIGNAL(frameChanged(int)),
+		playback_widget.get(), SLOT(setFrame(int))
+	);
+	connect(
+		playback_widget.get(), SIGNAL(playingChanged(bool)),
+		&playback_, SLOT(setPlaying(bool))
+	);
+	connect(
+		&playback_, SIGNAL(playingChanged(bool)),
+		playback_widget.get(), SLOT(setPlaying(bool))
+	);
+	connect(
+		&playback_, SIGNAL(durationChanged(int)),
+		playback_widget.get(), SLOT(setDuration(int))
+	);
+	connect(
+		&playback_, SIGNAL(playableChanged(bool)),
+		playback_widget.get(), SLOT(setPlayable(bool))
+	);
+	connect(
+		&playback_, SIGNAL(playableChanged(bool)),
+		playback_dock.get(), SLOT(setVisible(bool))
+	);
+	connect(
+		&playback_, SIGNAL(playableChanged(bool)),
+		playback_dock->toggleViewAction(), SLOT(setEnabled(bool))
+	);
 	playback_dock->setWidget(playback_widget.release());
+	playback_dock->setVisible(false);
+	playback_dock->toggleViewAction()->setEnabled(false);
+	view_menu->addAction(playback_dock->toggleViewAction());
 	addDockWidget(Qt::RightDockWidgetArea, playback_dock.release());
+
+	/* setMenuBar promises to take ownership */
+	setMenuBar(menu_bar.release());
 }
 
 void MainWindow::setWindowTitle(const QString& filename) {
@@ -393,4 +441,10 @@ void MainWindow::about() {
 
 void MainWindow::homepage() {
 	QDesktopServices::openUrl(QUrl(homePageURL()));
+}
+
+void MainWindow::planInitialized(const AbstractOpenGLPlan& plan) {
+	const auto depth = plan.hdu().data().imageDataUnit()->depth();
+
+	playback_.setDuration(depth);
 }

@@ -38,6 +38,7 @@ PlaybackWidget::PlaybackWidget(QWidget* parent):
 		this, SIGNAL(frameChanged(int))
 	);
 
+	play_action_->setEnabled(false);
 	play_action_->setCheckable(true);
 	connect(
 		play_action_.get(), SIGNAL(toggled(bool)),
