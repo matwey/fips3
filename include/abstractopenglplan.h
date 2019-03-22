@@ -136,6 +136,7 @@ public:
 	virtual QString fragmentShaderSourceCode() const = 0;
 	virtual QString vertexShaderSourceCode() const = 0;
 	virtual AbstractOpenGLTexture& imageTexture() = 0;
+	virtual const AbstractOpenGLTexture& imageTexture() const = 0;
 
 	bool initialize();
 	virtual void draw() {
@@ -164,6 +165,9 @@ public:
 	virtual ~AbstractOpenGLPlanTexture() override = 0;
 
 	virtual texture_type& imageTexture() override {
+		return image_texture_;
+	}
+	virtual const texture_type& imageTexture() const override {
 		return image_texture_;
 	}
 };
