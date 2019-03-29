@@ -142,13 +142,13 @@ FITS::AbstractDataUnit* FITS::AbstractDataUnit::createFromPages(AbstractFITSStor
 
 	if (naxis == 0) {
 		return new EmptyDataUnit{};
-	} else if (naxis != 2) {
+	} else if (!(naxis == 2 || naxis == 3)) {
 		throw FITS::WrongHeaderValue("NAXIS", header.header("NAXIS"));
 	}
 
 	const auto width = header.header_as<quint64>("NAXIS1");
 	const auto height = header.header_as<quint64>("NAXIS2");
-	const auto depth = static_cast<quint64>(1);
+	const auto depth = (naxis == 3 ? header.header_as<quint64>("NAXIS3") : static_cast<quint64>(1));
 
 	return ImageDataUnit::createFromPages(begin, end, bitpix, height, width, depth);
 }
