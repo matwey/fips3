@@ -28,11 +28,12 @@ struct DataUnitCreateHelper {
 	const AbstractFITSStorage::Page& end_;
 	quint64 height_;
 	quint64 width_;
+	quint64 depth_;
 
 	template<class T> FITS::ImageDataUnit* operator() (T*) {
-		std::unique_ptr<FITS::DataUnit<T>> du{new FITS::DataUnit<T>(reinterpret_cast<const T*>(begin_.data()), height_, width_)};
+		std::unique_ptr<FITS::DataUnit<T>> du{new FITS::DataUnit<T>(reinterpret_cast<const T*>(begin_.data()), height_, width_, depth_)};
 
-		const auto length = du->element_size() * height_ * width_;
+		const auto length = du->element_size() * height_ * width_ * depth_;
 
 		if (begin_.distanceInBytes(end_) < length)
 			throw FITS::UnexpectedEnd();
@@ -147,23 +148,25 @@ FITS::AbstractDataUnit* FITS::AbstractDataUnit::createFromPages(AbstractFITSStor
 
 	const auto width = header.header_as<quint64>("NAXIS1");
 	const auto height = header.header_as<quint64>("NAXIS2");
+	const auto depth = static_cast<quint64>(1);
 
-	return ImageDataUnit::createFromPages(begin, end, bitpix, height, width);
+	return ImageDataUnit::createFromPages(begin, end, bitpix, height, width, depth);
 }
 
 FITS::AbstractDataUnit::VisitorBase::~VisitorBase() = default;
 
-FITS::ImageDataUnit::ImageDataUnit(quint64 height, quint64 width, quint32 element_size):
+FITS::ImageDataUnit::ImageDataUnit(quint64 height, quint64 width, quint64 depth, quint32 element_size):
 	AbstractDataUnit(),
 	height_(height),
 	width_(width),
+	depth_(depth),
 	element_size_(element_size) {
 }
 
 FITS::ImageDataUnit::~ImageDataUnit() = default;
 
-FITS::ImageDataUnit* FITS::ImageDataUnit::createFromPages(AbstractFITSStorage::Page& begin, AbstractFITSStorage::Page end, const QString& bitpix, quint64 height, quint64 width) {
-	DataUnitCreateHelper c{begin, end, height, width};
+FITS::ImageDataUnit* FITS::ImageDataUnit::createFromPages(AbstractFITSStorage::Page& begin, AbstractFITSStorage::Page end, const QString& bitpix, quint64 height, quint64 width, quint64 depth) {
+	DataUnitCreateHelper c{begin, end, height, width, depth};
 	return bitpixToType(bitpix, c);
 }
 

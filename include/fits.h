@@ -185,16 +185,18 @@ public:
 	private:
 		quint64 height_;
 		quint64 width_;
+		quint64 depth_;
 		quint32 element_size_;
 	public:
-		ImageDataUnit(quint64 height, quint64 width, quint32 element_size);
+		ImageDataUnit(quint64 height, quint64 width, quint64 depth, quint32 element_size);
 		virtual ~ImageDataUnit() override = 0;
 
 		template<class F> static auto bitpixToType(const QString& bitpix, F fun) -> decltype(std::declval<F>()(static_cast<quint8*>(0)));
-		static ImageDataUnit* createFromPages(AbstractFITSStorage::Page& begin, AbstractFITSStorage::Page end, const QString& bitpix, quint64 height, quint64 width);
+		static ImageDataUnit* createFromPages(AbstractFITSStorage::Page& begin, AbstractFITSStorage::Page end, const QString& bitpix, quint64 height, quint64 width, quint64 depth);
 
 		inline quint64 height() const { return height_; }
 		inline quint64 width()  const { return width_; }
+		inline quint64 depth()  const { return depth_; }
 		inline quint32 element_size() const { return element_size_; }
 		inline QSize size() const { return QSize(width_, height_); }
 	};
@@ -218,9 +220,9 @@ public:
 			visitor.visit(*this);
 		}
 	public:
-		DataUnit(T const* data, quint64 height, quint64 width):
-			ImageDataUnit(height, width, sizeof(T)),
-			data_(data), length_(height*width) {}
+		DataUnit(T const* data, quint64 height, quint64 width, quint64 depth):
+			ImageDataUnit(height, width, depth, sizeof(T)),
+			data_(data), length_(height*width*depth) {}
 		DataUnit(const DataUnit&) = default;
 		DataUnit(DataUnit&&) = default;
 		DataUnit& operator=(const DataUnit&) = default;
