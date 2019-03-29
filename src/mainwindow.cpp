@@ -168,8 +168,6 @@ MainWindow::MainWindow(const QString& fits_filename, QWidget *parent):
 	auto help_menu = menu_bar->addMenu(tr("&Help"));
 	help_menu->addAction(tr("&About"), this, SLOT(about()));
 	help_menu->addAction(tr("&Homepage"), this, SLOT(homepage()));
-	/* setMenuBar promises to take ownership */
-	setMenuBar(menu_bar.release());
 
 	std::unique_ptr<QDockWidget> levels_dock{new QDockWidget(tr("Levels"), this)};
 	levels_dock->setAllowedAreas(Qt::AllDockWidgetAreas);
@@ -183,6 +181,7 @@ MainWindow::MainWindow(const QString& fits_filename, QWidget *parent):
 			scrollZoomArea()->viewport(), SLOT(changeLevels(const std::pair<double, double>&))
 	);
 	levels_dock->setWidget(levels_widget.release());
+	view_menu->addAction(levels_dock->toggleViewAction());
 	addDockWidget(Qt::RightDockWidgetArea, levels_dock.release());
 
 	std::unique_ptr<QDockWidget> rotation_dock{new QDockWidget(tr("Rotation"), this)};
@@ -197,6 +196,7 @@ MainWindow::MainWindow(const QString& fits_filename, QWidget *parent):
 			scrollZoomArea()->viewport(), SLOT(setRotation(double))
 	);
 	rotation_dock->setWidget(rotation_widget.release());
+	view_menu->addAction(rotation_dock->toggleViewAction());
 	addDockWidget(Qt::RightDockWidgetArea, rotation_dock.release());
 
 	std::unique_ptr<QDockWidget> flip_dock{new QDockWidget(tr("Flipping"))};
@@ -219,6 +219,7 @@ MainWindow::MainWindow(const QString& fits_filename, QWidget *parent):
 			scrollZoomArea()->viewport(), SLOT(setVerticalFlip(bool))
 	);
 	flip_dock->setWidget(flip_widget.release());
+	view_menu->addAction(flip_dock->toggleViewAction());
 	addDockWidget(Qt::RightDockWidgetArea, flip_dock.release());
 
 	std::unique_ptr<QDockWidget> colormap_dock{new QDockWidget(tr("Color map"), this)};
@@ -229,7 +230,11 @@ MainWindow::MainWindow(const QString& fits_filename, QWidget *parent):
 			scrollZoomArea()->viewport(), SLOT(changeColorMap(int))
 	);
 	colormap_dock->setWidget(colormap_widget.release());
+	view_menu->addAction(colormap_dock->toggleViewAction());
 	addDockWidget(Qt::RightDockWidgetArea, colormap_dock.release());
+
+	/* setMenuBar promises to take ownership */
+	setMenuBar(menu_bar.release());
 
 	std::unique_ptr<QStatusBar> status_bar{new QStatusBar(this)};
 	std::unique_ptr<MousePositionWidget> mouse_position_widget{new MousePositionWidget(this)};
