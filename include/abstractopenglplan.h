@@ -137,6 +137,9 @@ public:
 	virtual QString vertexShaderSourceCode() const = 0;
 	virtual AbstractOpenGLTexture& imageTexture() = 0;
 	virtual const AbstractOpenGLTexture& imageTexture() const = 0;
+	inline const FITS::AbstractHeaderDataUnit& hdu() const {
+		return imageTexture().hdu();
+	};
 
 	bool initialize();
 	virtual void draw() {
