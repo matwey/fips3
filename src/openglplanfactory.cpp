@@ -8,21 +8,21 @@ OpenGLPlanFactory::OpenGLPlanFactory(const QOpenGLContext& opengl_context):
 
 AbstractOpenGLPlan* OpenGLPlanFactory::operator() (const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu) const {
 	if (hdu.data().depth() > 1)
-		return resolveOpenGLPlan<Uint8OpenGL33ArrayPlan>(features_, hdu);
+		return resolveOpenGLPlan<Uint8OpenGL33ArrayPlan, Uint8OpenGLArrayPlan>(features_, hdu);
 
 	return resolveOpenGLPlan<Uint8OpenGL33Plan, Uint8OpenGL30Plan, Uint8OpenGLPlan>(features_, hdu);
 }
 
 AbstractOpenGLPlan* OpenGLPlanFactory::operator() (const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu) const {
 	if (hdu.data().depth() > 1)
-		return resolveOpenGLPlan<Int16OpenGL33ArrayPlan>(features_, hdu);
+		return resolveOpenGLPlan<Int16OpenGL33ArrayPlan, Int16OpenGLArrayPlan>(features_, hdu);
 
 	return resolveOpenGLPlan<Int16OpenGL33Plan, Int16OpenGL30Plan, Int16OpenGLPlan>(features_, hdu);
 }
 
 AbstractOpenGLPlan* OpenGLPlanFactory::operator() (const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu) const {
 	if (hdu.data().depth() > 1)
-		return resolveOpenGLPlan<Int32OpenGL33ArrayPlan>(features_, hdu);
+		return resolveOpenGLPlan<Int32OpenGL33ArrayPlan, Int32OpenGLArrayPlan>(features_, hdu);
 
 	return resolveOpenGLPlan<Int32OpenGL33Plan, Int32OpenGL30Plan, Int32OpenGLPlan>(features_, hdu);
 }

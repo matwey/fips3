@@ -50,6 +50,14 @@ void Uint8OpenGLTexture::setData() {
 	AbstractOpenGLTexture::setData(QOpenGLTexture::Alpha, QOpenGLTexture::UInt8, hdu().data(), &pto);
 }
 
+Uint8OpenGLTextureArray::Uint8OpenGLTextureArray(const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu):
+	Uint8OpenGLTexture(hdu, QOpenGLTexture::Target2DArray) {
+}
+
+void Uint8OpenGLTextureArray::setSize() {
+	setSizeArray(*this, hdu().data());
+}
+
 Uint8OpenGL3Texture::Uint8OpenGL3Texture(const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu, QOpenGLTexture::Target target):
 	AbstractOpenGLTexture(target), hdu_(&hdu) {
 }
@@ -96,6 +104,14 @@ void Int16OpenGLTexture::setData() {
 	AbstractOpenGLTexture::setData(QOpenGLTexture::LuminanceAlpha, QOpenGLTexture::UInt8, hdu().data(), &pto);
 }
 
+Int16OpenGLTextureArray::Int16OpenGLTextureArray(const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu):
+	Int16OpenGLTexture(hdu, QOpenGLTexture::Target2DArray) {
+}
+
+void Int16OpenGLTextureArray::setSize() {
+	setSizeArray(*this, hdu().data());
+}
+
 Int16OpenGL3Texture::Int16OpenGL3Texture(const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu, QOpenGLTexture::Target target):
 	AbstractOpenGLTexture(target), hdu_(&hdu) {
 }
@@ -140,6 +156,14 @@ void Int32OpenGLTexture::setData() {
 	pto.setAlignment(Utils::row_align(hdu_->data().width() * 4));
 	pto.setSwapBytesEnabled(false);
 	AbstractOpenGLTexture::setData(QOpenGLTexture::RGBA, QOpenGLTexture::UInt8, hdu().data(), &pto);
+}
+
+Int32OpenGLTextureArray::Int32OpenGLTextureArray(const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu):
+	Int32OpenGLTexture(hdu, QOpenGLTexture::Target2DArray) {
+}
+
+void Int32OpenGLTextureArray::setSize() {
+	setSizeArray(*this, hdu().data());
 }
 
 Int32OpenGL3Texture::Int32OpenGL3Texture(const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu, QOpenGLTexture::Target target):

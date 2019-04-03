@@ -38,6 +38,15 @@ public:
 	virtual ~Uint8OpenGLTexture() override = default;
 };
 
+class Uint8OpenGLTextureArray:
+	public Uint8OpenGLTexture {
+protected:
+	virtual void setSize() override;
+public:
+	explicit Uint8OpenGLTextureArray(const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu);
+	virtual ~Uint8OpenGLTextureArray() override = default;
+};
+
 class Uint8OpenGL3Texture:
 	public AbstractOpenGLTexture {
 private:
@@ -81,6 +90,15 @@ public:
 	virtual ~Int16OpenGLTexture() override = default;
 };
 
+class Int16OpenGLTextureArray:
+	public Int16OpenGLTexture {
+protected:
+	virtual void setSize() override;
+public:
+	explicit Int16OpenGLTextureArray(const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu);
+	virtual ~Int16OpenGLTextureArray() override = default;
+};
+
 class Int16OpenGL3Texture:
 	public AbstractOpenGLTexture {
 private:
@@ -122,6 +140,15 @@ protected:
 public:
 	Int32OpenGLTexture(const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu, QOpenGLTexture::Target target = QOpenGLTexture::Target2D);
 	virtual ~Int32OpenGLTexture() override = default;
+};
+
+class Int32OpenGLTextureArray:
+	public Int32OpenGLTexture {
+protected:
+	virtual void setSize() override;
+public:
+	explicit Int32OpenGLTextureArray(const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu);
+	virtual ~Int32OpenGLTextureArray() override = default;
 };
 
 class Int32OpenGL3Texture:

@@ -31,6 +31,12 @@ struct OpenGL21BasedPlan {
 	}
 };
 
+struct OpenGL21BasedArrayPlan {
+	constexpr static bool satisfied(const OpenGLFeatures& features) {
+		return OpenGLRequiredFeatures{}.requireOpenGL21().requireEXT_texture_array().satisfied(features);
+	}
+};
+
 struct OpenGL30BasedPlan {
 	constexpr static bool satisfied(const OpenGLFeatures& features) {
 		return OpenGLRequiredFeatures{}.requireOpenGL30().satisfied(features);
@@ -57,6 +63,16 @@ class Uint8OpenGLPlan:
 public:
 	explicit Uint8OpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu);
 	virtual ~Uint8OpenGLPlan() override = default;
+
+	virtual QString fragmentShaderSourceCode() const override;
+};
+
+class Uint8OpenGLArrayPlan:
+	public AbstractOpenGL2Plan<Uint8OpenGLTextureArray>,
+	public detail::OpenGL21BasedArrayPlan {
+public:
+	explicit Uint8OpenGLArrayPlan(const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu);
+	virtual ~Uint8OpenGLArrayPlan() override = default;
 
 	virtual QString fragmentShaderSourceCode() const override;
 };
@@ -101,6 +117,16 @@ public:
 	virtual QString fragmentShaderSourceCode() const override;
 };
 
+class Int16OpenGLArrayPlan:
+	public AbstractOpenGL2Plan<Int16OpenGLTextureArray>,
+	public detail::OpenGL21BasedArrayPlan {
+public:
+	explicit Int16OpenGLArrayPlan(const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu);
+	virtual ~Int16OpenGLArrayPlan() override = default;
+
+	virtual QString fragmentShaderSourceCode() const override;
+};
+
 class Int16OpenGL30Plan:
 	public AbstractOpenGL2Plan<Int16OpenGL3Texture>,
 	public detail::OpenGL30BasedPlan {
@@ -137,6 +163,16 @@ class Int32OpenGLPlan:
 public:
 	explicit Int32OpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu);
 	virtual ~Int32OpenGLPlan() override = default;
+
+	virtual QString fragmentShaderSourceCode() const override;
+};
+
+class Int32OpenGLArrayPlan:
+	public AbstractOpenGL2Plan<Int32OpenGLTextureArray>,
+	public detail::OpenGL21BasedArrayPlan {
+public:
+	explicit Int32OpenGLArrayPlan(const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu);
+	virtual ~Int32OpenGLArrayPlan() override = default;
 
 	virtual QString fragmentShaderSourceCode() const override;
 };
