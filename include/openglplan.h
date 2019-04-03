@@ -87,6 +87,16 @@ public:
 	virtual QString fragmentShaderSourceCode() const override;
 };
 
+class Uint8OpenGL30ArrayPlan:
+	public AbstractOpenGL2Plan<Uint8OpenGL3TextureArray>,
+	public detail::OpenGL30BasedPlan {
+public:
+	explicit Uint8OpenGL30ArrayPlan(const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu);
+	virtual ~Uint8OpenGL30ArrayPlan() override = default;
+
+	virtual QString fragmentShaderSourceCode() const override;
+};
+
 class Uint8OpenGL33Plan:
 	public AbstractOpenGL33Plan<Uint8OpenGL3Texture>,
 	public detail::OpenGL33BasedPlan {
@@ -133,6 +143,16 @@ class Int16OpenGL30Plan:
 public:
 	explicit Int16OpenGL30Plan(const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu);
 	virtual ~Int16OpenGL30Plan() override = default;
+
+	virtual QString fragmentShaderSourceCode() const override;
+};
+
+class Int16OpenGL30ArrayPlan:
+	public AbstractOpenGL2Plan<Int16OpenGL3TextureArray>,
+	public detail::OpenGL30BasedPlan {
+public:
+	explicit Int16OpenGL30ArrayPlan(const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu);
+	virtual ~Int16OpenGL30ArrayPlan() override = default;
 
 	virtual QString fragmentShaderSourceCode() const override;
 };
@@ -187,6 +207,16 @@ public:
 	virtual QString fragmentShaderSourceCode() const override;
 };
 
+class Int32OpenGL30ArrayPlan:
+	public AbstractOpenGL2Plan<Int32OpenGL3TextureArray>,
+	public detail::OpenGL30BasedPlan {
+public:
+	explicit Int32OpenGL30ArrayPlan(const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu);
+	virtual ~Int32OpenGL30ArrayPlan() override = default;
+
+	virtual QString fragmentShaderSourceCode() const override;
+};
+
 class Int32OpenGL33Plan:
 	public AbstractOpenGL33Plan<Int32OpenGL3Texture>,
 	public detail::OpenGL33BasedPlan {
@@ -213,6 +243,16 @@ class Int64OpenGLPlan:
 public:
 	explicit Int64OpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<qint64>>& hdu);
 	virtual ~Int64OpenGLPlan() override = default;
+
+	virtual QString fragmentShaderSourceCode() const override;
+};
+
+class Int64OpenGLArrayPlan:
+	public AbstractOpenGL2Plan<Int64OpenGLTextureArray>,
+	public detail::OpenGL21BasedArrayPlan {
+public:
+	explicit Int64OpenGLArrayPlan(const FITS::HeaderDataUnit<FITS::DataUnit<qint64>>& hdu);
+	virtual ~Int64OpenGLArrayPlan() override = default;
 
 	virtual QString fragmentShaderSourceCode() const override;
 };
@@ -245,6 +285,18 @@ private:
 public:
 	explicit FloatOpenGL30Plan(const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu);
 	virtual ~FloatOpenGL30Plan() override = default;
+
+	virtual QString fragmentShaderSourceCode() const override;
+};
+
+class FloatOpenGL30ArrayPlan:
+	public AbstractOpenGL2Plan<FloatOpenGL3TextureArray>,
+	public detail::OpenGL30BasedPlan {
+private:
+	FloatOpenGL30ArrayPlan(const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu, const std::pair<double, double>& minmax);
+public:
+	explicit FloatOpenGL30ArrayPlan(const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu);
+	virtual ~FloatOpenGL30ArrayPlan() override = default;
 
 	virtual QString fragmentShaderSourceCode() const override;
 };
@@ -284,6 +336,18 @@ public:
 	constexpr static bool satisfied(const ::OpenGLFeatures& features) {
 		return OpenGLRequiredFeatures{}.requireOpenGL30().requireARB_gpu_shader_fp64().satisfied(features);
 	}
+
+	virtual QString fragmentShaderSourceCode() const override;
+};
+
+class DoubleOpenGL30ArrayPlan:
+	public AbstractOpenGL2Plan<DoubleOpenGL3TextureArray>,
+	public detail::OpenGL30BasedPlan {
+private:
+	DoubleOpenGL30ArrayPlan(const FITS::HeaderDataUnit<FITS::DataUnit<double>>& hdu, const std::pair<double, double>& minmax);
+public:
+	explicit DoubleOpenGL30ArrayPlan(const FITS::HeaderDataUnit<FITS::DataUnit<double>>& hdu);
+	virtual ~DoubleOpenGL30ArrayPlan() override = default;
 
 	virtual QString fragmentShaderSourceCode() const override;
 };
