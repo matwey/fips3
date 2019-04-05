@@ -1,4 +1,5 @@
 sudo: required
+dist: xenial
 language: cpp
 services:
 - docker
@@ -66,4 +67,4 @@ install:
 - cat Dockerfile.in | m4 -DBASE_IMAGE_TAG=${BASE_IMAGE_TAG} > Dockerfile
 - docker build . -t test
 script:
-- docker run test
+- docker run --security-opt seccomp=unconfined test
