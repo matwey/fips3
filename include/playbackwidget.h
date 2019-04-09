@@ -21,6 +21,7 @@
 
 #include <QAction>
 #include <QSlider>
+#include <QSpinBox>
 #include <QWidget>
 
 #include <playback.h>
@@ -28,23 +29,27 @@
 class PlaybackWidget: public QWidget {
 	Q_OBJECT
 private:
-	std::unique_ptr<QSlider> slider_;
+	std::unique_ptr<QSlider> frame_slider_;
+	std::unique_ptr<QSpinBox> frame_spinbox_;
+	std::unique_ptr<QSpinBox> interval_spinbox_;
 	std::unique_ptr<QAction> play_action_;
 public:
 	explicit PlaybackWidget(QWidget *parent = Q_NULLPTR);
 
-	inline int duration() const { return slider_->maximum(); }
-	inline int frame() const { return slider_->value(); }
+	inline int duration() const { return frame_slider_->maximum(); }
+	inline int frame() const { return frame_slider_->value(); }
 	inline bool playing() const { return play_action_->isChecked(); }
 	inline bool playable() const { return play_action_->isEnabled(); }
 
 public slots:
 	void setDuration(int duration);
 	void setFrame(int frame);
+	void setInterval(int interval_ms);
 	void setPlaying(bool playing);
 	void setPlayable(bool playable);
 signals:
 	void frameChanged(int);
+	void intervalChanged(int);
 	void playingChanged(bool);
 };
 

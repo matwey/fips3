@@ -279,6 +279,14 @@ MainWindow::MainWindow(const QString& fits_filename, QWidget *parent):
 		playback_widget.get(), SLOT(setDuration(int))
 	);
 	connect(
+		&playback_, SIGNAL(intervalChanged(int)),
+		playback_widget.get(), SLOT(setInterval(int))
+	);
+	connect(
+		playback_widget.get(), SIGNAL(intervalChanged(int)),
+		&playback_, SLOT(setInterval(int))
+	);
+	connect(
 		&playback_, SIGNAL(playableChanged(bool)),
 		playback_widget.get(), SLOT(setPlayable(bool))
 	);
@@ -290,6 +298,7 @@ MainWindow::MainWindow(const QString& fits_filename, QWidget *parent):
 		&playback_, SIGNAL(playableChanged(bool)),
 		playback_dock->toggleViewAction(), SLOT(setEnabled(bool))
 	);
+	playback_.setInterval(100); // ms
 	playback_dock->setWidget(playback_widget.release());
 	playback_dock->setVisible(false);
 	playback_dock->toggleViewAction()->setEnabled(false);
