@@ -32,7 +32,8 @@ PlaybackWidget::PlaybackWidget(QWidget* parent):
 	frame_slider_{new QSlider(Qt::Horizontal, this)},
 	frame_spinbox_{new QSpinBox(this)},
 	interval_spinbox_{new QSpinBox(this)},
-	play_action_{new QAction(style()->standardIcon(QStyle::SP_MediaPlay), tr("Play"), this)} {
+	play_action_{new QAction(style()->standardIcon(QStyle::SP_MediaPlay), tr("Play"), this)},
+	loop_action_{new QAction(style()->standardIcon(QStyle::SP_BrowserReload), tr("Loop"), this)} {
 
 	frame_slider_->setMinimum(0);
 	frame_slider_->setMaximum(0);
@@ -65,9 +66,21 @@ PlaybackWidget::PlaybackWidget(QWidget* parent):
 	std::unique_ptr<QToolButton> play_button{new QToolButton(this)};
 	play_button->setDefaultAction(play_action_.get());
 
+	loop_action_->setEnabled(true);
+	loop_action_->setCheckable(true);
+	loop_action_->setChecked(true);
+	connect(
+		loop_action_.get(), SIGNAL(toggled(bool)),
+		this, SIGNAL(loopChanged(bool))
+	);
+
+	std::unique_ptr<QToolButton> loop_button{new QToolButton(this)};
+	loop_button->setDefaultAction(loop_action_.get());
+
 	std::unique_ptr<QWidget> frame_widget{new QWidget(this)};
 	std::unique_ptr<QHBoxLayout> frame_layout{new QHBoxLayout(frame_widget.get())};
 	frame_layout->addWidget(play_button.release());
+	frame_layout->addWidget(loop_button.release());
 	frame_layout->addWidget(frame_slider_.get());
 	frame_layout->addWidget(frame_spinbox_.get());
 	frame_widget->setLayout(frame_layout.release());
@@ -101,6 +114,12 @@ void PlaybackWidget::setInterval(int interval_ms) {
 	if (interval_ms == interval_spinbox_->value()) return;
 
 	interval_spinbox_->setValue(interval_ms);
+}
+
+void PlaybackWidget::setLoop(bool loop) {
+	if (loop == loop_action_->isChecked()) return;
+
+	loop_action_->setChecked(loop);
 }
 
 void PlaybackWidget::setPlaying(bool playing) {

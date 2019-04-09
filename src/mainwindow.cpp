@@ -287,6 +287,14 @@ MainWindow::MainWindow(const QString& fits_filename, QWidget *parent):
 		&playback_, SLOT(setInterval(int))
 	);
 	connect(
+		&playback_, SIGNAL(loopChanged(bool)),
+		playback_widget.get(), SLOT(setLoop(bool))
+	);
+	connect(
+		playback_widget.get(), SIGNAL(loopChanged(bool)),
+		&playback_, SLOT(setLoop(bool))
+	);
+	connect(
 		&playback_, SIGNAL(playableChanged(bool)),
 		playback_widget.get(), SLOT(setPlayable(bool))
 	);

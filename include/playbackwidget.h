@@ -33,6 +33,7 @@ private:
 	std::unique_ptr<QSpinBox> frame_spinbox_;
 	std::unique_ptr<QSpinBox> interval_spinbox_;
 	std::unique_ptr<QAction> play_action_;
+	std::unique_ptr<QAction> loop_action_;
 public:
 	explicit PlaybackWidget(QWidget *parent = Q_NULLPTR);
 
@@ -45,11 +46,13 @@ public slots:
 	void setDuration(int duration);
 	void setFrame(int frame);
 	void setInterval(int interval_ms);
+	void setLoop(bool loop);
 	void setPlaying(bool playing);
 	void setPlayable(bool playable);
 signals:
 	void frameChanged(int);
 	void intervalChanged(int);
+	void loopChanged(bool);
 	void playingChanged(bool);
 };
 

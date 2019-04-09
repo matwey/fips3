@@ -36,6 +36,7 @@ Playback::Playback(QObject* parent):
 	QObject(parent),
 	frame_(0),
 	duration_(1),
+	loop_(true),
 	timer_(this) {
 }
 
@@ -79,8 +80,21 @@ void Playback::setInterval(int interval) {
 	emit intervalChanged(interval);
 }
 
+void Playback::setLoop(bool loop) {
+	if (loop == loop_) return;
+
+	loop_ = loop;
+	emit loopChanged(loop);
+}
+
 void Playback::advanceFrame() {
 	frame_ = (frame_ + 1) % duration_;
+
+	if (!loop() && frame_ == 0) {
+		timer_.stop();
+		emit playingChanged(false);
+	}
+
 	emit frameChanged(frame_);
 }
 

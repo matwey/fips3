@@ -43,6 +43,7 @@ public:
 
 	inline int frame()    const { return frame_; }
 	inline int duration() const { return duration_; }
+	inline bool loop() const { return loop_; }
 	inline int interval() const { return timer_.interval(); }
 	inline bool playing() const { return timer_.isActive(); }
 	inline bool playable() const { return duration_ > 1; }
@@ -54,6 +55,7 @@ public slots:
 	void setDuration(int frames);
 	void setFrame(int frame);
 	void setInterval(int interval);
+	void setLoop(bool loop);
 	void setPlaying(bool playing);
 	void advanceFrame();
 
@@ -61,12 +63,14 @@ signals:
 	void durationChanged(int duration);
 	void frameChanged(int frame);
 	void intervalChanged(int interval);
+	void loopChanged(bool loop);
 	void playingChanged(bool playing);
 	void playableChanged(bool playable);
 
 private:
 	int frame_;
 	int duration_;
+	bool loop_;
 	Timer timer_;
 };
 
