@@ -21,9 +21,8 @@ WcsData::WcsData(const FITS::HeaderUnit& unit) : matrix_{} {
 					m.at(1) = unit.header_as<float>("PC1_2") * c_delt.at(0);
 					m.at(2) = unit.header_as<float>("PC2_1") * c_delt.at(1);
 					m.at(3) = unit.header_as<float>("PC2_2") * c_delt.at(1);
-
 				}
-				else FITS::Exception("WCS data is not present or unsupported. Using identity transofmation.").raise();		
+				else FITS::Exception("WCS data is not present or unsupported. Using identity transformation.").raise();
 
 				matrix_ = QMatrix4x4
 				{  
@@ -37,7 +36,7 @@ WcsData::WcsData(const FITS::HeaderUnit& unit) : matrix_{} {
 		else qDebug() << "Number of axes is not present. Using identity transformation.";
 	}
 	catch (std::exception& e) {
-		qDebug() << "Error occured during processing WCS data. See details: " << e.what();
+		qDebug() << "Error occurred during processing WCS data. See details: " << e.what();
 	}
 }
 
