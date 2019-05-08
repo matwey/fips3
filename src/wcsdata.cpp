@@ -28,7 +28,7 @@ WcsData::WcsData(const FITS::HeaderUnit& unit) : matrix_{} {
 				{  
 					m.at(0), m.at(1), 0.f, unit.header_as<float>("CRVAL1") - (m.at(0) * ref_px.at(0) + m.at(1) * ref_px.at(1)),
                     m.at(2), m.at(3), 0.f, unit.header_as<float>("CRVAL2") - (m.at(2) * ref_px.at(0) + m.at(3) * ref_px.at(1)),
-					0.f, 0.f, 0.f, 0.f,
+					0.f, 0.f, 1.f, 0.f,
 					0.f, 0.f, 0.f, 1.f
 				};
 			}

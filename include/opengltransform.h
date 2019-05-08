@@ -30,6 +30,8 @@ protected:
 	float angle_;
 	QRectF viewrect_;
 	bool h_flip_, v_flip_;
+	QMatrix4x4 wcs_;
+	QSize image_size_;
 
 	virtual void updateTransform() const;
 public:
@@ -52,12 +54,17 @@ public:
 	void setHorizontalFlip(bool flip);
 	const bool& verticalFlip() const { return v_flip_; }
 	void setVerticalFlip(bool flip);
+
+	void setWcsMatrix(const QMatrix4x4& wcs);
+	const QMatrix4x4& wcsMatrix() const { return wcs_; }
+
+	const QSize& imageSize() const { return image_size_; }
+	void setImageSize(const QSize& image_size);
 };
 
 class WidgetToFitsOpenGLTransform:
 	public OpenGLTransform {
 private:
-	QSize image_size_;
 	qreal scale_;
 	QSize widget_size_;
 protected:
@@ -66,9 +73,6 @@ public:
 	explicit WidgetToFitsOpenGLTransform(QObject* parent = Q_NULLPTR);
 	WidgetToFitsOpenGLTransform(const QSize& image_size, qreal scale, const QSize& widget_size, const QRectF& viewrect, QObject* parent = Q_NULLPTR);
 	~WidgetToFitsOpenGLTransform() override;
-
-	const QSize& imageSize() const { return image_size_; }
-	void setImageSize(const QSize& image_size);
 
 	const qreal& scale() const { return scale_; }
 	void setScale(const qreal& scale);

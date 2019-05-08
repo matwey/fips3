@@ -144,8 +144,12 @@ void OpenGLWidget::initializeGLObjects() {
 	// If no exceptions were thrown then we can put new objects to object's member pointers
 	viewrect_.setBorder(plan_->plane().borderRect(rotation()));
 	widget_to_fits_.setScale(plan_->plane().scale());
+	opengl_transform_.setImageSize(image_size());
 	widget_to_fits_.setImageSize(image_size());
-	fits_to_wcs_.setWcsMatrix(WcsData(hdu_->header()).matrix());
+	const auto wcs = WcsData(hdu_->header()).matrix();
+	opengl_transform_.setWcsMatrix(wcs);
+	widget_to_fits_.setWcsMatrix(wcs);
+	fits_to_wcs_.setWcsMatrix(wcs);
 
 	emit planInitialized(*plan_);
 
@@ -235,7 +239,7 @@ Pixel OpenGLWidget::pixelFromWidgetCoordinate(const QPoint &widget_coord) {
 	}
 
 	const auto wcs_vector = fits_to_wcs_.transform(p);
-    qDebug() << wcs_vector.x() << " " << wcs_vector.y();
+	qDebug() << wcs_vector.x() << " " << wcs_vector.y();
 	const QPoint wcs_position(wcs_vector.x(), wcs_vector.y());
 	const auto value = hdu_->header().bscale() * hdu_->data().apply(HDUValueGetter{position}) + hdu_->header().bzero();
 	return Pixel(wcs_position, value);

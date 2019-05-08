@@ -16,6 +16,8 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <cmath>
+
 #include <opengltransform.h>
 
 OpenGLTransform::OpenGLTransform(QObject* parent):
@@ -23,9 +25,10 @@ OpenGLTransform::OpenGLTransform(QObject* parent):
 	expired_(true),
 	matrix_(), // QMatrix4x4() constructs an unity matrix
 	angle_(0),
+	viewrect_(-1, -1, 2, 2),
 	h_flip_(false),
 	v_flip_(false),
-	viewrect_(-1, -1, 2, 2)
+	wcs_()
 {}
 OpenGLTransform::OpenGLTransform(const QRectF& viewrect, QObject* parent):
 	OpenGLTransform(parent) {
@@ -43,6 +46,12 @@ void OpenGLTransform::updateTransform() const {
 	matrix_.ortho(QRectF{viewrect_.left(), -viewrect_.top(), viewrect_.width(), -viewrect_.height()});
 	matrix_.rotate(angle_, static_cast<float>(0), static_cast<float>(0), static_cast<float>(1));
 	matrix_.scale(h_flip_ ? -1 : 1, v_flip_ ? -1 : 1);
+
+	auto cwcs = QMatrix4x4(wcs_);
+	cwcs.setColumn(3, QVector4D(static_cast<float>(0), static_cast<float>(0), static_cast<float>(0), static_cast<float>(1)));
+	auto s = std::sqrt(std::abs(cwcs.determinant()));
+	cwcs.scale(1.0/s, 1.0/s, 1);
+	matrix_ *= cwcs;
 
 	expired_ = false;
 }
@@ -81,6 +90,19 @@ void OpenGLTransform::setVerticalFlip(bool flip) {
 	expired_ = true;
 }
 
+void OpenGLTransform::setWcsMatrix(const QMatrix4x4& wcs) {
+	if (wcs_ == wcs) return;
+
+	wcs_ = wcs;
+	expired_ = true;
+}
+
+void OpenGLTransform::setImageSize(const QSize& image_size) {
+	if (image_size_ == image_size) return;
+
+	image_size_ = image_size;
+	expired_ = true;
+}
 
 WidgetToFitsOpenGLTransform::WidgetToFitsOpenGLTransform(QObject* parent):
 	OpenGLTransform(parent) {}
@@ -98,6 +120,11 @@ WidgetToFitsOpenGLTransform::~WidgetToFitsOpenGLTransform() = default;
 void WidgetToFitsOpenGLTransform::updateTransform() const {
 	matrix_.setToIdentity();
 
+	auto cwcs = QMatrix4x4(wcs_);
+	cwcs.setColumn(3, QVector4D(static_cast<float>(0), static_cast<float>(0), static_cast<float>(0), static_cast<float>(1)));
+	auto s = std::sqrt(std::abs(cwcs.determinant()));
+	cwcs.scale(1.0/s, 1.0/s, 1);
+
 	/* texture (0,0, 1,1) to image */
 	matrix_.scale(image_size_.width(), image_size_.height());
 
@@ -105,6 +132,8 @@ void WidgetToFitsOpenGLTransform::updateTransform() const {
 	matrix_.translate(static_cast<float>(0.5), static_cast<float>(0.5));
 	matrix_.scale(static_cast<float>(0.5)/(scale_*image_size_.width()),
 		static_cast<float>(0.5)/(scale_*image_size_.height()));
+
+	matrix_ *= cwcs.inverted();
 
 	/* flip */
 	matrix_.scale(h_flip_ ? -1 : 1, v_flip_ ? -1 : 1);
@@ -122,14 +151,9 @@ void WidgetToFitsOpenGLTransform::updateTransform() const {
 	matrix_.translate(tr_x, tr_y);
 	matrix_.scale(static_cast<float>(2)/widget_width, static_cast<float>(2)/widget_height);
 
+	qDebug() << "w2f" << matrix_;
+
 	expired_ = false;
-}
-
-void WidgetToFitsOpenGLTransform::setImageSize(const QSize& image_size) {
-	if (image_size_ == image_size) return;
-
-	image_size_ = image_size;
-	expired_ = true;
 }
 
 void WidgetToFitsOpenGLTransform::setScale(const qreal& scale) {
