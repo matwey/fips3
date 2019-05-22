@@ -41,7 +41,7 @@ matrix:
           tags: true
           branch: master
       - provider: script
-        script: curl --upload-file ${RELEASE_DMG_FILE} https://transfer.sh/${RELEASE_DMG_FILE}
+        script: curl --upload-file ${RELEASE_DMG_FILE} https://transfer.sh/${RELEASE_DMG_FILE} || true
         skip_cleanup: true
         on:
           all_branches: true
