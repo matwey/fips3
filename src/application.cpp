@@ -22,6 +22,8 @@
 #include <QTimer>
 #include <QWindow>
 
+#include <algorithm>
+
 #include <application.h>
 #include <instance.h>
 
@@ -45,7 +47,12 @@ Application::Application(int &argc, char **argv):
 		}
 #endif // Q_OS_MAC
 	} else {
-		for (const auto& x: args) addInstance(x);
+		const auto failed = std::none_of(args.begin(), args.end(), [this](const QString& filename) {
+			return addInstance(filename);
+		});
+
+		if (failed)
+			::exit(1); /* exactly what parser.showHelp() does under the hood */
 	}
 
 }
