@@ -28,7 +28,12 @@
 #include <instance.h>
 
 Application::Application(int &argc, char **argv):
+#ifdef Q_OS_MAC
+	QApplication(argc, argv),
+	event_seen_(false) {
+#else
 	QApplication(argc, argv) {
+#endif // Q_OS_MAC
 
 	QCommandLineParser parser;
 	parser.addHelpOption();
@@ -39,7 +44,7 @@ Application::Application(int &argc, char **argv):
 
 	if (args.length() == 0) {
 #ifdef Q_OS_MAC
-		QTimer::singleShot(0, this, [this] () { if (root_.children().length() == 0) openFile(); });
+		QTimer::singleShot(0, this, [this] () { if (!event_seen_) openFile(); });
 #else
 		if (openFile() == 0) {
 			/* Remember that showHelp() exits applications */
@@ -84,6 +89,7 @@ std::size_t Application::openFile() {
 #ifdef Q_OS_MAC
 bool Application::event(QEvent *event) {
 	if (event->type() == QEvent::FileOpen) {
+		event_seen_ = true;
 		auto *openEvent = static_cast<QFileOpenEvent *>(event);
 		addInstance(openEvent->file());
 	}
