@@ -29,6 +29,9 @@ class Application:
 	Q_OBJECT
 private:
 	QObject root_;
+#ifdef Q_OS_MAC
+	bool event_seen_;
+#endif
 public:
 	Application(int &argc, char **argv);
 	virtual ~Application() override;
