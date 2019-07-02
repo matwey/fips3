@@ -30,6 +30,7 @@ protected:
 	constexpr static const quint64 mask_hasOpenGL30 = Q_UINT64_C(1) << 2;
 	constexpr static const quint64 mask_hasOpenGL33 = Q_UINT64_C(1) << 3;
 	constexpr static const quint64 mask_hasARB_gpu_shader_fp64 = Q_UINT64_C(1) << 16;
+	constexpr static const quint64 mask_hasEXT_texture_array = Q_UINT64_C(1) << 17;
 private:
 	bool checkHasOpenGLHelper(const QOpenGLContext& opengl_context, const int major, const int minor, const quint64 mask);
 
@@ -39,6 +40,7 @@ private:
 
 	bool checkHasExtension(const QOpenGLContext& opengl_context, const char* extension_name, const quint64 mask);
 	bool checkHasARB_gpu_shader_fp64(const QOpenGLContext& opengl_context);
+	bool checkHasEXT_texture_array(const QOpenGLContext& opengl_context);
 protected:
 	constexpr inline OpenGLFeatures(const quint64 bitmask = 0): bitmask_(bitmask) {}
 public:
@@ -85,6 +87,9 @@ public:
 	}
 	constexpr inline OpenGLRequiredFeatures requireARB_gpu_shader_fp64() const {
 		return OpenGLRequiredFeatures{bitmask_ | mask_hasARB_gpu_shader_fp64};
+	}
+	constexpr inline OpenGLRequiredFeatures requireEXT_texture_array() const {
+		return OpenGLRequiredFeatures{bitmask_ | mask_hasEXT_texture_array};
 	}
 };
 

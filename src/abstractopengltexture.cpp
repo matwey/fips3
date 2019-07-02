@@ -28,18 +28,24 @@ QException* AbstractOpenGLTexture::TextureCreateError::clone() const {
 	return new AbstractOpenGLTexture::TextureCreateError(*this);
 }
 
-AbstractOpenGLTexture::AbstractOpenGLTexture():
-	QOpenGLTexture(QOpenGLTexture::Target2D) {
+AbstractOpenGLTexture::AbstractOpenGLTexture(QOpenGLTexture::Target target):
+	QOpenGLTexture(target) {
 }
 
 AbstractOpenGLTexture::~AbstractOpenGLTexture() = default;
+
+void AbstractOpenGLTexture::setSize() {
+	const auto& im_du = hdu().data().imageDataUnit();
+
+	QOpenGLTexture::setSize(im_du->width(), im_du->height());
+}
 
 void AbstractOpenGLTexture::initialize() {
 	setMinificationFilter(QOpenGLTexture::Nearest);
 	setMagnificationFilter(QOpenGLTexture::Nearest);
 	setFormat();
 	throwIfGLError<TextureCreateError>();
-	setSize(hdu().data().imageDataUnit()->width(), hdu().data().imageDataUnit()->height());
+	setSize();
 	throwIfGLError<TextureCreateError>();
 	allocateStorage();
 	throwIfGLError<TextureCreateError>();

@@ -34,6 +34,7 @@
 #include <colormapwidget.h>
 #include <levelswidget.h>
 #include <mousepositionwidget.h>
+#include <playback.h>
 #include <scrollzoomarea.h>
 #include <utils/exception.h>
 
@@ -102,6 +103,7 @@ private:
 
 	std::unique_ptr<MainWindowState> state_;
 	std::unique_ptr<MouseMoveEventFilter> mouse_move_event_filter_;
+	Playback playback_;
 private:
 	void setState(MainWindowState* state);
 	void setState(std::unique_ptr<MainWindowState>&& state);
@@ -130,6 +132,8 @@ public slots:
 	void fitToWindow();
 	void about();
 	void homepage();
+private slots:
+	void planInitialized(const AbstractOpenGLPlan& plan);
 signals:
 	void closed(MainWindow& mainwindow);
 };

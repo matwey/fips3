@@ -128,7 +128,9 @@ protected:
 	virtual void resizeEvent(QResizeEvent* event) override;
 
 public:
-	inline QSize image_size() const { return hdu_->data().imageDataUnit()->size(); }
+	inline QSize       image_size()  const { return hdu_->data().imageDataUnit()->size(); }
+	inline std::size_t image_depth() const { return hdu_->data().imageDataUnit()->depth(); }
+
 	void setHDU(const FITS::AbstractHeaderDataUnit& hdu);
 	Pixel pixelFromWidgetCoordinate(const QPoint &widget_coord);
 
@@ -176,6 +178,15 @@ public slots:
 	void changeColorMap(int colormap_index);
 public:
 	const QString& planName() const;
+
+private:
+	int layer_;
+public:
+	inline int layer() const { return layer_; }
+public slots:
+	void setLayer(int layer);
+signals:
+	void layerChanged(int);
 };
 
 

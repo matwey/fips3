@@ -22,6 +22,7 @@ constexpr const quint64 OpenGLFeatures::mask_hasOpenGL21;
 constexpr const quint64 OpenGLFeatures::mask_hasOpenGL30;
 constexpr const quint64 OpenGLFeatures::mask_hasOpenGL33;
 constexpr const quint64 OpenGLFeatures::mask_hasARB_gpu_shader_fp64;
+constexpr const quint64 OpenGLFeatures::mask_hasEXT_texture_array;
 
 bool OpenGLFeatures::checkHasOpenGLHelper(const QOpenGLContext& opengl_context, const int major, const int minor, const quint64 mask) {
 	bool has = (opengl_context.format().majorVersion() > major
@@ -52,9 +53,14 @@ bool OpenGLFeatures::checkHasARB_gpu_shader_fp64(const QOpenGLContext& opengl_co
 	return checkHasExtension(opengl_context, "GL_ARB_gpu_shader_fp64", mask_hasARB_gpu_shader_fp64);
 }
 
+bool OpenGLFeatures::checkHasEXT_texture_array(const QOpenGLContext& opengl_context) {
+	return checkHasExtension(opengl_context, "GL_EXT_texture_array", mask_hasEXT_texture_array);
+}
+
 OpenGLFeatures::OpenGLFeatures(const QOpenGLContext& opengl_context): bitmask_(0) {
 	checkHasOpenGL33(opengl_context)
 		|| checkHasOpenGL30(opengl_context)
 		|| checkHasOpenGL21(opengl_context);
 	checkHasARB_gpu_shader_fp64(opengl_context);
+	checkHasEXT_texture_array(opengl_context);
 }
