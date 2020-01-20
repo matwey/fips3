@@ -27,20 +27,27 @@ protected:
 	mutable bool expired_;
 	mutable QMatrix4x4 matrix_;
 
+	QSize image_size_;
+	float scale_x_, scale_y_;
 	float angle_;
 	QRectF viewrect_;
 	bool h_flip_, v_flip_;
 
+	void updateTransformHelper(QMatrix4x4& init_matrix) const;
 	virtual void updateTransform() const;
 public:
 	explicit OpenGLTransform(QObject* parent = Q_NULLPTR);
-	OpenGLTransform(const QRectF& viewrect, QObject* parent = Q_NULLPTR);
+	OpenGLTransform(const QSize& image_size, const QRectF& viewrect, QObject* parent = Q_NULLPTR);
 	virtual ~OpenGLTransform() override;
 
 	inline void updateTransform() {
 		const_cast<const OpenGLTransform*>(this)->updateTransform();
 	};
 	const QMatrix4x4& transformMatrix() const override;
+	const QRectF border() const;
+
+	const QSize& imageSize() const { return image_size_; }
+	void setImageSize(const QSize& image_size);
 
 	const float& rotation() const { return angle_; }
 	void setRotation(float angle);
@@ -57,21 +64,13 @@ public:
 class WidgetToFitsOpenGLTransform:
 	public OpenGLTransform {
 private:
-	QSize image_size_;
-	qreal scale_;
 	QSize widget_size_;
 protected:
 	void updateTransform() const override;
 public:
 	explicit WidgetToFitsOpenGLTransform(QObject* parent = Q_NULLPTR);
-	WidgetToFitsOpenGLTransform(const QSize& image_size, qreal scale, const QSize& widget_size, const QRectF& viewrect, QObject* parent = Q_NULLPTR);
+	WidgetToFitsOpenGLTransform(const QSize& image_size, const QSize& widget_size, const QRectF& viewrect, QObject* parent = Q_NULLPTR);
 	~WidgetToFitsOpenGLTransform() override;
-
-	const QSize& imageSize() const { return image_size_; }
-	void setImageSize(const QSize& image_size);
-
-	const qreal& scale() const { return scale_; }
-	void setScale(const qreal& scale);
 
 	const QSize& widgetSize() const { return widget_size_; }
 	void setWidgetSize(const QSize& widget_size);

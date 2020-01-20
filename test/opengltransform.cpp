@@ -1,6 +1,5 @@
 #include <QtTest/QtTest>
 
-#include <openglplane.h>
 #include <opengltransform.h>
 
 class TestWidgetToFitsOpenGLTransform: public QObject
@@ -20,8 +19,7 @@ void TestWidgetToFitsOpenGLTransform::test_1x1() {
 	const QSize widget_size{3, 3};
 	const QRectF view_rect{-1, -1, 2, 2};
 
-	OpenGLPlane p(image_size);
-	WidgetToFitsOpenGLTransform t(image_size, p.scale(), widget_size, view_rect);
+	WidgetToFitsOpenGLTransform t(image_size, widget_size, view_rect);
 
 	{
 		auto f = t.transform(0, 0);
@@ -55,8 +53,7 @@ void TestWidgetToFitsOpenGLTransform::test_1x1a() {
 	const QSize widget_size{6, 3};
 	const QRectF view_rect{-1, -0.5, 2, 1};
 
-	OpenGLPlane p(image_size);
-	WidgetToFitsOpenGLTransform t(image_size, p.scale(), widget_size, view_rect);
+	WidgetToFitsOpenGLTransform t(image_size, widget_size, view_rect);
 
 	{
 		auto f = t.transform(0, 0);
@@ -95,8 +92,7 @@ void TestWidgetToFitsOpenGLTransform::test_1x1_rot90() {
 	const QSize widget_size{3, 3};
 	const QRectF view_rect{-1, -1, 2, 2};
 
-	OpenGLPlane p(image_size);
-	WidgetToFitsOpenGLTransform t(image_size, p.scale(), widget_size, view_rect);
+	WidgetToFitsOpenGLTransform t(image_size, widget_size, view_rect);
 	t.setRotation(90);
 
 	{
@@ -131,8 +127,7 @@ void TestWidgetToFitsOpenGLTransform::test_1x1_vr2() {
 	const QSize widget_size{2, 2};
 	const QRectF view_rect{-1, -1, 1, 1};
 
-	OpenGLPlane p(image_size);
-	WidgetToFitsOpenGLTransform t(image_size, p.scale(), widget_size, view_rect);
+	WidgetToFitsOpenGLTransform t(image_size, widget_size, view_rect);
 
 	{
 		auto f = t.transform(0, 0);
@@ -161,8 +156,7 @@ void TestWidgetToFitsOpenGLTransform::test_1x1_vr2a() {
 	const QSize widget_size{4, 2};
 	const QRectF view_rect{-1, -0.5, 1, 0.5};
 
-	OpenGLPlane p(image_size);
-	WidgetToFitsOpenGLTransform t(image_size, p.scale(), widget_size, view_rect);
+	WidgetToFitsOpenGLTransform t(image_size, widget_size, view_rect);
 
 	{
 		auto f = t.transform(0, 0);
@@ -196,8 +190,7 @@ void TestWidgetToFitsOpenGLTransform::test_1x2() {
 	const QSize widget_size{6, 6};
 	const QRectF view_rect{-1, -1, 2, 2};
 
-	OpenGLPlane p(image_size);
-	WidgetToFitsOpenGLTransform t(image_size, p.scale(), widget_size, view_rect);
+	WidgetToFitsOpenGLTransform t(image_size, widget_size, view_rect);
 
 	{
 		auto f = t.transform(0, 0);

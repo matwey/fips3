@@ -146,9 +146,9 @@ void OpenGLWidget::initializeGLObjects() {
 
 	plan_ = std::move(new_plan);
 	// If no exceptions were thrown then we can put new objects to object's member pointers
-	viewrect_.setBorder(plan_->plane().borderRect(rotation()));
-	widget_to_fits_.setScale(plan_->plane().scale());
+	opengl_transform_.setImageSize(image_size());
 	widget_to_fits_.setImageSize(image_size());
+	viewrect_.setBorder(opengl_transform_.border());
 
 	emit planInitialized(*plan_);
 
@@ -235,7 +235,7 @@ QSize OpenGLWidget::sizeHint() const {
 	return image_size();
 }
 
-Pixel OpenGLWidget::pixelFromWidgetCoordinate(const QPoint &widget_coord) {
+Pixel OpenGLWidget::pixelFromWidgetCoordinate(const QPoint& widget_coord) {
 	const auto p = widget_to_fits_.transform(widget_coord.x(), widget_coord.y());
 	const QPoint position(p.x(), p.y());
 
@@ -262,10 +262,10 @@ void OpenGLWidget::setRotation(double angle) {
 	auto new_view = viewrect_.view();
 	new_view.moveCenter(new_view_center);
 	viewrect_.setView(new_view);
-	viewrect_.setBorder(plan_->plane().borderRect(angle));
 
 	opengl_transform_.setRotation(angle);
 	widget_to_fits_.setRotation(angle);
+	viewrect_.setBorder(opengl_transform_.border());
 
 	emit rotationChanged(rotation());
 }
