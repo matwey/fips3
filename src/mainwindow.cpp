@@ -134,19 +134,19 @@ MainWindow::MainWindow(const QString& fits_filename, QWidget *parent):
 	resize(state_->fits().first_hdu().data().imageDataUnit()->size().boundedTo(maximum_initial_window_size));
 
 	// Create scroll area and put there open_gl_widget
-	std::unique_ptr<ScrollZoomArea> scroll_zoom_area{new ScrollZoomArea(this, state_->fits().first_hdu())};
+	std::unique_ptr<ScrollArea> scroll_area{new ScrollArea(this, state_->fits().first_hdu())};
 	/* setCentralWidget promises to take ownership */
-	setCentralWidget(scroll_zoom_area.release());
+	setCentralWidget(scroll_area.release());
 	connect(
-		scrollZoomArea()->viewport(), SIGNAL(planInitialized(const AbstractOpenGLPlan&)),
+		scrollArea()->viewport(), SIGNAL(planInitialized(const AbstractOpenGLPlan&)),
 		this, SLOT(planInitialized(const AbstractOpenGLPlan&))
 	);
 	connect(
 		&playback_, SIGNAL(frameChanged(int)),
-		scrollZoomArea()->viewport(), SLOT(setLayer(int))
+		scrollArea()->viewport(), SLOT(setLayer(int))
 	);
 	connect(
-		scrollZoomArea()->viewport(), SIGNAL(layerChanged(int)),
+		scrollArea()->viewport(), SIGNAL(layerChanged(int)),
 		&playback_, SLOT(setFrame(int))
 	);
 
@@ -187,12 +187,12 @@ MainWindow::MainWindow(const QString& fits_filename, QWidget *parent):
 	levels_dock->setAllowedAreas(Qt::AllDockWidgetAreas);
 	std::unique_ptr<LevelsWidget> levels_widget{new LevelsWidget(levels_dock.get())};
 	connect(
-		scrollZoomArea()->viewport(), SIGNAL(planInitialized(const AbstractOpenGLPlan&)),
+		scrollArea()->viewport(), SIGNAL(planInitialized(const AbstractOpenGLPlan&)),
 		levels_widget.get(), SLOT(notifyPlanInitialized(const AbstractOpenGLPlan&))
 	);
 	connect(
 		levels_widget.get(), SIGNAL(valuesChanged(const std::pair<double, double>&)),
-		scrollZoomArea()->viewport(), SLOT(changeLevels(const std::pair<double, double>&))
+		scrollArea()->viewport(), SLOT(changeLevels(const std::pair<double, double>&))
 	);
 	levels_dock->setWidget(levels_widget.release());
 	view_menu->addAction(levels_dock->toggleViewAction());
@@ -202,12 +202,12 @@ MainWindow::MainWindow(const QString& fits_filename, QWidget *parent):
 	rotation_dock->setAllowedAreas(Qt::AllDockWidgetAreas);
 	std::unique_ptr<RotationWidget> rotation_widget{new RotationWidget(this)};
 	connect(
-			scrollZoomArea()->viewport(), SIGNAL(rotationChanged(double)),
+			scrollArea()->viewport(), SIGNAL(rotationChanged(double)),
 			rotation_widget->spinbox(), SLOT(setValue(double))
 	);
 	connect(
 			rotation_widget->spinbox(), SIGNAL(valueChanged(double)),
-			scrollZoomArea()->viewport(), SLOT(setRotation(double))
+			scrollArea()->viewport(), SLOT(setRotation(double))
 	);
 	rotation_dock->setWidget(rotation_widget.release());
 	view_menu->addAction(rotation_dock->toggleViewAction());
@@ -217,20 +217,20 @@ MainWindow::MainWindow(const QString& fits_filename, QWidget *parent):
 	flip_dock->setAllowedAreas(Qt::AllDockWidgetAreas);
 	std::unique_ptr<FlipWidget> flip_widget{new FlipWidget(this)};
 	connect(
-			scrollZoomArea()->viewport(), SIGNAL(horizontalFlipChanged(bool)),
+			scrollArea()->viewport(), SIGNAL(horizontalFlipChanged(bool)),
 			flip_widget->horizontalFlipCheckBox(), SLOT(setChecked(bool))
 	);
 	connect(
-			scrollZoomArea()->viewport(), SIGNAL(verticalFlipChanged(bool)),
+			scrollArea()->viewport(), SIGNAL(verticalFlipChanged(bool)),
 			flip_widget->verticalFlipCheckBox(), SLOT(setChecked(bool))
 	);
 	connect(
 			flip_widget->horizontalFlipCheckBox(), SIGNAL(clicked(bool)),
-			scrollZoomArea()->viewport(), SLOT(setHorizontalFlip(bool))
+			scrollArea()->viewport(), SLOT(setHorizontalFlip(bool))
 	);
 	connect(
 			flip_widget->verticalFlipCheckBox(), SIGNAL(clicked(bool)),
-			scrollZoomArea()->viewport(), SLOT(setVerticalFlip(bool))
+			scrollArea()->viewport(), SLOT(setVerticalFlip(bool))
 	);
 	flip_dock->setWidget(flip_widget.release());
 	view_menu->addAction(flip_dock->toggleViewAction());
@@ -238,10 +238,10 @@ MainWindow::MainWindow(const QString& fits_filename, QWidget *parent):
 
 	std::unique_ptr<QDockWidget> colormap_dock{new QDockWidget(tr("Color map"), this)};
 	colormap_dock->setAllowedAreas(Qt::AllDockWidgetAreas);
-	std::unique_ptr<ColorMapWidget> colormap_widget{new ColorMapWidget(colormap_dock.get(), *scrollZoomArea()->viewport())};
+	std::unique_ptr<ColorMapWidget> colormap_widget{new ColorMapWidget(colormap_dock.get(), *scrollArea()->viewport())};
 	connect(
 			colormap_widget->buttonGroup(), SIGNAL(buttonClicked(int)),
-			scrollZoomArea()->viewport(), SLOT(changeColorMap(int))
+			scrollArea()->viewport(), SLOT(changeColorMap(int))
 	);
 	colormap_dock->setWidget(colormap_widget.release());
 	view_menu->addAction(colormap_dock->toggleViewAction());
@@ -250,7 +250,7 @@ MainWindow::MainWindow(const QString& fits_filename, QWidget *parent):
 	std::unique_ptr<QStatusBar> status_bar{new QStatusBar(this)};
 	std::unique_ptr<MousePositionWidget> mouse_position_widget{new MousePositionWidget(this)};
 	mouse_move_event_filter_.reset(new MouseMoveEventFilter(mouse_position_widget.get(), this));
-	scrollZoomArea()->viewport()->installEventFilter(mouse_move_event_filter_.get());
+	scrollArea()->viewport()->installEventFilter(mouse_move_event_filter_.get());
 	status_bar->addWidget(mouse_position_widget.release());
 	setStatusBar(status_bar.release());
 	setWindowTitle(state_->filename());
@@ -333,7 +333,7 @@ void MainWindow::setState(std::unique_ptr<MainWindowState>&& new_state) {
 	if (new_state.get() == state_.get())
 		return;
 
-	scrollZoomArea()->viewport()->setHDU(new_state->fits().first_hdu());
+	scrollArea()->viewport()->setHDU(new_state->fits().first_hdu());
 	setWindowTitle(new_state->filename());
 
 	state_ = std::move(new_state);
@@ -399,15 +399,15 @@ void MainWindow::setAutoRefresh(bool autorefresh) {
 }
 
 void MainWindow::zoomIn() {
-	scrollZoomArea()->zoomViewport(zoomIn_factor_);
+	scrollArea()->viewport()->zoom(zoomIn_factor_);
 }
 
 void MainWindow::zoomOut() {
-	scrollZoomArea()->zoomViewport(zoomOut_factor_);
+	scrollArea()->viewport()->zoom(zoomOut_factor_);
 }
 
 void MainWindow::fitToWindow() {
-	scrollZoomArea()->fitToViewport();
+	scrollArea()->fitToViewport();
 }
 
 void MainWindow::closeEvent(QCloseEvent* event) {
@@ -450,7 +450,7 @@ void MainWindow::about() {
 #endif
 			tr("<b>Qt version:</b> Runtime ") + qVersion() +
 			tr(", Compile ") + QT_VERSION_STR +
-			tr("<br/><b>Plan:</b> ") + scrollZoomArea()->viewport()->planName() +
+			tr("<br/><b>Plan:</b> ") + scrollArea()->viewport()->planName() +
 			tr("<br/>Copyright &copy; 2017 Matwey&nbsp;Kornilov, Konstantin&nbsp;Malanchev<br/>") +
 			tr("<a href=\"") + homePageURL() + tr("\">") + QString(homePageURL()) + tr("</a>")
 	);

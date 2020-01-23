@@ -16,21 +16,19 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _SCROLLZOOMAREA_H
-#define _SCROLLZOOMAREA_H
+#ifndef _SCROLLAREA_H
+#define _SCROLLAREA_H
 
 #include <QAbstractScrollArea>
 
 #include <fits.h>
 #include <openglwidget.h>
 
-class ScrollZoomArea: public QAbstractScrollArea {
+class ScrollArea: public QAbstractScrollArea {
 	Q_OBJECT
 public:
-	ScrollZoomArea(QWidget *parent, const FITS::AbstractHeaderDataUnit& hdu);
+	ScrollArea(QWidget *parent, const FITS::AbstractHeaderDataUnit& hdu);
 
-	void zoomViewport(double zoom_factor);
-	void zoomViewport(double zoom_factor, const QPoint& fixed_point);
 	void fitToViewport();
 	inline OpenGLWidget* viewport() const { return static_cast<OpenGLWidget*>(QAbstractScrollArea::viewport()); }
 private slots:
@@ -38,10 +36,9 @@ private slots:
 	inline void translateScrollRectY(int y) { translateScrollRect(viewport()->viewrect().scroll().left(), y); }
 	void updateBars();
 protected:
-	virtual void wheelEvent(QWheelEvent* event) override;
 	virtual bool viewportEvent(QEvent* event) override;
 private:
 	void translateScrollRect(int x, int y);
 };
 
-#endif //_SCROLLZOOMAREA_H
+#endif //_SCROLLAREA_H

@@ -176,6 +176,14 @@ void OpenGLWidget::resizeEvent(QResizeEvent* event) {
 	widget_to_fits_.setWidgetSize(new_widget_size);
 }
 
+void OpenGLWidget::wheelEvent(QWheelEvent* event) {
+	/* One wheel tick is 120 eighths of degree */
+	const double log_factor_per_eighth = 0.05 / 120;
+	const auto zoom_factor = std::exp(log_factor_per_eighth * event->delta());
+
+	zoom(zoom_factor, event->pos());
+}
+
 void OpenGLWidget::paintGL() {
 	glClear(GL_COLOR_BUFFER_BIT);
 
@@ -246,6 +254,24 @@ Pixel OpenGLWidget::pixelFromWidgetCoordinate(const QPoint& widget_coord) {
 
 	const auto value = hdu_->header().bscale() * hdu_->data().apply(HDUValueGetter{position, layer()}) + hdu_->header().bzero();
 	return Pixel(position, value);
+}
+
+void OpenGLWidget::zoom(double zoom_factor) {
+	zoom(zoom_factor, rect().center());
+}
+
+void OpenGLWidget::zoom(double zoom_factor, const QPoint& fixed_point) {
+	const QPointF fixed_point4{
+		static_cast<double>(fixed_point.x()) / (width() - 1),
+		static_cast<double>(fixed_point.y()) / (height() - 1)};
+
+	const auto old_view_rect = viewrect().view();
+	const auto new_size = old_view_rect.size() / zoom_factor;
+	const QPointF new_top_left{
+		old_view_rect.topLeft().x() + fixed_point4.x() * (old_view_rect.width() - new_size.width()),
+		old_view_rect.topLeft().y() + fixed_point4.y() * (old_view_rect.height() - new_size.height())};
+
+	viewrect().setView(QRectF{new_top_left, new_size});
 }
 
 void OpenGLWidget::viewChanged(const QRectF& view_rect) {

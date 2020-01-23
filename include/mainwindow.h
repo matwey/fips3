@@ -35,7 +35,7 @@
 #include <levelswidget.h>
 #include <mousepositionwidget.h>
 #include <playback.h>
-#include <scrollzoomarea.h>
+#include <scrollarea.h>
 #include <utils/exception.h>
 
 class MouseMoveEventFilter: public QObject {
@@ -118,8 +118,8 @@ protected:
 public:
 	MainWindow(const QString& fits_filename, QWidget *parent = Q_NULLPTR);
 
-	inline ScrollZoomArea* scrollZoomArea() const {
-		return static_cast<ScrollZoomArea*>(centralWidget());
+	inline ScrollArea* scrollArea() const {
+		return static_cast<ScrollArea*>(centralWidget());
 	}
 	inline const char* homePageURL() const { return "http://fips.space"; }
 public slots:

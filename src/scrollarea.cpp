@@ -20,9 +20,9 @@
 #include <QScrollBar>
 #include <QMessageBox>
 
-#include <scrollzoomarea.h>
+#include <scrollarea.h>
 
-ScrollZoomArea::ScrollZoomArea(QWidget *parent, const FITS::AbstractHeaderDataUnit& hdu):
+ScrollArea::ScrollArea(QWidget *parent, const FITS::AbstractHeaderDataUnit& hdu):
 	QAbstractScrollArea(parent) {
 
 	std::unique_ptr<OpenGLWidget> open_gl_widget{new OpenGLWidget(this, hdu)};
@@ -34,25 +34,7 @@ ScrollZoomArea::ScrollZoomArea(QWidget *parent, const FITS::AbstractHeaderDataUn
 	connect(&viewport()->viewrect(), SIGNAL(scrollChanged(const QRect&)), this, SLOT(updateBars()));
 }
 
-void ScrollZoomArea::zoomViewport(double zoom_factor) {
-	zoomViewport(zoom_factor, viewport()->rect().center());
-}
-
-void ScrollZoomArea::zoomViewport(double zoom_factor, const QPoint& fixed_point) {
-	const QPointF fixed_point4{
-		static_cast<double>(fixed_point.x()) / (viewport()->width() - 1),
-		static_cast<double>(fixed_point.y()) / (viewport()->height() - 1)};
-	const auto old_view_rect = viewport()->viewrect().view();
-	const auto new_size = old_view_rect.size() / zoom_factor;
-	const QPointF new_top_left{
-		old_view_rect.topLeft().x() +
-			fixed_point4.x() * (old_view_rect.width() - new_size.width()),
-		old_view_rect.topLeft().y() +
-			fixed_point4.y() * (old_view_rect.height() - new_size.height())};
-	viewport()->viewrect().setView(QRectF{new_top_left, new_size});
-}
-
-void ScrollZoomArea::fitToViewport() {
+void ScrollArea::fitToViewport() {
 	// Hide scroll bars while do fit
 	const auto h_policy = horizontalScrollBarPolicy();
 	const auto v_policy = verticalScrollBarPolicy();
@@ -63,13 +45,13 @@ void ScrollZoomArea::fitToViewport() {
 	setVerticalScrollBarPolicy  (v_policy);
 }
 
-void ScrollZoomArea::translateScrollRect(int x, int y) {
+void ScrollArea::translateScrollRect(int x, int y) {
 	QRect new_scroll_rect(viewport()->viewrect().scroll());
 	new_scroll_rect.moveTopLeft({x, y});
 	viewport()->viewrect().setScroll(new_scroll_rect);
 }
 
-void ScrollZoomArea::updateBars() {
+void ScrollArea::updateBars() {
 	const auto scroll_rect  = viewport()->viewrect().scroll();
 	const auto scroll_range = viewport()->viewrect().scrollRange();
 	horizontalScrollBar()->setPageStep(scroll_rect.width());
@@ -80,18 +62,12 @@ void ScrollZoomArea::updateBars() {
 	verticalScrollBar()  ->setValue(scroll_rect.top());
 }
 
-void ScrollZoomArea::wheelEvent(QWheelEvent* event) {
-	/* One wheel tick is 120 eighths of degree */
-	const double factor_per_eighth = 1.0 + 0.05 / 120;
-
-	zoomViewport(std::pow(factor_per_eighth, event->delta()), event->pos());
-}
-
-bool ScrollZoomArea::viewportEvent(QEvent* event) {
+bool ScrollArea::viewportEvent(QEvent* event) {
 	switch (event->type()) {
-	/* The following two guys are the special beasts. */
-	case QEvent::Resize:
+	/* The following three guys are the special beasts. */
 	case QEvent::Paint:
+	case QEvent::Resize:
+	case QEvent::Wheel:
 		return false;
 	default:
 		return QAbstractScrollArea::viewportEvent(event);
