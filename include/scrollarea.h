@@ -31,14 +31,18 @@ public:
 
 	void fitToViewport();
 	inline OpenGLWidget* viewport() const { return static_cast<OpenGLWidget*>(QAbstractScrollArea::viewport()); }
-private slots:
-	inline void translateScrollRectX(int x) { translateScrollRect(x, viewport()->viewrect().scroll().top());  }
-	inline void translateScrollRectY(int y) { translateScrollRect(viewport()->viewrect().scroll().left(), y); }
-	void updateBars();
+	QPoint virtualPos() const;
 protected:
+	virtual void scrollContentsBy(int dx, int dy) override;
 	virtual bool viewportEvent(QEvent* event) override;
-private:
-	void translateScrollRect(int x, int y);
+	void viewportResizeEvent(QResizeEvent* event);
+private slots:
+	void setVirtualPos(const QPoint& vpos);
+	void updateScrollBars();
+	void updateScrollBar(QScrollBar* bar, int phys, int virt);
+	void updateViewportPosition() const;
+	void updateViewportHorizontalPosition(const QPoint& vpos) const;
+	void updateViewportVerticalPosition(const QPoint& vpos) const;
 };
 
 #endif //_SCROLLAREA_H

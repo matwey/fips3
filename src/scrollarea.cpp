@@ -29,9 +29,8 @@ ScrollArea::ScrollArea(QWidget *parent, const FITS::AbstractHeaderDataUnit& hdu)
 	/* setViewport promises to take ownership */
 	setViewport(open_gl_widget.release());
 
-	connect(horizontalScrollBar(), SIGNAL(valueChanged(int)), this, SLOT(translateScrollRectX(int)));
-	connect(verticalScrollBar(),   SIGNAL(valueChanged(int)), this, SLOT(translateScrollRectY(int)));
-	connect(&viewport()->viewrect(), SIGNAL(scrollChanged(const QRect&)), this, SLOT(updateBars()));
+	connect(&viewport()->viewrect(), SIGNAL(virtualSizeChanged(const QSize&)), this, SLOT(updateScrollBars()));
+	connect(&viewport()->viewrect(), SIGNAL(virtualPosChanged(const QPoint&)), this, SLOT(setVirtualPos(const QPoint&)));
 }
 
 void ScrollArea::fitToViewport() {
@@ -45,31 +44,92 @@ void ScrollArea::fitToViewport() {
 	setVerticalScrollBarPolicy  (v_policy);
 }
 
-void ScrollArea::translateScrollRect(int x, int y) {
-	QRect new_scroll_rect(viewport()->viewrect().scroll());
-	new_scroll_rect.moveTopLeft({x, y});
-	viewport()->viewrect().setScroll(new_scroll_rect);
+QPoint ScrollArea::virtualPos() const {
+	const auto vsize = viewport()->viewrect().virtualSize();
+	const auto psize = viewport()->size();
+	const auto pw = psize.width();
+	const auto ph = psize.height();
+	const auto vw = vsize.width();
+	const auto vh = vsize.height();
+	const auto vx = -horizontalScrollBar()->value();
+	const auto vy = -verticalScrollBar()->value();
+	const auto ax = (pw - vw) / 2;
+	const auto ay = (ph - vh) / 2;
+
+	return QPoint{pw > vw ? ax : vx, ph > vh ? ay : vy};
 }
 
-void ScrollArea::updateBars() {
-	const auto scroll_rect  = viewport()->viewrect().scroll();
-	const auto scroll_range = viewport()->viewrect().scrollRange();
-	horizontalScrollBar()->setPageStep(scroll_rect.width());
-	verticalScrollBar()  ->setPageStep(scroll_rect.height());
-	horizontalScrollBar()->setRange(0, scroll_range - scroll_rect.width());
-	verticalScrollBar()  ->setRange(0, scroll_range - scroll_rect.height());
-	horizontalScrollBar()->setValue(scroll_rect.left());
-	verticalScrollBar()  ->setValue(scroll_rect.top());
+void ScrollArea::scrollContentsBy(int dx, int dy) {
+	const auto vpos = virtualPos();
+
+	if (dx) {
+		updateViewportHorizontalPosition(vpos);
+	}
+
+	if (dy) {
+		updateViewportVerticalPosition(vpos);
+	}
+}
+
+void ScrollArea::viewportResizeEvent(QResizeEvent* event) {
+	const auto& new_viewport_size = event->size();
+	const auto& old_viewport_size = event->oldSize();
+	const QPoint delta_vpos{
+		(new_viewport_size.width() - old_viewport_size.width()) / 2,
+		(new_viewport_size.height() - old_viewport_size.height()) / 2};
+	const auto new_vpos = virtualPos() + delta_vpos;
+
+	updateScrollBars();
+	setVirtualPos(new_vpos);
 }
 
 bool ScrollArea::viewportEvent(QEvent* event) {
 	switch (event->type()) {
 	/* The following three guys are the special beasts. */
-	case QEvent::Paint:
 	case QEvent::Resize:
+		viewportResizeEvent(static_cast<QResizeEvent*>(event));
+		return false;
+	case QEvent::Paint:
 	case QEvent::Wheel:
 		return false;
 	default:
 		return QAbstractScrollArea::viewportEvent(event);
 	}
+}
+
+void ScrollArea::setVirtualPos(const QPoint& vpos) {
+	horizontalScrollBar()->setValue(-vpos.x());
+	verticalScrollBar()->setValue(-vpos.y());
+	updateViewportPosition();
+}
+
+void ScrollArea::updateScrollBars() {
+	const auto vsize = viewport()->viewrect().virtualSize();
+	const auto psize = viewport()->size();
+
+	updateScrollBar(horizontalScrollBar(), psize.width(), vsize.width());
+	updateScrollBar(verticalScrollBar(), psize.height(), vsize.height());
+	updateViewportPosition();
+}
+
+void ScrollArea::updateScrollBar(QScrollBar* bar, int phys, int virt) {
+	bar->setPageStep(phys);
+	bar->setRange(0, virt - phys);
+}
+
+void ScrollArea::updateViewportPosition() const {
+	const auto vpos = virtualPos();
+
+	updateViewportHorizontalPosition(vpos);
+	updateViewportVerticalPosition(vpos);
+}
+
+void ScrollArea::updateViewportHorizontalPosition(const QPoint& vpos) const {
+	const auto& vx = vpos.x();
+	viewport()->viewrect().setHorizontalVirtualPos(vx);
+}
+
+void ScrollArea::updateViewportVerticalPosition(const QPoint& vpos) const {
+	const auto& vy = vpos.y();
+	viewport()->viewrect().setVerticalVirtualPos(vy);
 }

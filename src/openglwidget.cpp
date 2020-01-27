@@ -114,7 +114,8 @@ OpenGLWidget::OpenGLWidget(QWidget *parent, const FITS::AbstractHeaderDataUnit& 
 	layer_(0) {
 
 	connect(&viewrect_, SIGNAL(viewChanged(const QRectF&)), this, SLOT(viewChanged(const QRectF&)));
-	connect(&viewrect_, SIGNAL(scrollChanged(const QRect&)), this, SLOT(update()));
+	connect(&viewrect_, SIGNAL(virtualSizeChanged(const QSize&)), this, SLOT(update()));
+	connect(&viewrect_, SIGNAL(virtualPosChanged(const QPoint&)), this, SLOT(update()));
 	connect(this, SIGNAL(rotationChanged(double)), this, SLOT(update()));
 	connect(this, SIGNAL(horizontalFlipChanged(bool)), this, SLOT(update()));
 	connect(this, SIGNAL(verticalFlipChanged(bool)), this, SLOT(update()));
@@ -161,19 +162,15 @@ void OpenGLWidget::resizeEvent(QResizeEvent* event) {
 	QOpenGLWidget::resizeEvent(event);
 
 	const auto new_widget_size = event->size();
-	auto old_widget_size = event->oldSize();
+	const auto old_widget_size = event->oldSize();
+
+	viewrect_.setWidget(new_widget_size);
+	widget_to_fits_.setWidgetSize(new_widget_size);
+
 	// event->oldSize() for the first call of resizeEvent equals -1,-1
 	if (old_widget_size.width() < 0 || old_widget_size.height() < 0) {
 		fitViewrect();
-	} else {
-		const auto new_viewrect_width  = viewrect_.view().width()  * (new_widget_size.width()  - 1.0) / (old_widget_size.width()  - 1.0);
-		const auto new_viewrect_height = viewrect_.view().height() * (new_widget_size.height() - 1.0) / (old_widget_size.height() - 1.0);
-		QRectF new_view(viewrect_.view());
-		new_view.setSize({new_viewrect_width, new_viewrect_height});
-		viewrect_.setView(new_view);
 	}
-
-	widget_to_fits_.setWidgetSize(new_widget_size);
 }
 
 void OpenGLWidget::wheelEvent(QWheelEvent* event) {
@@ -262,16 +259,18 @@ void OpenGLWidget::zoom(double zoom_factor) {
 
 void OpenGLWidget::zoom(double zoom_factor, const QPoint& fixed_point) {
 	const QPointF fixed_point4{
-		static_cast<double>(fixed_point.x()) / (width() - 1),
-		static_cast<double>(fixed_point.y()) / (height() - 1)};
+		static_cast<qreal>(fixed_point.x()) / (width() - 1),
+		static_cast<qreal>(fixed_point.y()) / (height() - 1)
+	};
 
 	const auto old_view_rect = viewrect().view();
-	const auto new_size = old_view_rect.size() / zoom_factor;
+	viewrect().zoom(zoom_factor);
+	const auto new_view_size = viewrect().view().size();
 	const QPointF new_top_left{
-		old_view_rect.topLeft().x() + fixed_point4.x() * (old_view_rect.width() - new_size.width()),
-		old_view_rect.topLeft().y() + fixed_point4.y() * (old_view_rect.height() - new_size.height())};
+		old_view_rect.topLeft().x() + fixed_point4.x() * (old_view_rect.width() - new_view_size.width()),
+		old_view_rect.topLeft().y() + fixed_point4.y() * (old_view_rect.height() - new_view_size.height())};
 
-	viewrect().setView(QRectF{new_top_left, new_size});
+	viewrect().setViewOrigin(new_top_left);
 }
 
 void OpenGLWidget::viewChanged(const QRectF& view_rect) {
@@ -287,7 +286,7 @@ void OpenGLWidget::setRotation(double angle) {
 	const auto new_view_center = viewrect_rotation_matrix.map(viewrect_.view().center());
 	auto new_view = viewrect_.view();
 	new_view.moveCenter(new_view_center);
-	viewrect_.setView(new_view);
+	viewrect_.setViewOrigin(new_view.topLeft());
 
 	opengl_transform_.setRotation(angle);
 	widget_to_fits_.setRotation(angle);
@@ -313,7 +312,7 @@ void OpenGLWidget::flipViewrect(Qt::Axis flip_axis) {
 	const auto view_center = rotation_matrix.map(unrotated_view_center);
 	auto new_view = viewrect_.view();
 	new_view.moveCenter(view_center);
-	viewrect_.setView(new_view);
+	viewrect_.setViewOrigin(new_view.topLeft());
 }
 
 void OpenGLWidget::setHorizontalFlip(bool flip) {

@@ -16,18 +16,88 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <limits>
+
 #include <viewrect.h>
 
-Viewrect::Viewrect(): Viewrect(QRectF(-1,-1,2,2), QRectF(-1,-1,2,2)) {}
+Viewrect::Viewrect():
+	view_(-1, -1, 2, 2),
+	border_(-1, -1, 2, 2),
+	widget_(1, 1),
+	vsize_(1, 1),
+	vpos_(0, 0),
+	scale_(1) {
+};
 
-Viewrect::Viewrect(const QRectF& view_rect, const QRectF& border_rect) {
-	setBorder(border_rect);
-	setView(view_rect);
+void Viewrect::setViewOrigin(const QPointF& origin) {
+	if (view_.topLeft() == origin) return;
+
+	const QRectF new_view{origin, view_.size()};
+
+	setView(new_view);
 }
 
-Viewrect::Viewrect(const QRect& scroll_rect, const QRectF& border_rect) {
-	setBorder(border_rect);
-	setScroll(scroll_rect);
+void Viewrect::setVirtualPos(const QPoint& pos) {
+	if (vpos_ == pos) return;
+
+	const auto wb = static_cast<float>(border_.width());
+	const auto hb = static_cast<float>(border_.height());
+
+	const QPointF vpos = pos;
+	const QPointF new_origin{
+		static_cast<float>(-0.5) * wb - vpos.x() / scale_,
+		static_cast<float>(-0.5) * hb - vpos.y() / scale_};
+
+	setViewOrigin(new_origin);
+}
+
+void Viewrect::setHorizontalVirtualPos(int hpos) {
+	const QPoint new_vpos{hpos, vpos_.y()};
+
+	setVirtualPos(new_vpos);
+}
+
+void Viewrect::setVerticalVirtualPos(int vpos) {
+	const QPoint new_vpos{vpos_.x(), vpos};
+
+	setVirtualPos(new_vpos);
+}
+
+void Viewrect::resetViewSize() {
+	const auto w = static_cast<float>(widget_.width());
+	const auto h = static_cast<float>(widget_.height());
+	const auto scale_x = w / scale_;
+	const auto scale_y = h / scale_;
+	const QSizeF new_size{scale_x, scale_y};
+	const QRectF new_view{view_.topLeft(), new_size};
+
+	setView(new_view);
+}
+
+void Viewrect::resetVirtualSize() {
+	const auto wb = static_cast<float>(border_.width());
+	const auto hb = static_cast<float>(border_.height());
+	const QSize new_size {
+		static_cast<int>(scale_ * wb),
+		static_cast<int>(scale_ * hb)};
+
+	if (vsize_ == new_size) return;
+
+	vsize_ = new_size;
+	emit virtualSizeChanged(vsize_);
+}
+
+void Viewrect::resetVirtualPos() {
+	const auto wb = static_cast<float>(border_.width());
+	const auto hb = static_cast<float>(border_.height());
+	const QPoint new_pos {
+		-static_cast<int>(scale_ * (wb / 2 + view_.left())),
+		-static_cast<int>(scale_ * (hb / 2 + view_.top()))};
+
+	if (vpos_ == new_pos) return;
+
+	vpos_ = new_pos;
+	emit virtualPosChanged(vpos_);
 }
 
 void Viewrect::setView(const QRectF& view_rect) {
@@ -38,18 +108,38 @@ void Viewrect::setView(const QRectF& view_rect) {
 	if (view_ == new_rect) return;
 
 	view_ = new_rect;
-	emit viewChanged(view_);
 
-	setScroll(viewToScroll(view_));
+	resetVirtualSize();
+	resetVirtualPos();
 }
 
-void Viewrect::setScroll(const QRect& scroll_rect) {
-	if (scroll_ == scroll_rect) return;
+void Viewrect::setWidget(const QSize& widget_size) {
+	if (widget_ == widget_size) return;
 
-	scroll_ = scroll_rect;
-	emit scrollChanged(scroll_);
+	widget_ = widget_size;
 
-	setView(scrollToView(scroll_));
+	resetViewSize();
+}
+
+void Viewrect::setScale(float scale) {
+	const auto wb = static_cast<float>(border_.width());
+	const auto hb = static_cast<float>(border_.height());
+	const auto lo_scale = static_cast<float>(1) / std::min(wb, hb);
+	const auto hi_scale = static_cast<float>(std::numeric_limits<int>::max()) / std::max(wb, hb);
+
+	scale = std::min(std::max(lo_scale, scale), hi_scale);
+
+	if (scale_ == scale) return;
+
+	scale_ = scale;
+
+	emit scaleChanged(scale_);
+}
+
+void Viewrect::zoom(double zoom_factor) {
+	setScale(zoom_factor * scale());
+
+	resetViewSize();
 }
 
 QRectF Viewrect::alignView(const QRectF& view_rect) const {
@@ -80,27 +170,17 @@ QRectF Viewrect::alignView(const QRectF& view_rect) const {
 	return new_view;
 }
 
-QRect Viewrect::viewToScroll(const QRectF& view_rect) const {
-	const auto left =   qRound((view_rect.left() - border_.left()) / border_.width()  * scroll_range_);
-	const auto top  =   qRound((view_rect.top()  - border_.top())  / border_.height() * scroll_range_);
-	const auto width =  qRound(view_rect.width()  / border_.width()  * (scroll_range_ + 1));
-	const auto height = qRound(view_rect.height() / border_.height() * (scroll_range_ + 1));
-	return QRect{left, top, width, height};
-}
+void Viewrect::fitToBorder() {
+	const auto w = static_cast<float>(widget_.width());
+	const auto h = static_cast<float>(widget_.height());
+	const auto wb = static_cast<float>(border_.width());
+	const auto hb = static_cast<float>(border_.height());
+	const auto hscale = w / wb;
+	const auto vscale = h / hb;
 
-QRectF Viewrect::scrollToView(const QRect& scroll_rect) const {
-	const auto left   = scroll_rect.left()   * border_.width()  / scroll_range_ + border_.left();
-	const auto top    = scroll_rect.top()    * border_.height() / scroll_range_ + border_.top();
-	const auto width  = scroll_rect.width()  * border_.width()  / (scroll_range_ + 1);
-	const auto height = scroll_rect.height() * border_.height() / (scroll_range_ + 1);
-	return QRectF{left, top, width, height};
-}
+	setScale(std::min(hscale, vscale));
 
-void Viewrect::fitToBorder(QSizeF ratio) {
-	ratio.scale(border_.size(), Qt::KeepAspectRatioByExpanding);
-	// It will be aligned in align(), so top left corner value doesn't matter
-	const QRectF new_view(QPointF(0, 0), ratio);
-	setView(new_view);
+	resetViewSize();
 }
 
 void Viewrect::setBorder(const QRectF &border_rect) {
@@ -110,5 +190,6 @@ void Viewrect::setBorder(const QRectF &border_rect) {
 
 	emit borderChanged(border_);
 
-	setScroll(viewToScroll(view_));
+	resetVirtualSize();
+	resetVirtualPos();
 }
