@@ -75,11 +75,11 @@ bool MousePositionWidget::MouseMoveEventFilter::eventFilter(QObject* object, QEv
 		case QEvent::MouseMove: {
 			const auto mouse_event = static_cast<QMouseEvent*>(event);
 			mouse_position_widget_->setPositionAndValue(watched->pixelFromWidgetCoordinate(mouse_event->pos()));
-			return true;
 		}
-		default:
-			return false;
+		default:;
 	}
+
+	return false;
 }
 
 constexpr const int MousePositionWidget::max_number_of_digits_image_size_;
