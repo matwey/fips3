@@ -16,7 +16,10 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <QMouseEvent>
+
 #include <mousepositionwidget.h>
+#include <openglwidget.h>
 
 MousePositionWidget::MousePositionWidget(QWidget *parent):
 	QWidget(parent),
@@ -58,6 +61,24 @@ void MousePositionWidget::setPositionAndValue(const Pixel& pixel) {
 		x_position_->setText(locale().toString(pixel.position.x()));
 		y_position_->setText(locale().toString(pixel.position.y()));
 		value_->setText(locale().toString(pixel.value.value(), text_format_, decimals_));
+	}
+}
+
+MousePositionWidget::MouseMoveEventFilter::MouseMoveEventFilter(MousePositionWidget *mouse_position_widget, QObject* parent):
+	QObject(parent),
+	mouse_position_widget_(mouse_position_widget) {
+}
+
+bool MousePositionWidget::MouseMoveEventFilter::eventFilter(QObject* object, QEvent* event) {
+	auto watched = static_cast<OpenGLWidget*>(object);
+	switch (event->type()) {
+		case QEvent::MouseMove: {
+			const auto mouse_event = static_cast<QMouseEvent*>(event);
+			mouse_position_widget_->setPositionAndValue(watched->pixelFromWidgetCoordinate(mouse_event->pos()));
+			return true;
+		}
+		default:
+			return false;
 	}
 }
 

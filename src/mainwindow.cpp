@@ -35,23 +35,6 @@
 #include <playbackwidget.h>
 #include <rotationwidget.h>
 
-MouseMoveEventFilter::MouseMoveEventFilter(MousePositionWidget *mouse_position_widget, QObject* parent):
-		QObject(parent),
-		mouse_position_widget_(mouse_position_widget) {}
-
-bool MouseMoveEventFilter::eventFilter(QObject* open_gl_widget, QEvent* event) {
-	auto watched = static_cast<OpenGLWidget*>(open_gl_widget);
-	switch (event->type()) {
-		case QEvent::MouseMove: {
-			auto mouse_event = static_cast<QMouseEvent *>(event);
-			mouse_position_widget_->setPositionAndValue(watched->pixelFromWidgetCoordinate(mouse_event->pos()));
-			return true;
-		}
-		default:
-			return false;
-	}
-}
-
 MainWindowState::MainWindowState(const QString& filename, bool watch):
 	filename_(QFileInfo(filename).absoluteFilePath()),
 	watcher_(new QFileSystemWatcher(this)) {
@@ -249,8 +232,8 @@ MainWindow::MainWindow(const QString& fits_filename, QWidget *parent):
 
 	std::unique_ptr<QStatusBar> status_bar{new QStatusBar(this)};
 	std::unique_ptr<MousePositionWidget> mouse_position_widget{new MousePositionWidget(this)};
-	mouse_move_event_filter_.reset(new MouseMoveEventFilter(mouse_position_widget.get(), this));
-	scrollArea()->viewport()->installEventFilter(mouse_move_event_filter_.get());
+	std::unique_ptr<MousePositionWidget::MouseMoveEventFilter> mouse_move_event_filter{new MousePositionWidget::MouseMoveEventFilter(mouse_position_widget.get(), this)};
+	scrollArea()->viewport()->installEventFilter(mouse_move_event_filter.release());
 	status_bar->addWidget(mouse_position_widget.release());
 	setStatusBar(status_bar.release());
 	setWindowTitle(state_->filename());
