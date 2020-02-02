@@ -31,6 +31,11 @@ ScrollArea::ScrollArea(QWidget *parent, const FITS::AbstractHeaderDataUnit& hdu)
 
 	connect(&viewport()->viewrect(), SIGNAL(virtualSizeChanged(const QSize&)), this, SLOT(updateScrollBars()));
 	connect(&viewport()->viewrect(), SIGNAL(virtualPosChanged(const QPoint&)), this, SLOT(setVirtualPos(const QPoint&)));
+
+	std::unique_ptr<MouseMoveEventFilter> mouse_move_event_filter{new MouseMoveEventFilter(this, this)};
+	viewport()->installEventFilter(mouse_move_event_filter.release());
+
+	setMouseTracking(true);
 }
 
 void ScrollArea::fitToViewport() {
@@ -132,4 +137,39 @@ void ScrollArea::updateViewportHorizontalPosition(const QPoint& vpos) const {
 void ScrollArea::updateViewportVerticalPosition(const QPoint& vpos) const {
 	const auto& vy = vpos.y();
 	viewport()->viewrect().setVerticalVirtualPos(vy);
+}
+
+ScrollArea::MouseMoveEventFilter::MouseMoveEventFilter(ScrollArea* scroll_area, QObject* parent):
+	QObject(parent),
+	scroll_area_(scroll_area),
+	last_(0, 0) {
+}
+
+bool ScrollArea::MouseMoveEventFilter::eventFilter(QObject* object, QEvent* event) {
+	auto watched = static_cast<ScrollArea*>(object);
+	const auto mouse_event = static_cast<QMouseEvent*>(event);
+	switch (event->type()) {
+		case QEvent::MouseButtonPress: {
+			if (mouse_event->buttons() != Qt::LeftButton) break;
+
+			last_ = mouse_event->screenPos();
+			return true;
+		}
+		case QEvent::MouseMove: {
+			if (mouse_event->buttons() != Qt::LeftButton) break;
+
+			const auto current = mouse_event->screenPos();
+			const int hpos = scroll_area_->horizontalScrollBar()->value() + last_.x() - current.x();
+			const int vpos = scroll_area_->verticalScrollBar()->value() + last_.y() - current.y();
+
+			scroll_area_->horizontalScrollBar()->setValue(hpos);
+			scroll_area_->verticalScrollBar()->setValue(vpos);
+
+			last_ = current;
+			return true;
+		}
+		default:;
+	}
+
+	return false;
 }

@@ -20,6 +20,7 @@
 #define _SCROLLAREA_H
 
 #include <QAbstractScrollArea>
+#include <QPointF>
 
 #include <fits.h>
 #include <openglwidget.h>
@@ -43,6 +44,17 @@ private slots:
 	void updateViewportPosition() const;
 	void updateViewportHorizontalPosition(const QPoint& vpos) const;
 	void updateViewportVerticalPosition(const QPoint& vpos) const;
+public:
+	class MouseMoveEventFilter:
+		public QObject {
+	private:
+		ScrollArea* scroll_area_;
+		QPointF last_;
+	public:
+		MouseMoveEventFilter(ScrollArea* scroll_area, QObject* parent = Q_NULLPTR);
+	protected:
+		virtual bool eventFilter(QObject* object, QEvent* event) override;
+	};
 };
 
 #endif //_SCROLLAREA_H
