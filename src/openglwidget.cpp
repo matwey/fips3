@@ -165,6 +165,7 @@ void OpenGLWidget::resizeEvent(QResizeEvent* event) {
 	const auto old_widget_size = event->oldSize();
 
 	viewrect_.setWidget(new_widget_size);
+	opengl_transform_.setWidgetSize(new_widget_size);
 	widget_to_fits_.setWidgetSize(new_widget_size);
 
 	// event->oldSize() for the first call of resizeEvent equals -1,-1

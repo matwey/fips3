@@ -28,12 +28,14 @@ OpenGLTransform::OpenGLTransform(QObject* parent):
 	angle_(0),
 	h_flip_(false),
 	v_flip_(false),
-	viewrect_(-1, -1, 2, 2)
+	viewrect_(-1, -1, 2, 2),
+	widget_size_(1, 1)
 {}
-OpenGLTransform::OpenGLTransform(const QSize& image_size, const QRectF& viewrect, QObject* parent):
+OpenGLTransform::OpenGLTransform(const QSize& image_size, const QSize& widget_size,const QRectF& viewrect, QObject* parent):
 	OpenGLTransform(parent) {
 
 	setImageSize(image_size);
+	setWidgetSize(widget_size);
 	setViewrect(viewrect);
 }
 
@@ -111,12 +113,19 @@ void OpenGLTransform::setVerticalFlip(bool flip) {
 	expired_ = true;
 }
 
+void OpenGLTransform::setWidgetSize(const QSize& widget_size) {
+	if (widget_size_ == widget_size) return;
+
+	widget_size_ = widget_size;
+	expired_ = true;
+}
+
 
 WidgetToFitsOpenGLTransform::WidgetToFitsOpenGLTransform(QObject* parent):
 	OpenGLTransform(parent) {}
 
 WidgetToFitsOpenGLTransform::WidgetToFitsOpenGLTransform(const QSize& image_size, const QSize& widget_size, const QRectF& viewrect, QObject* parent):
-	OpenGLTransform(image_size, viewrect, parent) {
+	OpenGLTransform(image_size, widget_size, viewrect, parent) {
 
 	setWidgetSize(widget_size);
 }
@@ -150,11 +159,4 @@ void WidgetToFitsOpenGLTransform::updateTransform() const {
 	matrix_.scale(static_cast<float>(2)/widget_width, static_cast<float>(2)/widget_height);
 
 	expired_ = false;
-}
-
-void WidgetToFitsOpenGLTransform::setWidgetSize(const QSize& widget_size) {
-	if (widget_size_ == widget_size) return;
-
-	widget_size_ = widget_size;
-	expired_ = true;
 }
