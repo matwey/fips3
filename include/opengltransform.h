@@ -30,15 +30,16 @@ protected:
 	QSize image_size_;
 	float scale_x_, scale_y_;
 	float angle_;
-	QRectF viewrect_;
 	bool h_flip_, v_flip_;
 	QSize widget_size_;
+	QPoint vpos_;
+	float scale_;
 
 	void updateTransformHelper(QMatrix4x4& init_matrix) const;
 	virtual void updateTransform() const;
 public:
 	explicit OpenGLTransform(QObject* parent = Q_NULLPTR);
-	OpenGLTransform(const QSize& image_size, const QSize& widget_size, const QRectF& viewrect, QObject* parent = Q_NULLPTR);
+	OpenGLTransform(const QSize& image_size, const QSize& widget_size, float scale, QObject* parent = Q_NULLPTR);
 	virtual ~OpenGLTransform() override;
 
 	inline void updateTransform() {
@@ -53,9 +54,6 @@ public:
 	const float& rotation() const { return angle_; }
 	void setRotation(float angle);
 
-	const QRectF& viewrect() const { return viewrect_; }
-	void setViewrect(const QRectF& viewrect);
-
 	const bool& horizontalFlip() const { return h_flip_; }
 	void setHorizontalFlip(bool flip);
 	const bool& verticalFlip() const { return v_flip_; }
@@ -63,6 +61,12 @@ public:
 
 	const QSize& widgetSize() const { return widget_size_; }
 	void setWidgetSize(const QSize& widget_size);
+
+	const QPoint& virtualPos() const { return vpos_; }
+	void setVirtualPos(const QPoint& vpos);
+
+	const float& scale() const { return scale_; }
+	void setScale(float scale);
 };
 
 class WidgetToFitsOpenGLTransform:
@@ -73,7 +77,7 @@ protected:
 	void updateTransform() const override;
 public:
 	explicit WidgetToFitsOpenGLTransform(QObject* parent = Q_NULLPTR);
-	WidgetToFitsOpenGLTransform(const QSize& image_size, const QSize& widget_size, const QRectF& viewrect, QObject* parent = Q_NULLPTR);
+	WidgetToFitsOpenGLTransform(const QSize& image_size, const QSize& widget_size, float scale, QObject* parent = Q_NULLPTR);
 	~WidgetToFitsOpenGLTransform() override;
 };
 

@@ -28,15 +28,16 @@ OpenGLTransform::OpenGLTransform(QObject* parent):
 	angle_(0),
 	h_flip_(false),
 	v_flip_(false),
-	viewrect_(-1, -1, 2, 2),
-	widget_size_(1, 1)
+	widget_size_(1, 1),
+	vpos_(0, 0),
+	scale_(1)
 {}
-OpenGLTransform::OpenGLTransform(const QSize& image_size, const QSize& widget_size,const QRectF& viewrect, QObject* parent):
+OpenGLTransform::OpenGLTransform(const QSize& image_size, const QSize& widget_size, float scale, QObject* parent):
 	OpenGLTransform(parent) {
 
 	setImageSize(image_size);
 	setWidgetSize(widget_size);
-	setViewrect(viewrect);
+	setScale(scale);
 }
 
 OpenGLTransform::~OpenGLTransform() = default;
@@ -51,8 +52,19 @@ void OpenGLTransform::updateTransform() const {
 // FIXME: this function plays with mutable objects and looks like const-function,
 // consider to implement it in reentable way in order to avoid threading issues.
 
+	const auto vw = static_cast<float>(widget_size_.width());
+	const auto vh = static_cast<float>(widget_size_.height());
+	const auto scale_x = scale_ / vw * static_cast<float>(2);
+	const auto scale_y = scale_ / vh * static_cast<float>(2);
+	const auto& b = border();
+	const auto& bw = b.width();
+	const auto& bh = b.height();
+	const auto tr_x = (static_cast<float>(2) * vpos_.x() + bw * scale_ - vw) / vw;
+	const auto tr_y = -(static_cast<float>(2) * vpos_.y() + bh * scale_ - vh) / vh;
+
 	matrix_.setToIdentity();
-	matrix_.ortho(QRectF{viewrect_.left(), -viewrect_.top(), viewrect_.width(), -viewrect_.height()});
+	matrix_.translate(tr_x, tr_y);
+	matrix_.scale(scale_x, scale_y);
 	updateTransformHelper(matrix_);
 
 	expired_ = false;
@@ -92,13 +104,6 @@ void OpenGLTransform::setRotation(float angle) {
 	expired_ = true;
 }
 
-void OpenGLTransform::setViewrect(const QRectF& viewrect) {
-	if (viewrect_ == viewrect) return;
-
-	viewrect_ = viewrect;
-	expired_ = true;
-}
-
 void OpenGLTransform::setHorizontalFlip(bool flip) {
 	if (h_flip_ == flip) return;
 
@@ -117,15 +122,29 @@ void OpenGLTransform::setWidgetSize(const QSize& widget_size) {
 	if (widget_size_ == widget_size) return;
 
 	widget_size_ = widget_size;
+
 	expired_ = true;
 }
 
+void OpenGLTransform::setVirtualPos(const QPoint& vpos) {
+	if (vpos_ == vpos) return;
+
+	vpos_ = vpos;
+	expired_ = true;
+}
+
+void OpenGLTransform::setScale(float scale) {
+	if (scale_ == scale) return;
+
+	scale_ = scale;
+	expired_ = true;
+}
 
 WidgetToFitsOpenGLTransform::WidgetToFitsOpenGLTransform(QObject* parent):
 	OpenGLTransform(parent) {}
 
-WidgetToFitsOpenGLTransform::WidgetToFitsOpenGLTransform(const QSize& image_size, const QSize& widget_size, const QRectF& viewrect, QObject* parent):
-	OpenGLTransform(image_size, widget_size, viewrect, parent) {
+WidgetToFitsOpenGLTransform::WidgetToFitsOpenGLTransform(const QSize& image_size, const QSize& widget_size, float scale, QObject* parent):
+	OpenGLTransform(image_size, widget_size, scale, parent) {
 
 	setWidgetSize(widget_size);
 }
@@ -146,17 +165,16 @@ void WidgetToFitsOpenGLTransform::updateTransform() const {
 	matrix_.scale(h_flip_ ? -1 : 1, v_flip_ ? -1 : 1);
 	/* world unrotated */
 	matrix_.rotate(-angle_, static_cast<float>(0), static_cast<float>(0), static_cast<float>(1));
-	/* viewrect to world */
-	matrix_.translate(viewrect_.center().x(), -viewrect_.center().y());
-	matrix_.scale(viewrect_.width()/static_cast<float>(2), -viewrect_.height()/static_cast<float>(2));
 
-	/* widget pixel (0,0, w,h) to viewrect (-1,-1, 2,2)*/
-	const auto widget_width = widget_size_.width();
-	const auto widget_height = widget_size_.height();
-	const float tr_x = -static_cast<float>(widget_width-1) / static_cast<float>(widget_width);
-	const float tr_y = -static_cast<float>(widget_height-1) / static_cast<float>(widget_height);
+	const auto& b = border();
+	const auto& bw = b.width();
+	const auto& bh = b.height();
+	const auto tr_x = static_cast<float>(-0.5) * bw;
+	const auto tr_y = static_cast<float>(0.5) * bh;
+
 	matrix_.translate(tr_x, tr_y);
-	matrix_.scale(static_cast<float>(2)/widget_width, static_cast<float>(2)/widget_height);
+	matrix_.scale(static_cast<float>(1)/scale_, static_cast<float>(-1)/scale_);
+	matrix_.translate(-vpos_.x() + static_cast<float>(0.5), -vpos_.y() + static_cast<float>(0.5));
 
 	expired_ = false;
 }

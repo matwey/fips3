@@ -17,9 +17,9 @@ private slots:
 void TestWidgetToFitsOpenGLTransform::test_1x1() {
 	const QSize image_size{3, 3};
 	const QSize widget_size{3, 3};
-	const QRectF view_rect{-1, -1, 2, 2};
+	const float scale = std::min(widget_size.width(), widget_size.height()) / 2.0;
 
-	WidgetToFitsOpenGLTransform t(image_size, widget_size, view_rect);
+	WidgetToFitsOpenGLTransform t(image_size, widget_size, scale);
 
 	{
 		auto f = t.transform(0, 0);
@@ -51,9 +51,9 @@ void TestWidgetToFitsOpenGLTransform::test_1x1() {
 void TestWidgetToFitsOpenGLTransform::test_1x1a() {
 	const QSize image_size{6, 3};
 	const QSize widget_size{6, 3};
-	const QRectF view_rect{-1, -0.5, 2, 1};
+	const float scale = std::min(widget_size.width() / 2.0, widget_size.height() / 1.0);
 
-	WidgetToFitsOpenGLTransform t(image_size, widget_size, view_rect);
+	WidgetToFitsOpenGLTransform t(image_size, widget_size, scale);
 
 	{
 		auto f = t.transform(0, 0);
@@ -90,9 +90,9 @@ void TestWidgetToFitsOpenGLTransform::test_1x1a() {
 void TestWidgetToFitsOpenGLTransform::test_1x1_rot90() {
 	const QSize image_size{3, 3};
 	const QSize widget_size{3, 3};
-	const QRectF view_rect{-1, -1, 2, 2};
+	const float scale = std::min(widget_size.width(), widget_size.height()) / 2.0;
 
-	WidgetToFitsOpenGLTransform t(image_size, widget_size, view_rect);
+	WidgetToFitsOpenGLTransform t(image_size, widget_size, scale);
 	t.setRotation(90);
 
 	{
@@ -125,9 +125,9 @@ void TestWidgetToFitsOpenGLTransform::test_1x1_rot90() {
 void TestWidgetToFitsOpenGLTransform::test_1x1_vr2() {
 	const QSize image_size{4, 4};
 	const QSize widget_size{2, 2};
-	const QRectF view_rect{-1, -1, 1, 1};
+	const float scale = std::min(widget_size.width(), widget_size.height());
 
-	WidgetToFitsOpenGLTransform t(image_size, widget_size, view_rect);
+	WidgetToFitsOpenGLTransform t(image_size, widget_size, scale);
 
 	{
 		auto f = t.transform(0, 0);
@@ -154,9 +154,9 @@ void TestWidgetToFitsOpenGLTransform::test_1x1_vr2() {
 void TestWidgetToFitsOpenGLTransform::test_1x1_vr2a() {
 	const QSize image_size{8, 4};
 	const QSize widget_size{4, 2};
-	const QRectF view_rect{-1, -0.5, 1, 0.5};
+	const float scale = std::min(widget_size.width() / 1.0, widget_size.height() / 0.5);
 
-	WidgetToFitsOpenGLTransform t(image_size, widget_size, view_rect);
+	WidgetToFitsOpenGLTransform t(image_size, widget_size, scale);
 
 	{
 		auto f = t.transform(0, 0);
@@ -188,9 +188,9 @@ void TestWidgetToFitsOpenGLTransform::test_1x1_vr2a() {
 void TestWidgetToFitsOpenGLTransform::test_1x2() {
 	const QSize image_size{3, 3};
 	const QSize widget_size{6, 6};
-	const QRectF view_rect{-1, -1, 2, 2};
+	const float scale = std::min(widget_size.width(), widget_size.height()) / 2.0;
 
-	WidgetToFitsOpenGLTransform t(image_size, widget_size, view_rect);
+	WidgetToFitsOpenGLTransform t(image_size, widget_size, scale);
 
 	{
 		auto f = t.transform(0, 0);

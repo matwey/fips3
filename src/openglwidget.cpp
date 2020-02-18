@@ -113,9 +113,8 @@ OpenGLWidget::OpenGLWidget(QWidget *parent, const FITS::AbstractHeaderDataUnit& 
 	colormap_index_(0),
 	layer_(0) {
 
-	connect(&viewrect_, SIGNAL(viewChanged(const QRectF&)), this, SLOT(viewChanged(const QRectF&)));
-	connect(&viewrect_, SIGNAL(virtualSizeChanged(const QSize&)), this, SLOT(update()));
-	connect(&viewrect_, SIGNAL(virtualPosChanged(const QPoint&)), this, SLOT(update()));
+	connect(&viewrect_, SIGNAL(scaleChanged(float)), this, SLOT(scaleChanged(float)));
+	connect(&viewrect_, SIGNAL(virtualPosChanged(const QPoint&)), this, SLOT(virtualPosChanged(const QPoint&)));
 	connect(this, SIGNAL(rotationChanged(double)), this, SLOT(update()));
 	connect(this, SIGNAL(horizontalFlipChanged(bool)), this, SLOT(update()));
 	connect(this, SIGNAL(verticalFlipChanged(bool)), this, SLOT(update()));
@@ -274,9 +273,18 @@ void OpenGLWidget::zoom(double zoom_factor, const QPoint& fixed_point) {
 	viewrect().setViewOrigin(new_top_left);
 }
 
-void OpenGLWidget::viewChanged(const QRectF& view_rect) {
-	opengl_transform_.setViewrect(view_rect);
-	widget_to_fits_.setViewrect(view_rect);
+void OpenGLWidget::scaleChanged(float scale) {
+	opengl_transform_.setScale(scale);
+	widget_to_fits_.setScale(scale);
+
+	update();
+}
+
+void OpenGLWidget::virtualPosChanged(const QPoint& vpos) {
+	opengl_transform_.setVirtualPos(vpos);
+	widget_to_fits_.setVirtualPos(vpos);
+
+	update();
 }
 
 void OpenGLWidget::setRotation(double angle) {

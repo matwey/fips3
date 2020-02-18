@@ -146,7 +146,8 @@ public:
 	void zoom(double zoom_factor);
 	void zoom(double zoom_factor, const QPoint& fixed_point);
 private slots:
-	void viewChanged(const QRectF& view_rect);
+	void scaleChanged(float scale);
+	void virtualPosChanged(const QPoint& vpos);
 
 private:
 	OpenGLTransform opengl_transform_;
