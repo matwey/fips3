@@ -142,7 +142,7 @@ private:
 	Viewrect viewrect_;
 public:
 	inline Viewrect& viewrect() { return viewrect_; }
-	inline void fitViewrect() { viewrect_.fitToBorder(); };
+	inline void fitViewrect() { viewrect_.fitToBorder(size()); };
 	void zoom(double zoom_factor);
 	void zoom(double zoom_factor, const QPoint& fixed_point);
 private slots:

@@ -22,7 +22,6 @@
 
 Viewrect::Viewrect():
 	border_(-1, -1, 2, 2),
-	widget_(1, 1),
 	vsize_(1, 1),
 	vpos_(0, 0),
 	scale_(1) {
@@ -61,12 +60,6 @@ void Viewrect::resetVirtualSize() {
 	emit virtualSizeChanged(vsize_);
 }
 
-void Viewrect::setWidget(const QSize& widget_size) {
-	if (widget_ == widget_size) return;
-
-	widget_ = widget_size;
-}
-
 void Viewrect::setScale(float scale) {
 	const auto wb = static_cast<float>(border_.width());
 	const auto hb = static_cast<float>(border_.height());
@@ -88,9 +81,9 @@ void Viewrect::zoom(double zoom_factor) {
 	setScale(zoom_factor * scale());
 }
 
-void Viewrect::fitToBorder() {
-	const auto w = static_cast<float>(widget_.width());
-	const auto h = static_cast<float>(widget_.height());
+void Viewrect::fitToBorder(const QSize& widget) {
+	const auto w = static_cast<float>(widget.width());
+	const auto h = static_cast<float>(widget.height());
 	const auto wb = static_cast<float>(border_.width());
 	const auto hb = static_cast<float>(border_.height());
 	const auto hscale = w / wb;
