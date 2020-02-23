@@ -103,6 +103,7 @@ QException* OpenGLWidget::ShaderCompileError::clone() const {
 OpenGLWidget::OpenGLWidget(QWidget *parent, const FITS::AbstractHeaderDataUnit& hdu):
 	QOpenGLWidget(parent),
 	hdu_(&hdu),
+	fit_to_window_(false),
 	opengl_transform_(this),
 	widget_to_fits_(this),
 	shader_uniforms_(new OpenGLShaderUniforms(1, 1, 0, 1)),
@@ -167,7 +168,7 @@ void OpenGLWidget::resizeEvent(QResizeEvent* event) {
 	widget_to_fits_.setWidgetSize(new_widget_size);
 
 	// event->oldSize() for the first call of resizeEvent equals -1,-1
-	if (old_widget_size.width() < 0 || old_widget_size.height() < 0) {
+	if (fitToWindow() || old_widget_size.width() < 0 || old_widget_size.height() < 0) {
 		fitViewrect();
 	}
 }
@@ -252,11 +253,23 @@ Pixel OpenGLWidget::pixelFromWidgetCoordinate(const QPoint& widget_coord) {
 	return Pixel(position, value);
 }
 
+void OpenGLWidget::setFitToWindow(bool fit) {
+	if (fitToWindow() == fit) return;
+
+	fit_to_window_ = fit;
+
+	if (fit_to_window_) fitViewrect();
+
+	emit fitToWindowChanged(fit_to_window_);
+}
+
 void OpenGLWidget::zoom(double zoom_factor) {
 	zoom(zoom_factor, rect().center());
 }
 
 void OpenGLWidget::zoom(double zoom_factor, const QPoint& fixed_point) {
+	setFitToWindow(false);
+
 	const auto old_vpos = viewrect().virtualPos();
 	const auto old_scale = viewrect().scale();
 
@@ -300,6 +313,7 @@ void OpenGLWidget::setRotation(double angle) {
 	opengl_transform_.setRotation(angle);
 	widget_to_fits_.setRotation(angle);
 	viewrect().setBorder(opengl_transform_.border());
+	if (fitToWindow()) fitViewrect();
 
 	const auto border = viewrect().border();
 	const auto bvec = QPointF{

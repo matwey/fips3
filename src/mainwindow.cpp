@@ -157,8 +157,17 @@ MainWindow::MainWindow(const QString& fits_filename, QWidget *parent):
 	zoomIn_action->setShortcut(QKeySequence::ZoomIn);
 	auto zoomOut_action = view_menu->addAction(tr("Zoom &Out"), this, SLOT(zoomOut(void)));
 	zoomOut_action->setShortcut(QKeySequence::ZoomOut);
-	auto fit_to_window_action = view_menu->addAction(tr("&Fit to Window"), this, SLOT(fitToWindow(void)));
+	auto fit_to_window_action = view_menu->addAction(tr("&Fit to Window"));
 	fit_to_window_action->setShortcut(tr("Ctrl+F"));
+	fit_to_window_action->setCheckable(true);
+	connect(
+		fit_to_window_action, SIGNAL(triggered(bool)),
+		scrollArea()->viewport(), SLOT(setFitToWindow(bool))
+	);
+	connect(
+		scrollArea()->viewport(), SIGNAL(fitToWindowChanged(bool)),
+		fit_to_window_action, SLOT(setChecked(bool))
+	);
 	view_menu->addSeparator();
 	// To be continued in docks block
 	// Help menu
