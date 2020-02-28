@@ -24,7 +24,6 @@
 #include <QDropEvent>
 #include <QFileSystemWatcher>
 #include <QMainWindow>
-#include <QMouseEvent>
 #include <QMenuBar>
 #include <QStatusBar>
 #include <QString>
@@ -35,17 +34,8 @@
 #include <levelswidget.h>
 #include <mousepositionwidget.h>
 #include <playback.h>
-#include <scrollzoomarea.h>
+#include <scrollarea.h>
 #include <utils/exception.h>
-
-class MouseMoveEventFilter: public QObject {
-private:
-	MousePositionWidget* mouse_position_widget_;
-public:
-	MouseMoveEventFilter(MousePositionWidget* mouse_position_widget, QObject* parent = Q_NULLPTR);
-protected:
-	virtual bool eventFilter(QObject* open_gl_widget, QEvent* event) override;
-};
 
 class MainWindowState:
 	public QObject {
@@ -102,7 +92,6 @@ private:
 	static constexpr const char homepage_url_[] = "http://fips.space";
 
 	std::unique_ptr<MainWindowState> state_;
-	std::unique_ptr<MouseMoveEventFilter> mouse_move_event_filter_;
 	Playback playback_;
 private:
 	void setState(MainWindowState* state);
@@ -118,8 +107,8 @@ protected:
 public:
 	MainWindow(const QString& fits_filename, QWidget *parent = Q_NULLPTR);
 
-	inline ScrollZoomArea* scrollZoomArea() const {
-		return static_cast<ScrollZoomArea*>(centralWidget());
+	inline ScrollArea* scrollArea() const {
+		return static_cast<ScrollArea*>(centralWidget());
 	}
 	inline const char* homePageURL() const { return "http://fips.space"; }
 public slots:

@@ -27,35 +27,36 @@
 class Viewrect: public QObject {
 	Q_OBJECT
 private:
-	QRectF view_;
-	QRect  scroll_;
 	QRectF border_;
-	static constexpr int scroll_range_ = 10000;
+	QSize  vsize_;
+	QPoint vpos_;
+	float  scale_;
 
 public:
 	Viewrect();
-	explicit Viewrect(const QRectF& view_rect,   const QRectF& border_rect);
-	explicit Viewrect(const QRect&  scroll_rect, const QRectF& border_rect);
 
-	inline const QRectF& view()   const { return view_;   }
-	inline const QRect&  scroll() const { return scroll_; }
-	inline int scrollRange() const { return scroll_range_; }  // scroll range should be set to [0, scroll_range_]
-	void fitToBorder(QSizeF ratio);
+	inline const QRectF& border() const { return border_; }
+	void fitToBorder(const QSize& widget);
+	inline const QSize&  virtualSize() const { return vsize_; }
+	inline const QPoint& virtualPos() const { return vpos_; }
+	inline const float&  scale() const { return scale_; }
 
 public slots:
-	void setView(const QRectF& view_rect);
-	void setScroll(const QRect& scroll_rect);
+	void setVirtualPos(const QPoint& pos);
+	void setHorizontalVirtualPos(int hpos);
+	void setVerticalVirtualPos(int vpos);
 	void setBorder(const QRectF& border_rect);
+	void setScale(float scale);
+	void zoom(double zoom_factor);
 
 signals:
-	void viewChanged(const QRectF& view_rect);
-	void scrollChanged(const QRect& scroll_rect);
 	void borderChanged(const QRectF& border_rect);
+	void virtualSizeChanged(const QSize& vsize);
+	void virtualPosChanged(const QPoint& vpos);
+	void scaleChanged(float scale);
 
-protected:
-	QRectF alignView(const QRectF& view_rect) const;
-	QRectF scrollToView(const QRect& scroll_rect) const;
-	QRect viewToScroll(const QRectF& view_rect) const;
+private:
+	void resetVirtualSize();
 };
 
 #endif //_VIEWRECT_H

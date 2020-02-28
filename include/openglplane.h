@@ -33,26 +33,15 @@ private:
 	QOpenGLBuffer vertex_buffer_;
 	QOpenGLBuffer UV_buffer_;
 
-	QSize image_size_;
-	qreal scale_;
-
-	std::array<float, 8> vertices_;
-
 	void updateVertexArray();
 	void updateScale();
-	void setImageSize(const QSize& image_size);
 
 	bool initializeBufferHelper(QOpenGLBuffer& buffer, const void* data, int count, GLuint index);
 	bool initializeVertexBuffer();
 	bool initializeUVBuffer();
 public:
-	OpenGLPlane(const QSize& image_size, QObject* parent = Q_NULLPTR);
+	explicit OpenGLPlane(QObject* parent = Q_NULLPTR);
 	virtual ~OpenGLPlane() override;
-
-	inline const qreal& scale() const { return scale_; }
-
-	QRectF planeRect() const;
-	QRectF borderRect(float angle) const;
 
 	inline const QOpenGLBuffer& vertexCoordBuffer() const { return vertex_buffer_; }
 	inline QOpenGLBuffer&       vertexCoordBuffer()       { return vertex_buffer_; }
@@ -63,10 +52,18 @@ public:
 public:
 	// UV coordinates for triangle fan. See vertex_data_
 	static constexpr const GLfloat uv_data[] = {
-			0.0f, 0.0f,
-			0.0f, 1.0f,
-			1.0f, 1.0f,
-			1.0f, 0.0f
+		0.0f, 0.0f,
+		0.0f, 1.0f,
+		1.0f, 1.0f,
+		1.0f, 0.0f
+	};
+
+	// Vertex coordinates
+	static constexpr const GLfloat vertex_data[] = {
+		-1.0f, -1.0f,
+		-1.0f, 1.0f,
+		1.0f, 1.0f,
+		1.0f, -1.0f
 	};
 };
 

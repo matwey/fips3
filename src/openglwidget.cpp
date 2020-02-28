@@ -103,6 +103,7 @@ QException* OpenGLWidget::ShaderCompileError::clone() const {
 OpenGLWidget::OpenGLWidget(QWidget *parent, const FITS::AbstractHeaderDataUnit& hdu):
 	QOpenGLWidget(parent),
 	hdu_(&hdu),
+	fit_to_window_(false),
 	opengl_transform_(this),
 	widget_to_fits_(this),
 	shader_uniforms_(new OpenGLShaderUniforms(1, 1, 0, 1)),
@@ -113,8 +114,8 @@ OpenGLWidget::OpenGLWidget(QWidget *parent, const FITS::AbstractHeaderDataUnit& 
 	colormap_index_(0),
 	layer_(0) {
 
-	connect(&viewrect_, SIGNAL(viewChanged(const QRectF&)), this, SLOT(viewChanged(const QRectF&)));
-	connect(&viewrect_, SIGNAL(scrollChanged(const QRect&)), this, SLOT(update()));
+	connect(&viewrect_, SIGNAL(scaleChanged(float)), this, SLOT(scaleChanged(float)));
+	connect(&viewrect_, SIGNAL(virtualPosChanged(const QPoint&)), this, SLOT(virtualPosChanged(const QPoint&)));
 	connect(this, SIGNAL(rotationChanged(double)), this, SLOT(update()));
 	connect(this, SIGNAL(horizontalFlipChanged(bool)), this, SLOT(update()));
 	connect(this, SIGNAL(verticalFlipChanged(bool)), this, SLOT(update()));
@@ -146,9 +147,9 @@ void OpenGLWidget::initializeGLObjects() {
 
 	plan_ = std::move(new_plan);
 	// If no exceptions were thrown then we can put new objects to object's member pointers
-	viewrect_.setBorder(plan_->plane().borderRect(rotation()));
-	widget_to_fits_.setScale(plan_->plane().scale());
+	opengl_transform_.setImageSize(image_size());
 	widget_to_fits_.setImageSize(image_size());
+	viewrect_.setBorder(opengl_transform_.border());
 
 	emit planInitialized(*plan_);
 
@@ -161,19 +162,23 @@ void OpenGLWidget::resizeEvent(QResizeEvent* event) {
 	QOpenGLWidget::resizeEvent(event);
 
 	const auto new_widget_size = event->size();
-	auto old_widget_size = event->oldSize();
-	// event->oldSize() for the first call of resizeEvent equals -1,-1
-	if (old_widget_size.width() < 0 || old_widget_size.height() < 0) {
-		fitViewrect();
-	} else {
-		const auto new_viewrect_width  = viewrect_.view().width()  * (new_widget_size.width()  - 1.0) / (old_widget_size.width()  - 1.0);
-		const auto new_viewrect_height = viewrect_.view().height() * (new_widget_size.height() - 1.0) / (old_widget_size.height() - 1.0);
-		QRectF new_view(viewrect_.view());
-		new_view.setSize({new_viewrect_width, new_viewrect_height});
-		viewrect_.setView(new_view);
-	}
+	const auto old_widget_size = event->oldSize();
 
+	opengl_transform_.setWidgetSize(new_widget_size);
 	widget_to_fits_.setWidgetSize(new_widget_size);
+
+	// event->oldSize() for the first call of resizeEvent equals -1,-1
+	if (fitToWindow() || old_widget_size.width() < 0 || old_widget_size.height() < 0) {
+		fitViewrect();
+	}
+}
+
+void OpenGLWidget::wheelEvent(QWheelEvent* event) {
+	/* One wheel tick is 120 eighths of degree */
+	const double log_factor_per_eighth = 0.05 / 120;
+	const auto zoom_factor = std::exp(log_factor_per_eighth * event->delta());
+
+	zoom(zoom_factor, event->pos());
 }
 
 void OpenGLWidget::paintGL() {
@@ -235,7 +240,7 @@ QSize OpenGLWidget::sizeHint() const {
 	return image_size();
 }
 
-Pixel OpenGLWidget::pixelFromWidgetCoordinate(const QPoint &widget_coord) {
+Pixel OpenGLWidget::pixelFromWidgetCoordinate(const QPoint& widget_coord) {
 	const auto p = widget_to_fits_.transform(widget_coord.x(), widget_coord.y());
 	const QPoint position(p.x(), p.y());
 
@@ -248,46 +253,106 @@ Pixel OpenGLWidget::pixelFromWidgetCoordinate(const QPoint &widget_coord) {
 	return Pixel(position, value);
 }
 
-void OpenGLWidget::viewChanged(const QRectF& view_rect) {
-	opengl_transform_.setViewrect(view_rect);
-	widget_to_fits_.setViewrect(view_rect);
+void OpenGLWidget::setFitToWindow(bool fit) {
+	if (fitToWindow() == fit) return;
+
+	fit_to_window_ = fit;
+
+	if (fit_to_window_) fitViewrect();
+
+	emit fitToWindowChanged(fit_to_window_);
+}
+
+void OpenGLWidget::zoom(double zoom_factor) {
+	zoom(zoom_factor, rect().center());
+}
+
+void OpenGLWidget::zoom(double zoom_factor, const QPoint& fixed_point) {
+	setFitToWindow(false);
+
+	const auto old_vpos = viewrect().virtualPos();
+	const auto old_scale = viewrect().scale();
+
+	viewrect().zoom(zoom_factor);
+
+	const auto scale = viewrect().scale();
+	const QPointF diff = old_vpos - fixed_point - QPointF{0.5, 0.5};
+	const QPointF new_vpos = QPointF{0.5, 0.5} + fixed_point + diff * scale / old_scale;
+
+	viewrect().setVirtualPos(new_vpos.toPoint());
+}
+
+void OpenGLWidget::scaleChanged(float scale) {
+	opengl_transform_.setScale(scale);
+	widget_to_fits_.setScale(scale);
+
+	update();
+}
+
+void OpenGLWidget::virtualPosChanged(const QPoint& vpos) {
+	opengl_transform_.setVirtualPos(vpos);
+	widget_to_fits_.setVirtualPos(vpos);
+
+	update();
 }
 
 void OpenGLWidget::setRotation(double angle) {
 	if (rotation() == angle) return;
 
-	QMatrix4x4 viewrect_rotation_matrix;
-	viewrect_rotation_matrix.rotate(rotation()-angle, 0, 0, 1); // Rotation in viewrect coordinates is clockwise
-	const auto new_view_center = viewrect_rotation_matrix.map(viewrect_.view().center());
-	auto new_view = viewrect_.view();
-	new_view.moveCenter(new_view_center);
-	viewrect_.setView(new_view);
-	viewrect_.setBorder(plan_->plane().borderRect(angle));
+	QMatrix4x4 rot;
+	rot.rotate(rotation() - angle, 0, 0, 1);
+
+	const auto fixed_point = rect().center();
+	const auto scale = viewrect().scale();
+	const auto old_vpos = viewrect().virtualPos();
+	const auto old_border = viewrect().border();
+	const auto old_bvec = QPointF{
+		0.5 * scale * old_border.width(),
+		0.5 * scale * old_border.height()};
 
 	opengl_transform_.setRotation(angle);
 	widget_to_fits_.setRotation(angle);
+	viewrect().setBorder(opengl_transform_.border());
+	if (fitToWindow()) fitViewrect();
+
+	const auto border = viewrect().border();
+	const auto bvec = QPointF{
+		0.5 * scale * border.width(),
+		0.5 * scale * border.height()};
+	const QPointF diff = old_vpos - fixed_point - QPointF{0.5, 0.5} + old_bvec;
+	const QPointF new_vpos = QPointF{0.5, 0.5} + fixed_point - bvec + rot.map(diff);
+
+	viewrect().setVirtualPos(new_vpos.toPoint());
 
 	emit rotationChanged(rotation());
 }
 
 void OpenGLWidget::flipViewrect(Qt::Axis flip_axis) {
-	QMatrix4x4 rotation_matrix;
-	rotation_matrix.rotate(-rotation(), 0, 0, 1);
-	auto unrotated_view_center = rotation_matrix.transposed().map(viewrect_.view().center());
+	QMatrix4x4 rot;
+	rot.rotate(-2 * rotation(), 0, 0, 1);
+
+	const auto fixed_point = rect().center();
+	const auto scale = viewrect().scale();
+	const auto old_vpos = viewrect().virtualPos();
+	const auto border = viewrect().border();
+	const auto bvec = QPointF{
+		0.5 * scale * border.width(),
+		0.5 * scale * border.height()};
+
+	QPointF diff = old_vpos - fixed_point - QPointF{0.5, 0.5} + bvec;
 	switch (flip_axis) {
 		case Qt::XAxis:
-			unrotated_view_center.setX(-unrotated_view_center.x());
+			diff.setX(-diff.x());
 			break;
 		case Qt::YAxis:
-			unrotated_view_center.setY(-unrotated_view_center.y());
+			diff.setY(-diff.y());
 			break;
 		default:
 			Q_ASSERT(false);
 	}
-	const auto view_center = rotation_matrix.map(unrotated_view_center);
-	auto new_view = viewrect_.view();
-	new_view.moveCenter(view_center);
-	viewrect_.setView(new_view);
+	const QPointF new_vpos = QPointF{0.5, 0.5} + fixed_point - bvec + rot.map(diff);
+
+	viewrect().setVirtualPos(new_vpos.toPoint());
 }
 
 void OpenGLWidget::setHorizontalFlip(bool flip) {

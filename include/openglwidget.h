@@ -126,6 +126,7 @@ protected:
 	virtual void paintGL() override;
 	virtual QSize sizeHint() const override;
 	virtual void resizeEvent(QResizeEvent* event) override;
+	virtual void wheelEvent(QWheelEvent* event) override;
 
 public:
 	inline QSize       image_size()  const { return hdu_->data().imageDataUnit()->size(); }
@@ -139,11 +140,20 @@ private:
 	openGL_unique_ptr<AbstractOpenGLPlan> plan_;
 private:
 	Viewrect viewrect_;
+	bool fit_to_window_;
 public:
+	inline bool fitToWindow() const { return fit_to_window_; }
 	inline Viewrect& viewrect() { return viewrect_; }
 	inline void fitViewrect() { viewrect_.fitToBorder(size()); };
+	void zoom(double zoom_factor);
+	void zoom(double zoom_factor, const QPoint& fixed_point);
+public slots:
+	void setFitToWindow(bool fit);
 private slots:
-	void viewChanged(const QRectF& view_rect);
+	void scaleChanged(float scale);
+	void virtualPosChanged(const QPoint& vpos);
+signals:
+	void fitToWindowChanged(bool);
 
 private:
 	OpenGLTransform opengl_transform_;

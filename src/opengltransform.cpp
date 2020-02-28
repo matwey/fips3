@@ -22,27 +22,50 @@ OpenGLTransform::OpenGLTransform(QObject* parent):
 	AbstractOpenGLTransform(parent),
 	expired_(true),
 	matrix_(), // QMatrix4x4() constructs an unity matrix
+	image_size_(1, 1),
+	scale_x_(1.0),
+	scale_y_(1.0),
 	angle_(0),
 	h_flip_(false),
 	v_flip_(false),
-	viewrect_(-1, -1, 2, 2)
+	widget_size_(1, 1),
+	vpos_(0, 0),
+	scale_(1)
 {}
-OpenGLTransform::OpenGLTransform(const QRectF& viewrect, QObject* parent):
+OpenGLTransform::OpenGLTransform(const QSize& image_size, const QSize& widget_size, float scale, QObject* parent):
 	OpenGLTransform(parent) {
 
-	setViewrect(viewrect);
+	setImageSize(image_size);
+	setWidgetSize(widget_size);
+	setScale(scale);
 }
 
 OpenGLTransform::~OpenGLTransform() = default;
+
+void OpenGLTransform::updateTransformHelper(QMatrix4x4& init_matrix) const {
+	init_matrix.rotate(angle_, static_cast<float>(0), static_cast<float>(0), static_cast<float>(1));
+	init_matrix.scale(h_flip_ ? -1 : 1, v_flip_ ? -1 : 1);
+	init_matrix.scale(scale_x_, scale_y_);
+}
 
 void OpenGLTransform::updateTransform() const {
 // FIXME: this function plays with mutable objects and looks like const-function,
 // consider to implement it in reentable way in order to avoid threading issues.
 
+	const auto vw = static_cast<float>(widget_size_.width());
+	const auto vh = static_cast<float>(widget_size_.height());
+	const auto scale_x = scale_ / vw * static_cast<float>(2);
+	const auto scale_y = scale_ / vh * static_cast<float>(2);
+	const auto& b = border();
+	const auto& bw = b.width();
+	const auto& bh = b.height();
+	const auto tr_x = (static_cast<float>(2) * vpos_.x() + bw * scale_ - vw) / vw;
+	const auto tr_y = -(static_cast<float>(2) * vpos_.y() + bh * scale_ - vh) / vh;
+
 	matrix_.setToIdentity();
-	matrix_.ortho(QRectF{viewrect_.left(), -viewrect_.top(), viewrect_.width(), -viewrect_.height()});
-	matrix_.rotate(angle_, static_cast<float>(0), static_cast<float>(0), static_cast<float>(1));
-	matrix_.scale(h_flip_ ? -1 : 1, v_flip_ ? -1 : 1);
+	matrix_.translate(tr_x, tr_y);
+	matrix_.scale(scale_x, scale_y);
+	updateTransformHelper(matrix_);
 
 	expired_ = false;
 }
@@ -53,17 +76,31 @@ const QMatrix4x4& OpenGLTransform::transformMatrix() const {
 	return matrix_;
 }
 
+const QRectF OpenGLTransform::border() const {
+	QMatrix4x4 m;
+
+	updateTransformHelper(m);
+
+	return m.mapRect(QRectF{QPointF{-1.0, -1.0}, QPointF{1.0, 1.0}});
+}
+
+void OpenGLTransform::setImageSize(const QSize& image_size) {
+	if (image_size_ == image_size) return;
+
+	const auto image_width = image_size.width();
+	const auto image_height = image_size.height();
+
+	image_size_ = image_size;
+	scale_x_ = std::min(static_cast<float>(1), static_cast<float>(image_width) / static_cast<float>(image_height));
+	scale_y_ = std::min(static_cast<float>(1), static_cast<float>(image_height) / static_cast<float>(image_width));
+
+	expired_ = true;
+}
+
 void OpenGLTransform::setRotation(float angle) {
 	if (angle_ == angle) return;
 
 	angle_ = angle;
-	expired_ = true;
-}
-
-void OpenGLTransform::setViewrect(const QRectF& viewrect) {
-	if (viewrect_ == viewrect) return;
-
-	viewrect_ = viewrect;
 	expired_ = true;
 }
 
@@ -81,15 +118,34 @@ void OpenGLTransform::setVerticalFlip(bool flip) {
 	expired_ = true;
 }
 
+void OpenGLTransform::setWidgetSize(const QSize& widget_size) {
+	if (widget_size_ == widget_size) return;
+
+	widget_size_ = widget_size;
+
+	expired_ = true;
+}
+
+void OpenGLTransform::setVirtualPos(const QPoint& vpos) {
+	if (vpos_ == vpos) return;
+
+	vpos_ = vpos;
+	expired_ = true;
+}
+
+void OpenGLTransform::setScale(float scale) {
+	if (scale_ == scale) return;
+
+	scale_ = scale;
+	expired_ = true;
+}
 
 WidgetToFitsOpenGLTransform::WidgetToFitsOpenGLTransform(QObject* parent):
 	OpenGLTransform(parent) {}
 
-WidgetToFitsOpenGLTransform::WidgetToFitsOpenGLTransform(const QSize& image_size, qreal scale, const QSize& widget_size, const QRectF& viewrect, QObject* parent):
-	OpenGLTransform(viewrect, parent) {
+WidgetToFitsOpenGLTransform::WidgetToFitsOpenGLTransform(const QSize& image_size, const QSize& widget_size, float scale, QObject* parent):
+	OpenGLTransform(image_size, widget_size, scale, parent) {
 
-	setImageSize(image_size);
-	setScale(scale);
 	setWidgetSize(widget_size);
 }
 
@@ -103,45 +159,22 @@ void WidgetToFitsOpenGLTransform::updateTransform() const {
 
 	/* world to plane */
 	matrix_.translate(static_cast<float>(0.5), static_cast<float>(0.5));
-	matrix_.scale(static_cast<float>(0.5)/(scale_*image_size_.width()),
-		static_cast<float>(0.5)/(scale_*image_size_.height()));
+	matrix_.scale(static_cast<float>(0.5) / scale_x_, static_cast<float>(0.5) / scale_y_);
 
 	/* flip */
 	matrix_.scale(h_flip_ ? -1 : 1, v_flip_ ? -1 : 1);
 	/* world unrotated */
 	matrix_.rotate(-angle_, static_cast<float>(0), static_cast<float>(0), static_cast<float>(1));
-	/* viewrect to world */
-	matrix_.translate(viewrect_.center().x(), -viewrect_.center().y());
-	matrix_.scale(viewrect_.width()/static_cast<float>(2), -viewrect_.height()/static_cast<float>(2));
 
-	/* widget pixel (0,0, w,h) to viewrect (-1,-1, 2,2)*/
-	const auto widget_width = widget_size_.width();
-	const auto widget_height = widget_size_.height();
-	const float tr_x = -static_cast<float>(widget_width-1) / static_cast<float>(widget_width);
-	const float tr_y = -static_cast<float>(widget_height-1) / static_cast<float>(widget_height);
+	const auto& b = border();
+	const auto& bw = b.width();
+	const auto& bh = b.height();
+	const auto tr_x = static_cast<float>(-0.5) * bw;
+	const auto tr_y = static_cast<float>(0.5) * bh;
+
 	matrix_.translate(tr_x, tr_y);
-	matrix_.scale(static_cast<float>(2)/widget_width, static_cast<float>(2)/widget_height);
+	matrix_.scale(static_cast<float>(1)/scale_, static_cast<float>(-1)/scale_);
+	matrix_.translate(-vpos_.x() + static_cast<float>(0.5), -vpos_.y() + static_cast<float>(0.5));
 
 	expired_ = false;
-}
-
-void WidgetToFitsOpenGLTransform::setImageSize(const QSize& image_size) {
-	if (image_size_ == image_size) return;
-
-	image_size_ = image_size;
-	expired_ = true;
-}
-
-void WidgetToFitsOpenGLTransform::setScale(const qreal& scale) {
-	if (scale_ == scale) return;
-
-	scale_ = scale;
-	expired_ = true;
-}
-
-void WidgetToFitsOpenGLTransform::setWidgetSize(const QSize& widget_size) {
-	if (widget_size_ == widget_size) return;
-
-	widget_size_ = widget_size;
-	expired_ = true;
 }

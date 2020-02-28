@@ -16,32 +16,45 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _SCROLLZOOMAREA_H
-#define _SCROLLZOOMAREA_H
+#ifndef _SCROLLAREA_H
+#define _SCROLLAREA_H
 
 #include <QAbstractScrollArea>
+#include <QPointF>
 
 #include <fits.h>
 #include <openglwidget.h>
 
-class ScrollZoomArea: public QAbstractScrollArea {
+class ScrollArea: public QAbstractScrollArea {
 	Q_OBJECT
 public:
-	ScrollZoomArea(QWidget *parent, const FITS::AbstractHeaderDataUnit& hdu);
+	ScrollArea(QWidget *parent, const FITS::AbstractHeaderDataUnit& hdu);
 
-	void zoomViewport(double zoom_factor);
-	void zoomViewport(double zoom_factor, const QPoint& fixed_point);
 	void fitToViewport();
 	inline OpenGLWidget* viewport() const { return static_cast<OpenGLWidget*>(QAbstractScrollArea::viewport()); }
-private slots:
-	inline void translateScrollRectX(int x) { translateScrollRect(x, viewport()->viewrect().scroll().top());  }
-	inline void translateScrollRectY(int y) { translateScrollRect(viewport()->viewrect().scroll().left(), y); }
-	void updateBars();
+	QPoint virtualPos() const;
 protected:
-	virtual void wheelEvent(QWheelEvent* event) override;
+	virtual void scrollContentsBy(int dx, int dy) override;
 	virtual bool viewportEvent(QEvent* event) override;
-private:
-	void translateScrollRect(int x, int y);
+	void viewportResizeEvent(QResizeEvent* event);
+private slots:
+	void setVirtualPos(const QPoint& vpos);
+	void updateScrollBars();
+	void updateScrollBar(QScrollBar* bar, int phys, int virt);
+	void updateViewportPosition() const;
+	void updateViewportHorizontalPosition(const QPoint& vpos) const;
+	void updateViewportVerticalPosition(const QPoint& vpos) const;
+public:
+	class MouseMoveEventFilter:
+		public QObject {
+	private:
+		ScrollArea* scroll_area_;
+		QPointF last_;
+	public:
+		MouseMoveEventFilter(ScrollArea* scroll_area, QObject* parent = Q_NULLPTR);
+	protected:
+		virtual bool eventFilter(QObject* object, QEvent* event) override;
+	};
 };
 
-#endif //_SCROLLZOOMAREA_H
+#endif //_SCROLLAREA_H

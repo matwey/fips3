@@ -67,7 +67,7 @@ AbstractOpenGLPlan::AbstractOpenGLPlan(const QString& name, const FITS::Abstract
 	const std::pair<double, double>& instrumental_minmax,
 	quint8 channels, quint8 channel_size):
 	name_(name),
-	plane_(hdu.data().imageDataUnit()->size()),
+	plane_(),
 	program_(),
 	hdu_minmax_(hdu_minmax),
 	instrumental_minmax_(instrumental_minmax),
