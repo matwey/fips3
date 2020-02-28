@@ -27,7 +27,6 @@
 class Viewrect: public QObject {
 	Q_OBJECT
 private:
-	QRectF view_;
 	QRectF border_;
 	QSize  widget_;
 	QSize  vsize_;
@@ -37,7 +36,6 @@ private:
 public:
 	Viewrect();
 
-	inline const QRectF& view()   const { return view_;   }
 	inline const QSize&  widget() const { return widget_; }
 	inline const QRectF& border() const { return border_; }
 	void fitToBorder();
@@ -46,7 +44,6 @@ public:
 	inline const float&  scale() const { return scale_; }
 
 public slots:
-	void setViewOrigin(const QPointF& origin);
 	void setVirtualPos(const QPoint& pos);
 	void setHorizontalVirtualPos(int hpos);
 	void setVerticalVirtualPos(int vpos);
@@ -61,14 +58,8 @@ signals:
 	void virtualPosChanged(const QPoint& vpos);
 	void scaleChanged(float scale);
 
-protected:
-	QRectF alignView(const QRectF& view_rect) const;
-
 private:
-	void setView(const QRectF& view_rect);
-	void resetViewSize();
 	void resetVirtualSize();
-	void resetVirtualPos();
 };
 
 #endif //_VIEWRECT_H
