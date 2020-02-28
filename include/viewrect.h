@@ -39,6 +39,7 @@ public:
 
 	inline const QRectF& view()   const { return view_;   }
 	inline const QSize&  widget() const { return widget_; }
+	inline const QRectF& border() const { return border_; }
 	void fitToBorder();
 	inline const QSize&  virtualSize() const { return vsize_; }
 	inline const QPoint& virtualPos() const { return vpos_; }
