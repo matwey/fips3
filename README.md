@@ -27,7 +27,7 @@ Build requirements
 
 -   C++11 compatible C++ compiler, e.g. `gcc` 4.8+ or `clang` 3.4+
 
--   (Windows only) [NSIS](http://nsis.sourceforge.net/Main_Page)
+-   (Windows only) [WiX Toolset](https://wixtoolset.org/)
 
 Installation
 ------------
@@ -103,7 +103,7 @@ $env:PLATFORM = $Platform
 $env:QTDIR = $QtDir
 
 $env:PATH = "$QtDir\bin;$env:PATH"
-cmake -G"$Generator" -A $Architecture . -DFIPS_CONFIGURATION="$Configuration"
+cmake -G"$Generator" -A $Architecture .
 cmake --build . --config $Configuration --target PACKAGE
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
