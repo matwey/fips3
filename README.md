@@ -94,15 +94,16 @@ For Windows (make sure you have `cmake` in your `PATH`, then run in PowerShell):
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~powershell
 $Platform = 'x64' # or 'x86'
-$QtDir = 'E:\Libs\Qt\5.9.1\msvc2017_64' # make sure the path and platform is right
-$Generator = 'Visual Studio 15 2017 Win64' # drop ' Win64' to build x86 version
+$QtDir = 'E:\Libs\Qt\5.14.1\msvc2017_64' # make sure the path and platform is right
+$Generator = 'Visual Studio 16 2019'
+$Architecture = 'x64' # or Win32
 $Configuration = 'Release' # or Debug
 
 $env:PLATFORM = $Platform
 $env:QTDIR = $QtDir
 
 $env:PATH = "$QtDir\bin;$env:PATH"
-cmake -G"$Generator" . -DFIPS_CONFIGURATION="$Configuration"
+cmake -G"$Generator" -A $Architecture . -DFIPS_CONFIGURATION="$Configuration"
 cmake --build . --config $Configuration --target PACKAGE
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

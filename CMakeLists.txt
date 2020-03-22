@@ -116,10 +116,10 @@ elseif(WIN32)
 		# Debug version of VC++ redistributable doesn't exist, so windeployqt
 		# simply copies the debug runtime DLLs in that case. We need to deploy
 		# the redistributable only in Release configuration.
-		install(FILES $<TARGET_FILE_DIR:${TARGET}>/vcredist_$ENV{PLATFORM}.exe
+		install(FILES $<TARGET_FILE_DIR:${TARGET}>/vc_redist.$ENV{PLATFORM}.exe
 			DESTINATION prerequisites)
 		set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
-			ExecWait '\\\"$INSTDIR\\\\prerequisites\\\\vcredist_$ENV{PLATFORM}.exe\\\" /passive /norestart'
+			ExecWait '\\\"$INSTDIR\\\\prerequisites\\\\vc_redist.$ENV{PLATFORM}.exe\\\" /passive /norestart'
 		")
 	endif()
 
