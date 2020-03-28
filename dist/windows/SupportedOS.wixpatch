@@ -1,0 +1,12 @@
+<CPackWiXPatch>
+    <CPackWiXFragment Id="#PRODUCT">
+        <Condition Message="This application is only supported on Windows 7 SP1 or later.">
+            <!-- Check the condition only when installing the package (as opposed to repairing/uninstalling).
+                 For Windows 7 (ver. 601) require ServicePackLevel = 1: this means Windows 7 SP1.
+                 For later OS versions, don't impose any service pack requirement. -->
+            <![CDATA[
+                Installed OR ((VersionNT = 601) AND (ServicePackLevel = 1)) OR (VersionNT > 601)
+            ]]>
+        </Condition>
+    </CPackWiXFragment>
+</CPackWiXPatch>
