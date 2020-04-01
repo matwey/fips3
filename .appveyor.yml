@@ -20,6 +20,7 @@ install:
   - set PATH=%QTDIR%\bin;%PATH%
 
 before_build:
+  - call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat" %PLATFORM%
   - cmake -G"%GENERATOR%" -A %ARCHITECTURE% -DCMAKE_PREFIX_PATH=%QTDIR% -DCMAKE_INSTALL_PREFIX=./install .
 
 build_script:
