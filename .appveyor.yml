@@ -28,6 +28,7 @@ build_script:
 
 after_build:
   - cmake --build . --config %CONFIGURATION% --target PACKAGE
+  - ps: dist/windows/Build-InstallerBundle.ps1 -candle 'C:\Program Files (x86)\WiX Toolset v3.11\bin\candle.exe' -light 'C:\Program Files (x86)\WiX Toolset v3.11\bin\light.exe'
 
 on_failure:
   - pwsh: |
@@ -50,12 +51,14 @@ test_script:
 artifacts:
   - path: '*.msi'
     name: Installer
+  - path: '*.exe'
+    name: InstallerBundle
 
 deploy:
   provider: GitHub
   auth_token:
     secure: 0dqD0nJznh5C1ljdK5XdGXiivGzx5BWbfVMAdYVRsKC1QhbBIBzFl9tvRfzcuDSp
-  artifact: Installer
+  artifact: InstallerBundle
   on:
     appveyor_repo_tag: true
     configuration: Release

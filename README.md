@@ -105,6 +105,7 @@ $env:QTDIR = $QtDir
 $env:PATH = "$QtDir\bin;$env:PATH"
 cmake -G"$Generator" -A $Architecture .
 cmake --build . --config $Configuration --target PACKAGE
+./dist/windows/Build-InstallerBundle.ps1
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Community

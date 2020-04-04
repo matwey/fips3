@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
+     xmlns:bal="http://schemas.microsoft.com/wix/BalExtension">
+    <Bundle Name="Fips"
+            Version="$(var.VERSION)"
+            UpgradeCode="$(var.UPGRADE_CODE)"
+            IconSourceFile="dist/windows/fips.ico">
+        <BootstrapperApplicationRef Id="WixStandardBootstrapperApplication.RtfLicense">
+            <bal:WixStandardBootstrapperApplication LicenseFile="dist/windows/License.rtf"
+                                                    ShowVersion="yes"
+                                                    SuppressOptionsUI="yes" />
+        </BootstrapperApplicationRef>
+        <Chain>
+            <ExePackage Id="VCRedist"
+                        SourceFile="$(env.VCToolsRedistDir)\vc_redist.$(env.PLATFORM).exe"
+                        InstallCommand="/install /quiet /norestart"
+                        Cache="no"
+                        Compressed="yes"
+                        PerMachine="yes"
+                        Permanent="yes" />
+            <RollbackBoundary />
+            <MsiPackage SourceFile="Fips-$(var.VERSION)-$(var.PLATFORM).msi" ForcePerMachine="yes" />
+        </Chain>
+    </Bundle>
+</Wix>
