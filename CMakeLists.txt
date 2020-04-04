@@ -101,10 +101,9 @@ if(APPLE)
 	set(CPACK_GENERATOR DragNDrop)
 	include(CPack)
 elseif(WIN32)
-	include(InstallRequiredSystemLibraries)
 	add_custom_command(TARGET ${TARGET}
 		POST_BUILD
-		COMMAND windeployqt $<TARGET_FILE:${TARGET}> --force)
+		COMMAND windeployqt $<TARGET_FILE:${TARGET}> --force --no-compiler-runtime)
 
 	install(TARGETS ${TARGET} RUNTIME DESTINATION bin)
 	install(DIRECTORY $<TARGET_FILE_DIR:${TARGET}>/ DESTINATION bin
