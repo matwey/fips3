@@ -3,6 +3,7 @@
      xmlns:bal="http://schemas.microsoft.com/wix/BalExtension">
     <Bundle Name="Fips"
             Version="$(var.VERSION)"
+            Manufacturer="https://fips.space"
             UpgradeCode="$(var.UPGRADE_CODE)"
             IconSourceFile="dist/windows/fips.ico">
         <BootstrapperApplicationRef Id="WixStandardBootstrapperApplication.RtfLicense">
