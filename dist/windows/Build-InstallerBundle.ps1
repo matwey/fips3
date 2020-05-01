@@ -14,7 +14,7 @@ if ($msiInstaller.Count -ne 1) {
     throw "Found $($msiInstaller.Count) *.msi files in $SourceRoot, while expected exactly 1"
 }
 
-if (-not ($msiInstaller[0].Name -match '^Fips-(.*?)-(.*?).msi$')) {
+if (-not ($msiInstaller[0].Name -match '^Fips-(.*?)-(.*?).unbundled.msi$')) {
     throw "Cannot parse installer name: $($msiInstaller[0].Name)"
 }
 $version = $Matches[1]
@@ -24,7 +24,7 @@ $platform = $Matches[2]
 if (!$?) {
     throw 'candle execution error while building the installer'
 }
-$output = "Fips-$version-$platform.bundle.exe"
+$output = "Fips-$version-$platform.exe"
 & $light -ext WixBalExtension -out $output "$SourceRoot\InstallerBundle.wixobj"
 if (!$?) {
     throw 'light execution error while building the installer'

@@ -20,7 +20,7 @@
                         PerMachine="yes"
                         Permanent="yes" />
             <RollbackBoundary />
-            <MsiPackage SourceFile="Fips-$(var.VERSION)-$(var.PLATFORM).msi" ForcePerMachine="yes" />
+            <MsiPackage SourceFile="Fips-$(var.VERSION)-$(var.PLATFORM).unbundled.msi" ForcePerMachine="yes" />
         </Chain>
     </Bundle>
 </Wix>
