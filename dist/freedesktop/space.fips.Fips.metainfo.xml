@@ -27,6 +27,7 @@ FITS image extension has basic limited support.
 <url type="homepage">https://fips.space</url>
 <url type="bugtracker">https://github.com/matwey/fips3/issues</url>
 <releases>
+	<release version="3.4.0" timestamp="2020-05-02" />
 	<release version="3.3.1" timestamp="2019-03-05" />
 	<release version="3.3.0" timestamp="2018-08-10" />
 </releases>
