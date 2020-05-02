@@ -1,5 +1,5 @@
 image:
-  - Visual Studio 2015
+  - Visual Studio 2019
 
 configuration:
   - Debug
@@ -8,17 +8,19 @@ configuration:
 environment:
   matrix:
     - PLATFORM: x86
-      QTDIR: C:\Qt\5.9\msvc2015
-      GENERATOR: Visual Studio 14
+      QTDIR: C:\Qt\5.14\msvc2017
+      GENERATOR: Visual Studio 16 2019
+      ARCHITECTURE: Win32
     - PLATFORM: x64
-      QTDIR: C:\Qt\5.9\msvc2015_64
-      GENERATOR: Visual Studio 14 Win64
+      QTDIR: C:\Qt\5.14\msvc2017_64
+      GENERATOR: Visual Studio 16 2019
+      ARCHITECTURE: x64
 
 install:
   - set PATH=%QTDIR%\bin;%PATH%
 
 before_build:
-  - cmake -G"%GENERATOR%" -DCMAKE_PREFIX_PATH=%QTDIR% -DCMAKE_INSTALL_PREFIX=./install . -DFIPS_CONFIGURATION=%CONFIGURATION%
+  - cmake -G"%GENERATOR%" -A %ARCHITECTURE% -DCMAKE_PREFIX_PATH=%QTDIR% -DCMAKE_INSTALL_PREFIX=./install .
 
 build_script:
   - cmake --build . --config %CONFIGURATION%
@@ -26,11 +28,26 @@ build_script:
 after_build:
   - cmake --build . --config %CONFIGURATION% --target PACKAGE
 
+on_failure:
+  - pwsh: |
+      Write-Output '# Environment variables:'
+      Get-ChildItem env:
+
+      Write-Output '# WiX log file:'
+      $packagePlatformDesignator = if ($env:PLATFORM -eq 'x86') { 'win32' } else { 'win64' }
+      $wixLogFilePath = "./_CPack_Packages/$packagePlatformDesignator/WIX/wix.log"
+      Write-Output "($wixLogFilePath)"
+      if (Test-Path $wixLogFilePath) {
+        Get-Content $wixLogFilePath
+      } else {
+        Write-Output "not found"
+      }
+
 test_script:
   - ctest --output-on-failure
 
 artifacts:
-  - path: '*.exe'
+  - path: '*.msi'
     name: Installer
 
 deploy:

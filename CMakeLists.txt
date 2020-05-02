@@ -101,37 +101,28 @@ if(APPLE)
 	set(CPACK_GENERATOR DragNDrop)
 	include(CPack)
 elseif(WIN32)
+	include(InstallRequiredSystemLibraries)
 	add_custom_command(TARGET ${TARGET}
 		POST_BUILD
-		# Visual Studio specific command. We set VS macro as environment variable for windeployqt command:
-		COMMAND set VCINSTALLDIR=$(VCinstallDir)
-		COMMAND windeployqt $<TARGET_FILE:${TARGET}> --force --compiler-runtime)
+		COMMAND windeployqt $<TARGET_FILE:${TARGET}> --force)
 
 	install(TARGETS ${TARGET} RUNTIME DESTINATION bin)
 	install(DIRECTORY $<TARGET_FILE_DIR:${TARGET}>/ DESTINATION bin
 		FILES_MATCHING PATTERN *.dll)
 	install(DIRECTORY $<TARGET_FILE_DIR:${TARGET}>/ DESTINATION bin
 		FILES_MATCHING PATTERN *.qm)
-	if("${FIPS_CONFIGURATION}" STREQUAL "Release")
-		# Debug version of VC++ redistributable doesn't exist, so windeployqt
-		# simply copies the debug runtime DLLs in that case. We need to deploy
-		# the redistributable only in Release configuration.
-		install(FILES $<TARGET_FILE_DIR:${TARGET}>/vcredist_$ENV{PLATFORM}.exe
-			DESTINATION prerequisites)
-		set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
-			ExecWait '\\\"$INSTDIR\\\\prerequisites\\\\vcredist_$ENV{PLATFORM}.exe\\\" /passive /norestart'
-		")
-	endif()
 
-	set(CPACK_GENERATOR NSIS)
+	set_property(INSTALL "bin/fips.exe"
+		PROPERTY CPACK_START_MENU_SHORTCUTS "Fips"
+	)
+
+	set(CPACK_GENERATOR WIX)
 	set(CPACK_RESOURCE_FILE_LICENSE ${PROJECT_SOURCE_DIR}/LICENSE.txt)
-	set(CPACK_NSIS_MUI_ICON ${RESOURCES_DIR}/fips.ico)
-	set(CPACK_NSIS_CREATE_ICONS "
-		CreateShortCut \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\FIPS.lnk\\\" \\\"$INSTDIR\\\\bin\\\\fips.exe\\\"
-	")
-	set(CPACK_NSIS_DELETE_ICONS "
-		Delete \\\"$SMPROGRAMS\\\\$MUI_TEMP\\\\FIPS.lnk\\\"
-	")
+	set(CPACK_PACKAGE_INSTALL_DIRECTORY "Fips-3")
+	set(CPACK_WIX_PATCH_FILE ${RESOURCES_DIR}/SupportedOS.wixpatch)
+	set(CPACK_WIX_UPGRADE_GUID C61E8C2B-9E0C-45D4-AFAF-388E4F128FCF)
+	set(CPACK_WIX_PRODUCT_ICON ${RESOURCES_DIR}/fips.ico)
+	set(CPACK_WIX_PROGRAM_MENU_FOLDER ".")
 	include(CPack)
 elseif(UNIX)
 	set(XDG_PREFIX "${CMAKE_INSTALL_PREFIX}/share")
