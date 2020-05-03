@@ -1,54 +1,59 @@
-image:
-  - Visual Studio 2019
-
 configuration:
   - Debug
   - Release
 
 environment:
   matrix:
-    - PLATFORM: x86
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+      PLATFORM: x86
       QTDIR: C:\Qt\5.14\msvc2017
       GENERATOR: Visual Studio 16 2019
       ARCHITECTURE: Win32
-    - PLATFORM: x64
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+      PLATFORM: x64
       QTDIR: C:\Qt\5.14\msvc2017_64
       GENERATOR: Visual Studio 16 2019
       ARCHITECTURE: x64
 
-install:
-  - set PATH=%QTDIR%\bin;%PATH%
+for:
+-
+  matrix:
+    only:
+      - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
 
-before_build:
-  - cmake -G"%GENERATOR%" -A %ARCHITECTURE% -DCMAKE_PREFIX_PATH=%QTDIR% -DCMAKE_INSTALL_PREFIX=./install .
+    install:
+      - set PATH=%QTDIR%\bin;%PATH%
 
-build_script:
-  - cmake --build . --config %CONFIGURATION%
+    before_build:
+      - cmake -G"%GENERATOR%" -A %ARCHITECTURE% -DCMAKE_PREFIX_PATH=%QTDIR% -DCMAKE_INSTALL_PREFIX=./install .
 
-after_build:
-  - cmake --build . --config %CONFIGURATION% --target PACKAGE
+    build_script:
+      - cmake --build . --config %CONFIGURATION%
 
-on_failure:
-  - pwsh: |
-      Write-Output '# Environment variables:'
-      Get-ChildItem env:
+    after_build:
+      - cmake --build . --config %CONFIGURATION% --target PACKAGE
 
-      Write-Output '# WiX log file:'
-      $packagePlatformDesignator = if ($env:PLATFORM -eq 'x86') { 'win32' } else { 'win64' }
-      $wixLogFilePath = "./_CPack_Packages/$packagePlatformDesignator/WIX/wix.log"
-      Write-Output "($wixLogFilePath)"
-      if (Test-Path $wixLogFilePath) {
-        Get-Content $wixLogFilePath
-      } else {
-        Write-Output "not found"
-      }
+    on_failure:
+      - pwsh: |
+          Write-Output '# Environment variables:'
+          Get-ChildItem env:
+
+          Write-Output '# WiX log file:'
+          $packagePlatformDesignator = if ($env:PLATFORM -eq 'x86') { 'win32' } else { 'win64' }
+          $wixLogFilePath = "./_CPack_Packages/$packagePlatformDesignator/WIX/wix.log"
+          Write-Output "($wixLogFilePath)"
+          if (Test-Path $wixLogFilePath) {
+            Get-Content $wixLogFilePath
+          } else {
+            Write-Output "not found"
+          }
+
+    artifacts:
+      - path: '*.msi'
+        name: Installer
 
 test_script:
   - ctest --output-on-failure
-
-artifacts:
-  - path: '*.msi'
-    name: Installer
 
 deploy:
   provider: GitHub
