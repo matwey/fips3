@@ -5,10 +5,7 @@ services:
 - docker
 os:
 - linux
-- osx
 matrix:
-  exclude:
-    os: osx
   include:
     os: osx
     language: cpp
