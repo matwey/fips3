@@ -65,12 +65,7 @@ flatpak run space.fips.Fips
 
 #### macOS
 
-Download [release package](https://github.com/matwey/fips3/releases/latest) or
-install using [Homebrew](https://brew.sh) [Caskroom](http://caskroom.github.io):
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-brew cask install fips
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Download [release package](https://github.com/matwey/fips3/releases/latest).
 
 #### Windows
 
