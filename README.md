@@ -53,6 +53,16 @@ zypper in fips
 dnf install fips
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+#### [EPEL](https://fedoraproject.org/wiki/EPEL): RHEL, CentOS, and others (8.2 and later)
+
+Before installing the package, enable
+[EPEL](https://fedoraproject.org/wiki/EPEL) repository as recommended
+[here](https://fedoraproject.org/wiki/EPEL#Quickstart).
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+dnf install fips
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 #### FlatPak
 [FlatPak](https://flatpak.org) is cross-distribution Linux desktop package
 manager with isolation.
