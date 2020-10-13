@@ -29,14 +29,18 @@ protected:
 	constexpr static const quint64 mask_hasOpenGL21 = Q_UINT64_C(1) << 1;
 	constexpr static const quint64 mask_hasOpenGL30 = Q_UINT64_C(1) << 2;
 	constexpr static const quint64 mask_hasOpenGL33 = Q_UINT64_C(1) << 3;
+	constexpr static const quint64 mask_hasOpenGLES20 = Q_UINT64_C(1) << 8;
+	constexpr static const quint64 mask_hasOpenGLES30 = Q_UINT64_C(1) << 9;
 	constexpr static const quint64 mask_hasARB_gpu_shader_fp64 = Q_UINT64_C(1) << 16;
 	constexpr static const quint64 mask_hasEXT_texture_array = Q_UINT64_C(1) << 17;
 private:
-	bool checkHasOpenGLHelper(const QOpenGLContext& opengl_context, const int major, const int minor, const quint64 mask);
+	bool checkHasOpenGLHelper(const QOpenGLContext& opengl_context, const int major, const int minor, const quint64 mask, const bool es = false);
 
 	bool checkHasOpenGL33(const QOpenGLContext& opengl_context);
 	bool checkHasOpenGL30(const QOpenGLContext& opengl_context);
 	bool checkHasOpenGL21(const QOpenGLContext& opengl_context);
+	bool checkHasOpenGLES30(const QOpenGLContext& opengl_context);
+	bool checkHasOpenGLES20(const QOpenGLContext& opengl_context);
 
 	bool checkHasExtension(const QOpenGLContext& opengl_context, const char* extension_name, const quint64 mask);
 	bool checkHasARB_gpu_shader_fp64(const QOpenGLContext& opengl_context);

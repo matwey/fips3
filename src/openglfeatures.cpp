@@ -21,11 +21,13 @@
 constexpr const quint64 OpenGLFeatures::mask_hasOpenGL21;
 constexpr const quint64 OpenGLFeatures::mask_hasOpenGL30;
 constexpr const quint64 OpenGLFeatures::mask_hasOpenGL33;
+constexpr const quint64 OpenGLFeatures::mask_hasOpenGLES20;
+constexpr const quint64 OpenGLFeatures::mask_hasOpenGLES30;
 constexpr const quint64 OpenGLFeatures::mask_hasARB_gpu_shader_fp64;
 constexpr const quint64 OpenGLFeatures::mask_hasEXT_texture_array;
 
-bool OpenGLFeatures::checkHasOpenGLHelper(const QOpenGLContext& opengl_context, const int major, const int minor, const quint64 mask) {
-	bool has = (opengl_context.format().majorVersion() > major
+bool OpenGLFeatures::checkHasOpenGLHelper(const QOpenGLContext& opengl_context, const int major, const int minor, const quint64 mask, const bool es) {
+	const bool has = opengl_context.isOpenGLES() == es && (opengl_context.format().majorVersion() > major
 		|| (opengl_context.format().majorVersion() == major && opengl_context.format().minorVersion() >= minor));
 	bitmask_ |= (has ? mask : static_cast<quint64>(0));
 	return has;
@@ -43,8 +45,16 @@ bool OpenGLFeatures::checkHasOpenGL21(const QOpenGLContext& opengl_context) {
 	return checkHasOpenGLHelper(opengl_context, 2, 1, mask_hasOpenGL21);
 }
 
+bool OpenGLFeatures::checkHasOpenGLES30(const QOpenGLContext& opengl_context) {
+	return checkHasOpenGLHelper(opengl_context, 3, 0, mask_hasOpenGLES30, true);
+}
+
+bool OpenGLFeatures::checkHasOpenGLES20(const QOpenGLContext& opengl_context) {
+	return checkHasOpenGLHelper(opengl_context, 2, 0, mask_hasOpenGLES20, true);
+}
+
 bool OpenGLFeatures::checkHasExtension(const QOpenGLContext &opengl_context, const char *extension_name, const quint64 mask) {
-	bool has = opengl_context.hasExtension(extension_name);
+	const bool has = opengl_context.hasExtension(extension_name);
 	bitmask_ |= (has ? mask : static_cast<quint64>(0));
 	return has;
 }
@@ -61,6 +71,8 @@ OpenGLFeatures::OpenGLFeatures(const QOpenGLContext& opengl_context): bitmask_(0
 	checkHasOpenGL33(opengl_context)
 		|| checkHasOpenGL30(opengl_context)
 		|| checkHasOpenGL21(opengl_context);
+	checkHasOpenGLES30(opengl_context)
+		|| checkHasOpenGLES20(opengl_context);
 	checkHasARB_gpu_shader_fp64(opengl_context);
 	checkHasEXT_texture_array(opengl_context);
 }
