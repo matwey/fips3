@@ -18,6 +18,7 @@
 
 #include <QApplication>
 #include <QDebug>
+#include <QOpenGLContext>
 #include <QSurfaceFormat>
 
 #include <application.h>
@@ -28,8 +29,14 @@ int main(int argc, char** argv) {
 	 * systems. We have to require it globaly.
 	 */
 	QSurfaceFormat format;
-	format.setVersion(4, 1);
-	format.setProfile(QSurfaceFormat::CoreProfile);
+	if (QOpenGLContext::openGLModuleType() == QOpenGLContext::LibGL) {
+		format.setRenderableType(QSurfaceFormat::OpenGL);
+		format.setVersion(4, 1);
+		format.setProfile(QSurfaceFormat::CoreProfile);
+	} else {
+		format.setRenderableType(QSurfaceFormat::OpenGLES);
+		format.setVersion(3, 0);
+	}
 	QSurfaceFormat::setDefaultFormat(format);
 
 	try {
