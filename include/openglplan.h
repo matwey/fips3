@@ -55,6 +55,12 @@ struct OpenGL33fp64BasedPlan {
 	}
 };
 
+struct OpenGLES30BasedPlan {
+	constexpr static bool satisfied(const OpenGLFeatures& features) {
+		return OpenGLRequiredFeatures{}.requireOpenGLES30().satisfied(features);
+	}
+};
+
 } // detail
 
 class Uint8OpenGLPlan:
@@ -113,6 +119,16 @@ class Uint8OpenGL33ArrayPlan:
 public:
 	explicit Uint8OpenGL33ArrayPlan(const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu);
 	virtual ~Uint8OpenGL33ArrayPlan() override = default;
+
+	virtual QString fragmentShaderSourceCode() const override;
+};
+
+class Uint8OpenGLES30Plan:
+	public AbstractOpenGLES30Plan<Uint8OpenGLES3Texture>,
+	public detail::OpenGLES30BasedPlan {
+public:
+	explicit Uint8OpenGLES30Plan(const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu);
+	virtual ~Uint8OpenGLES30Plan() override = default;
 
 	virtual QString fragmentShaderSourceCode() const override;
 };

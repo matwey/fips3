@@ -252,4 +252,42 @@ QString AbstractOpenGL33Plan<T>::vertexShaderSourceCode() const {
 template<class T>
 AbstractOpenGL33Plan<T>::~AbstractOpenGL33Plan() = default;
 
+template<class T>
+class AbstractOpenGLES30Plan:
+	public AbstractOpenGLPlanTexture<T> {
+public:
+	template<class U>
+	AbstractOpenGLES30Plan(const QString& name, const FITS::HeaderDataUnit<FITS::DataUnit<U>>& hdu,
+		const std::pair<double, double>& hdu_minmax,
+		const std::pair<double, double>& instrumental_minmax,
+		quint8 channels, quint8 channel_size):
+		AbstractOpenGLPlanTexture<T>(name, hdu, hdu_minmax, instrumental_minmax, channels, channel_size) {
+	}
+	virtual ~AbstractOpenGLES30Plan() override = 0;
+
+	virtual QString vertexShaderSourceCode() const override;
+};
+
+template<class T>
+QString AbstractOpenGLES30Plan<T>::vertexShaderSourceCode() const {
+	static const QString source = R"(
+		#version 300 es
+
+		in vec2 vertexCoord;
+		in vec2 vertexUV;
+		out vec2 UV;
+		uniform mat4 MVP;
+
+		void main() {
+			gl_Position = MVP * vec4(vertexCoord,0,1);
+			UV = vertexUV;
+		}
+	)";
+
+	return source;
+}
+
+template<class T>
+AbstractOpenGLES30Plan<T>::~AbstractOpenGLES30Plan() = default;
+
 #endif // _ABSTRACTOPENGLPLAN_H
