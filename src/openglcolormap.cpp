@@ -19,7 +19,7 @@
 #include <openglcolormap.h>
 
 OpenGLColorMap::OpenGLColorMap():
-	QOpenGLTexture(QOpenGLTexture::Target1D) {}
+	QOpenGLTexture(QOpenGLTexture::Target2D) {}
 
 OpenGLColorMap::~OpenGLColorMap() = default;
 
