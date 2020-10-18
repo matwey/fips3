@@ -89,6 +89,12 @@ public:
 	constexpr inline OpenGLRequiredFeatures requireOpenGL33() const {
 		return OpenGLRequiredFeatures{bitmask_ | mask_hasOpenGL33};
 	}
+	constexpr inline OpenGLRequiredFeatures requireOpenGLES20() const {
+		return OpenGLRequiredFeatures{bitmask_ | mask_hasOpenGLES20};
+	}
+	constexpr inline OpenGLRequiredFeatures requireOpenGLES30() const {
+		return OpenGLRequiredFeatures{bitmask_ | mask_hasOpenGLES30};
+	}
 	constexpr inline OpenGLRequiredFeatures requireARB_gpu_shader_fp64() const {
 		return OpenGLRequiredFeatures{bitmask_ | mask_hasARB_gpu_shader_fp64};
 	}
