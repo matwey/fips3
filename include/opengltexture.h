@@ -90,6 +90,15 @@ public:
 	virtual ~Uint8OpenGLES3Texture() override = default;
 };
 
+class Uint8OpenGLES3TextureArray:
+	public Uint8OpenGLES3Texture {
+protected:
+	virtual void setSize() override;
+public:
+	explicit Uint8OpenGLES3TextureArray(const FITS::HeaderDataUnit<FITS::DataUnit<quint8>>& hdu);
+	virtual ~Uint8OpenGLES3TextureArray() override = default;
+};
+
 class Int16OpenGLTexture:
 	public AbstractOpenGLTexture {
 private:
