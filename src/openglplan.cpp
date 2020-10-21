@@ -898,6 +898,46 @@ QString FloatOpenGL33ArrayPlan::fragmentShaderSourceCode() const {
 	return source;
 }
 
+FloatOpenGLES30Plan::FloatOpenGLES30Plan(const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu, const std::pair<double, double>& minmax):
+	AbstractOpenGLES30Plan<FloatOpenGLES3Texture>("float32-opengles3.0", hdu, minmax, minmax, 1, 0) {
+}
+
+FloatOpenGLES30Plan::FloatOpenGLES30Plan(const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu):
+	FloatOpenGLES30Plan(hdu, makeMinMax(hdu)) {
+}
+
+QString FloatOpenGLES30Plan::fragmentShaderSourceCode() const {
+	static const QString source = R"(
+	#version 300 es
+	#ifdef GL_ES
+		#ifdef GL_FRAGMENT_PRECISION_HIGH
+			precision highp float;
+			precision highp usampler2D;
+			precision highp sampler2D;
+		#else
+			precision mediump float;
+			precision mediump usampler2D;
+			precision mediump sampler2D;
+		#endif
+	#endif
+	in vec2 UV;
+	out vec4 color;
+	uniform usampler2D image_texture;
+	uniform sampler2D colormap;
+	uniform float c;
+	uniform float z;
+
+	void main() {
+		uvec4 raw_vec = texture(image_texture, UV);
+		float raw_value = uintBitsToFloat(raw_vec.w + uint(256) * raw_vec.z + uint(65536) * raw_vec.y + uint(16777216) * raw_vec.x);
+		float value = dot(c, raw_value - z);
+		color = texture(colormap, vec2(clamp(value, 0.0, 1.0), 0.0));
+	}
+	)";
+
+	return source;
+}
+
 DoubleOpenGL30Plan::DoubleOpenGL30Plan(const FITS::HeaderDataUnit<FITS::DataUnit<double>>& hdu, const std::pair<double, double>& minmax):
 	AbstractOpenGL2Plan<DoubleOpenGL3Texture>("float64-opengl3.0", hdu, minmax, minmax, 1, 0) {
 }

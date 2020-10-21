@@ -281,6 +281,23 @@ public:
 	virtual ~FloatOpenGL3TextureArray() override = default;
 };
 
+class FloatOpenGLES3Texture:
+	public AbstractOpenGLTexture {
+private:
+	const FITS::HeaderDataUnit<FITS::DataUnit<float>>* hdu_;
+
+	virtual void setFormat() override;
+	virtual void allocateStorage() override;
+	virtual void setData() override;
+protected:
+	virtual const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu() const override {
+		return *hdu_;
+	}
+public:
+	FloatOpenGLES3Texture(const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu, QOpenGLTexture::Target target = QOpenGLTexture::Target2D);
+	virtual ~FloatOpenGLES3Texture() override = default;
+};
+
 class DoubleOpenGL3Texture:
 	public AbstractOpenGLTexture {
 private:
