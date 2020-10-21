@@ -183,6 +183,14 @@ void Int16OpenGLES3Texture::setData() {
 	AbstractOpenGLTexture::setData(QOpenGLTexture::RG, QOpenGLTexture::UInt8, hdu().data(), &pto);
 }
 
+Int16OpenGLES3TextureArray::Int16OpenGLES3TextureArray(const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu):
+	Int16OpenGLES3Texture(hdu, QOpenGLTexture::Target2DArray) {
+}
+
+void Int16OpenGLES3TextureArray::setSize() {
+	setSizeArray(*this, hdu().data());
+}
+
 Int32OpenGLTexture::Int32OpenGLTexture(const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu, QOpenGLTexture::Target target):
 	AbstractOpenGLTexture(target), hdu_(&hdu) {
 }

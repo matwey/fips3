@@ -168,6 +168,15 @@ public:
 	virtual ~Int16OpenGLES3Texture() override = default;
 };
 
+class Int16OpenGLES3TextureArray:
+	public Int16OpenGLES3Texture {
+protected:
+	virtual void setSize() override;
+public:
+	explicit Int16OpenGLES3TextureArray(const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu);
+	virtual ~Int16OpenGLES3TextureArray() override = default;
+};
+
 class Int32OpenGLTexture:
 	public AbstractOpenGLTexture {
 private:
