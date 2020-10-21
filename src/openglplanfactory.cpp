@@ -17,7 +17,7 @@ AbstractOpenGLPlan* OpenGLPlanFactory::operator() (const FITS::HeaderDataUnit<FI
 	if (hdu.data().depth() > 1)
 		return resolveOpenGLPlan<Int16OpenGL33ArrayPlan, Int16OpenGL30ArrayPlan, Int16OpenGLArrayPlan>(features_, hdu);
 
-	return resolveOpenGLPlan<Int16OpenGL33Plan, Int16OpenGL30Plan, Int16OpenGLPlan>(features_, hdu);
+	return resolveOpenGLPlan<Int16OpenGL33Plan, Int16OpenGL30Plan, Int16OpenGLPlan, Int16OpenGLES30Plan>(features_, hdu);
 }
 
 AbstractOpenGLPlan* OpenGLPlanFactory::operator() (const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu) const {

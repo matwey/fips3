@@ -142,6 +142,23 @@ public:
 	virtual ~Int16OpenGL3TextureArray() override = default;
 };
 
+class Int16OpenGLES3Texture:
+	public AbstractOpenGLTexture {
+private:
+	const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>* hdu_;
+protected:
+	virtual const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu() const override {
+		return *hdu_;
+	}
+
+	virtual void setFormat() override;
+	virtual void allocateStorage() override;
+	virtual void setData() override;
+public:
+	Int16OpenGLES3Texture(const FITS::HeaderDataUnit<FITS::DataUnit<qint16>>& hdu, QOpenGLTexture::Target target = QOpenGLTexture::Target2D);
+	virtual ~Int16OpenGLES3Texture() override = default;
+};
+
 class Int32OpenGLTexture:
 	public AbstractOpenGLTexture {
 private:
