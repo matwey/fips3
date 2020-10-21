@@ -229,6 +229,24 @@ void Int32OpenGL3TextureArray::setSize() {
 	setSizeArray(*this, hdu().data());
 }
 
+Int32OpenGLES3Texture::Int32OpenGLES3Texture(const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu, QOpenGLTexture::Target target):
+	AbstractOpenGLTexture(target), hdu_(&hdu) {
+}
+
+void Int32OpenGLES3Texture::setFormat() {
+	QOpenGLTexture::setFormat(QOpenGLTexture::RGBA8_UNorm);
+}
+
+void Int32OpenGLES3Texture::allocateStorage() {
+	QOpenGLTexture::allocateStorage(QOpenGLTexture::RGBA, QOpenGLTexture::UInt8);
+}
+
+void Int32OpenGLES3Texture::setData() {
+	QOpenGLPixelTransferOptions pto{};
+	pto.setAlignment(Utils::row_align(hdu_->data().width() * 4));
+	AbstractOpenGLTexture::setData(QOpenGLTexture::RGBA, QOpenGLTexture::UInt8, hdu().data(), &pto);
+}
+
 Int64OpenGLTexture::Int64OpenGLTexture(const FITS::HeaderDataUnit<FITS::DataUnit<qint64>>& hdu, QOpenGLTexture::Target target):
 	AbstractOpenGLTexture(target), hdu_(&hdu) {
 }
