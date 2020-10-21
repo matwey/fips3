@@ -246,6 +246,15 @@ public:
 	virtual ~Int32OpenGLES3Texture() override = default;
 };
 
+class Int32OpenGLES3TextureArray:
+	public Int32OpenGLES3Texture {
+protected:
+	virtual void setSize() override;
+public:
+	explicit Int32OpenGLES3TextureArray(const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu);
+	virtual ~Int32OpenGLES3TextureArray() override = default;
+};
+
 class Int64OpenGLTexture:
 	public AbstractOpenGLTexture {
 private:

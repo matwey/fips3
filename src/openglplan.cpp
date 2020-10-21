@@ -724,6 +724,41 @@ QString Int32OpenGLES30Plan::fragmentShaderSourceCode() const {
 	return source;
 }
 
+Int32OpenGLES30ArrayPlan::Int32OpenGLES30ArrayPlan(const FITS::HeaderDataUnit<FITS::DataUnit<qint32>>& hdu):
+	AbstractOpenGLES30Plan<Int32OpenGLES3TextureArray>("int32-opengles3.0-array", hdu, makeMinMax(hdu), makeInstrumentalMinMax(hdu), 4, 1) {
+}
+
+QString Int32OpenGLES30ArrayPlan::fragmentShaderSourceCode() const {
+	static const QString source = R"(
+	#version 300 es
+	#ifdef GL_ES
+		#ifdef GL_FRAGMENT_PRECISION_HIGH
+			precision highp float;
+			precision highp sampler2DArray;
+		#else
+			precision mediump float;
+			precision mediump sampler2DArray;
+		#endif
+	#endif
+	in vec2 UV;
+	out vec4 color;
+	uniform sampler2DArray image_texture;
+	uniform sampler2D colormap;
+	uniform vec4 c;
+	uniform vec4 z;
+	uniform float layer;
+
+	void main() {
+		vec4 raw_value = texture(image_texture, vec3(UV, layer));
+		raw_value.x -= float(raw_value.x > 0.5) * 1.003921568627451; // 256.0 / 255.0
+		float value = dot(c, raw_value - z);
+		color = texture(colormap, vec2(clamp(value, 0.0, 1.0), 0.0));
+	}
+	)";
+
+	return source;
+}
+
 Int64OpenGLPlan::Int64OpenGLPlan(const FITS::HeaderDataUnit<FITS::DataUnit<qint64>>& hdu):
 	AbstractOpenGL2Plan<Int64OpenGLTexture>("int64", hdu, makeMinMax(hdu), makeInstrumentalMinMax(hdu), 4, 2) {
 }
