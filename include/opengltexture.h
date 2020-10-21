@@ -325,6 +325,15 @@ public:
 	virtual ~FloatOpenGLES3Texture() override = default;
 };
 
+class FloatOpenGLES3TextureArray:
+	public FloatOpenGLES3Texture {
+protected:
+	virtual void setSize() override;
+public:
+	explicit FloatOpenGLES3TextureArray(const FITS::HeaderDataUnit<FITS::DataUnit<float>>& hdu);
+	virtual ~FloatOpenGLES3TextureArray() override = default;
+};
+
 class DoubleOpenGL3Texture:
 	public AbstractOpenGLTexture {
 private:
