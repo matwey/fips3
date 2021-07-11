@@ -8,35 +8,22 @@ jobs:
 
     strategy:
       matrix:
-        include:
-          - BASE_IMAGE_TAG: gcc9-qt513
-          - BASE_IMAGE_TAG: gcc9-qt512
-          - BASE_IMAGE_TAG: gcc9-qt59
-          - BASE_IMAGE_TAG: gcc8-qt513
-          - BASE_IMAGE_TAG: gcc8-qt512
-          - BASE_IMAGE_TAG: gcc8-qt59
-          - BASE_IMAGE_TAG: gcc7-qt513
-          - BASE_IMAGE_TAG: gcc7-qt512
-          - BASE_IMAGE_TAG: gcc7-qt59
-          - BASE_IMAGE_TAG: gcc4.8-qt56
-          - BASE_IMAGE_TAG: clang9-qt513
-          - BASE_IMAGE_TAG: clang9-qt512
-          - BASE_IMAGE_TAG: clang9-qt59
-          - BASE_IMAGE_TAG: clang8-qt513
-          - BASE_IMAGE_TAG: clang8-qt512
-          - BASE_IMAGE_TAG: clang8-qt59
-          - BASE_IMAGE_TAG: clang7-qt513
-          - BASE_IMAGE_TAG: clang7-qt512
-          - BASE_IMAGE_TAG: clang7-qt59
+        docker_image_tag: ["gcc9-qt513", "gcc9-qt512", "gcc9-qt59", "gcc8-qt513", "gcc8-qt512", "gcc8-qt59", "gcc7-qt513", "gcc7-qt512", "gcc7-qt59", "gcc4.8-qt56", "clang9-qt513", "clang9-qt512", "clang9-qt59", "clang8-qt513", "clang8-qt512", "clang8-qt59", "clang7-qt513", "clang7-qt512", "clang7-qt59"]
+
+    container:
+      image: matwey/opensuse-ci:${{ matrix.docker_image_tag }}
 
     steps:
       - uses: actions/checkout@v2
-      - name: Build Docker image
+      - name: Build
         run: |
-          cat Dockerfile.in | m4 -DBASE_IMAGE_TAG=${{ matrix.BASE_IMAGE_TAG }} > Dockerfile
-          docker build . -t test
+          mkdir build && cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release
+          make VERBOSE=1
+          make VERBOSE=1 install
       - name: Test
-        run: docker run --security-opt seccomp=unconfined test
+        run: make test
+        working-directory: build
 
   macos:
     runs-on: macos-10.15
