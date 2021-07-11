@@ -37,3 +37,22 @@ jobs:
           docker build . -t test
       - name: Test
         run: docker run --security-opt seccomp=unconfined test
+
+  macos:
+    runs-on: macos-10.15
+    
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: |
+          brew update
+          brew install qt@5
+          brew link --force qt@5
+      - name: Build
+        run: |
+          mkdir build && cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$(brew --prefix qt@5)
+          make package VERBOSE=1 DESTDIR=$(pwd)/install
+      - name: Test
+        run: make test
+        working-directory: build
