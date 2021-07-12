@@ -1,0 +1,45 @@
+name: Tests
+
+on: [push, pull_request]
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        docker_image_tag: ["gcc9-qt513", "gcc9-qt512", "gcc9-qt59", "gcc8-qt513", "gcc8-qt512", "gcc8-qt59", "gcc7-qt513", "gcc7-qt512", "gcc7-qt59", "gcc4.8-qt56", "clang9-qt513", "clang9-qt512", "clang9-qt59", "clang8-qt513", "clang8-qt512", "clang8-qt59", "clang7-qt513", "clang7-qt512", "clang7-qt59"]
+
+    container:
+      image: matwey/opensuse-ci:${{ matrix.docker_image_tag }}
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build
+        run: |
+          mkdir build && cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release
+          make VERBOSE=1
+          make VERBOSE=1 install
+      - name: Test
+        run: make test
+        working-directory: build
+
+  macos:
+    runs-on: macos-10.15
+    
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: |
+          brew update
+          brew install qt@5
+          brew link --force qt@5
+      - name: Build
+        run: |
+          mkdir build && cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$(brew --prefix qt@5)
+          make package VERBOSE=1 DESTDIR=$(pwd)/install
+      - name: Test
+        run: make test
+        working-directory: build
