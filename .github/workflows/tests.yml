@@ -9,7 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        docker_image_tag: ["gcc9-qt515", "gcc11-qt515", "gcc10-qt515", "gcc10-qt512", "gcc9-qt512", "clang9-qt512", "gcc11-qt512", "clang7-qt512", "gcc7-qt515", "gcc7-qt512", "clang7-qt515", "clang9-qt515"]
+        docker_image_tag: ["gcc9-qt515", "gcc11-qt515", "gcc10-qt515", "gcc10-qt512", "gcc9-qt512", "clang9-qt512", "gcc11-qt512", "clang7-qt512", "gcc7-qt515", "gcc7-qt512", "clang7-qt515", "clang9-qt515", "gcc7-qt60", "gcc9-qt60"]
 
     container:
       image: ghcr.io/matwey/docker/opensuse-ci:${{ matrix.docker_image_tag }}
