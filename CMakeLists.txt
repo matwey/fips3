@@ -6,15 +6,29 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_CXX_STANDARD 11)
 
-find_package(Qt5Core REQUIRED)
-find_package(Qt5Widgets REQUIRED)
-find_package(Qt5Test REQUIRED)
+option(USE_QT6 "Use Qt 6 (experimental)" OFF)
 
-if(Qt5Widgets_VERSION VERSION_LESS 5.5)
-	message(FATAL_ERROR "Qt5 5.5 or later is required")
-else(Qt5Widgets_VERSION VERSION_LESS 5.5)
-	message(STATUS "Found Qt ${Qt5Widgets_VERSION}")
-endif(Qt5Widgets_VERSION VERSION_LESS 5.5)
+if(NOT USE_QT6)
+	find_package(Qt5Core REQUIRED)
+	find_package(Qt5Widgets REQUIRED)
+	find_package(Qt5Test REQUIRED)
+
+	if(Qt5Widgets_VERSION VERSION_LESS 5.5)
+		message(FATAL_ERROR "Qt5 5.5 or later is required")
+	else(Qt5Widgets_VERSION VERSION_LESS 5.5)
+		message(STATUS "Found Qt ${Qt5Widgets_VERSION}")
+	endif(Qt5Widgets_VERSION VERSION_LESS 5.5)
+
+	set(TARGET_LINK_LIBRARIES Qt5::Widgets)
+	set(TEST_LINK_LIBRARIES Qt5::Test)
+	set(TEST_OPENGLTRANSFORM_LINK_LIBRARIES Qt5::Gui)
+else()
+	find_package(Qt6 COMPONENTS Core Gui OpenGLWidgets Test Widgets REQUIRED)
+
+	set(TARGET_LINK_LIBRARIES Qt6::Widgets Qt6::OpenGLWidgets)
+	set(TEST_LINK_LIBRARIES Qt6::Test)
+	set(TEST_OPENGLTRANSFORM_LINK_LIBRARIES Qt6::Gui Qt6::OpenGL)
+endif()
 
 include_directories ("${PROJECT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}")
 
@@ -52,7 +66,7 @@ else()
 	add_executable(${TARGET} ${SOURCES})
 endif(APPLE)
 
-target_link_libraries(${TARGET} Qt5::Widgets)
+target_link_libraries(${TARGET} ${TARGET_LINK_LIBRARIES})
 target_compile_definitions(${TARGET} PUBLIC PROJECT_VERSION="${PROJECT_VERSION}")
 
 if(APPLE OR WIN32)
@@ -150,29 +164,29 @@ target_compile_definitions(test_fits PUBLIC PROJECT_ROOT="${PROJECT_SOURCE_DIR}"
 # If QT_WIDGETS_LIB is defined, the application object will be a QApplication,
 # if QT_GUI_LIB is defined, the application object will be a QGuiApplication,
 # otherwise it will be a QCoreApplication.
-target_link_libraries(test_fits Qt5::Test)
+target_link_libraries(test_fits ${TEST_LINK_LIBRARIES})
 add_test(test_fits test_fits)
 
 add_executable(test_openglshaderuniforms test/openglshaderuniforms.cpp src/openglshaderunifroms.cpp)
-target_link_libraries(test_openglshaderuniforms Qt5::Test)
+target_link_libraries(test_openglshaderuniforms ${TEST_LINK_LIBRARIES})
 add_test(test_openglshaderuniforms test_openglshaderuniforms)
 
 add_executable(test_opengltransform test/opengltransform.cpp src/abstractopengltransform.cpp include/abstractopengltransform.h src/opengltransform.cpp include/opengltransform.h src/openglplane.cpp include/openglplane.h)
-target_link_libraries(test_opengltransform Qt5::Test Qt5::Gui)
+target_link_libraries(test_opengltransform ${TEST_LINK_LIBRARIES} ${TEST_OPENGLTRANSFORM_LINK_LIBRARIES})
 add_test(test_opengltransform test_opengltransform)
 
 add_executable(test_utils_minmax test/utils/minmax.cpp)
-target_link_libraries(test_utils_minmax Qt5::Test)
+target_link_libraries(test_utils_minmax ${TEST_LINK_LIBRARIES})
 add_test(test_utils_minmax test_utils_minmax)
 
 add_executable(test_utils_openglrowalign test/utils/openglrowalign.cpp src/utils/openglrowalign.cpp)
-target_link_libraries(test_utils_openglrowalign Qt5::Test)
+target_link_libraries(test_utils_openglrowalign ${TEST_LINK_LIBRARIES})
 add_test(test_utils_openglrowalign test_utils_openglrowalign)
 
 add_executable(test_utils_swapbytes test/utils/swapbytes.cpp)
-target_link_libraries(test_utils_swapbytes Qt5::Test)
+target_link_libraries(test_utils_swapbytes ${TEST_LINK_LIBRARIES})
 add_test(test_utils_swapbytes test_utils_swapbytes)
 
 add_executable(test_utils_optional test/utils/optional.cpp src/utils/exception.cpp)
-target_link_libraries(test_utils_optional Qt5::Test)
+target_link_libraries(test_utils_optional ${TEST_LINK_LIBRARIES})
 add_test(test_utils_optional test_utils_optional)
