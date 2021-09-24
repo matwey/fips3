@@ -16,10 +16,16 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - name: Prepare
+        run: mkdir build && cd build
+      - name: Configure Qt5
+        if: ${{ !endsWith(matrix.docker_image_tag, '-qt60') }}
+        run: cmake .. -DCMAKE_BUILD_TYPE=Release
+      - name: Configure Qt6
+        if: ${{ endsWith(matrix.docker_image_tag, '-qt60') }}
+        run: cmake .. -DCMAKE_BUILD_TYPE=Release -DUSE_QT6:BOOL=ON
       - name: Build
         run: |
-          mkdir build && cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Release
           make VERBOSE=1
           make VERBOSE=1 install
       - name: Test
