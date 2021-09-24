@@ -42,11 +42,16 @@ jobs:
           brew update
           brew install qt@${{ matrix.qt_version }}
           brew link --force qt@${{ matrix.qt_version }}
-      - name: Build
-        run: |
-          mkdir build && cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$(brew --prefix qt@${{ matrix.qt_version }})
-          make package VERBOSE=1 DESTDIR=$(pwd)/install
+      - name: Prepare
+        run: mkdir build && cd build
+      - name: Configure Qt5
+        if: ${{ matrix.qt_version == 5 }}
+        run: cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$(brew --prefix qt@${{ matrix.qt_version }})
+      - name: Configure Qt6
+        if: ${{ matrix.qt_version == 6 }}
+        run: cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$(brew --prefix qt@${{ matrix.qt_version }}) -DUSE_QT6:BOOL=ON
+      - name: Build package
+        run: make package VERBOSE=1 DESTDIR=$(pwd)/install
       - name: Test
         run: make test
         working-directory: build
