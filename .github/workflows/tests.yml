@@ -33,18 +33,19 @@ jobs:
       fail-fast: false
       matrix:
         os: ["macos-10.15", "macos-11"]
+        qt_version: ["5", "6"]
     
     steps:
       - uses: actions/checkout@v2
       - name: Install dependencies
         run: |
           brew update
-          brew install qt@5
-          brew link --force qt@5
+          brew install qt@${{ matrix.qt_version }}
+          brew link --force qt@${{ matrix.qt_version }}
       - name: Build
         run: |
           mkdir build && cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$(brew --prefix qt@5)
+          cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$(brew --prefix qt@${{ matrix.qt_version }})
           make package VERBOSE=1 DESTDIR=$(pwd)/install
       - name: Test
         run: make test
