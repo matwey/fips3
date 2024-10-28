@@ -20,15 +20,21 @@ FITS image extension has basic limited support.
 	</p>
 </description>
 <screenshots>
-	<screenshot type="default">https://fips.space/.screenshot/1.png</screenshot>
+	<screenshot type="default">
+		<caption>Sombrero Galaxy (M104) in Fips window</caption>
+		<image>https://fips.space/.screenshot/1.png</image>
+	</screenshot>
 </screenshots>
+<developer id="space.fips">
+	<name>Fips team</name>
+</developer>
 <update_contact>matwey.kornilov_AT_gmail.com</update_contact>
 <launchable type="desktop-id">space.fips.Fips.desktop</launchable>
 <url type="homepage">https://fips.space</url>
 <url type="bugtracker">https://github.com/matwey/fips3/issues</url>
 <releases>
-	<release version="3.4.0" timestamp="2020-05-02" />
-	<release version="3.3.1" timestamp="2019-03-05" />
-	<release version="3.3.0" timestamp="2018-08-10" />
+	<release version="3.4.0" date="2020-05-02" />
+	<release version="3.3.1" date="2019-03-05" />
+	<release version="3.3.0" date="2018-08-10" />
 </releases>
 </component>
