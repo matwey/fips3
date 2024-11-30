@@ -9,19 +9,28 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        docker_image_tag: ["gcc9-qt515", "gcc11-qt515", "gcc10-qt515", "gcc10-qt512", "gcc9-qt512", "clang9-qt512", "gcc11-qt512", "clang7-qt512", "gcc7-qt515", "gcc7-qt512", "clang7-qt515", "clang9-qt515"]
+        docker_image_tag: ["gcc9-qt515", "gcc11-qt515", "gcc10-qt515", "gcc10-qt512", "gcc9-qt512", "clang9-qt512", "gcc11-qt512", "clang7-qt512", "gcc7-qt515", "gcc7-qt512", "clang7-qt515", "clang9-qt515", "gcc7-qt60", "gcc9-qt60"]
 
     container:
       image: ghcr.io/matwey/docker/opensuse-ci:${{ matrix.docker_image_tag }}
 
     steps:
       - uses: actions/checkout@v2
+      - name: Prepare
+        run: mkdir build
+      - name: Configure Qt5
+        if: ${{ !endsWith(matrix.docker_image_tag, '-qt60') }}
+        run: cmake .. -DCMAKE_BUILD_TYPE=Release
+        working-directory: build
+      - name: Configure Qt6
+        if: ${{ endsWith(matrix.docker_image_tag, '-qt60') }}
+        run: cmake .. -DCMAKE_BUILD_TYPE=Release -DUSE_QT6:BOOL=ON
+        working-directory: build
       - name: Build
         run: |
-          mkdir build && cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Release
           make VERBOSE=1
           make VERBOSE=1 install
+        working-directory: build
       - name: Test
         run: make test
         working-directory: build
@@ -33,19 +42,28 @@ jobs:
       fail-fast: false
       matrix:
         os: ["macos-10.15", "macos-11"]
+        qt_version: ["5", "6"]
     
     steps:
       - uses: actions/checkout@v2
       - name: Install dependencies
         run: |
           brew update
-          brew install qt@5
-          brew link --force qt@5
-      - name: Build
-        run: |
-          mkdir build && cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$(brew --prefix qt@5)
-          make package VERBOSE=1 DESTDIR=$(pwd)/install
+          brew install qt@${{ matrix.qt_version }}
+          brew link --force qt@${{ matrix.qt_version }}
+      - name: Prepare
+        run: mkdir build
+      - name: Configure Qt5
+        if: ${{ matrix.qt_version == 5 }}
+        run: cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$(brew --prefix qt@${{ matrix.qt_version }})
+        working-directory: build
+      - name: Configure Qt6
+        if: ${{ matrix.qt_version == 6 }}
+        run: cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$(brew --prefix qt@${{ matrix.qt_version }}) -DUSE_QT6:BOOL=ON
+        working-directory: build
+      - name: Build package
+        run: make package VERBOSE=1 DESTDIR=$(pwd)/install
+        working-directory: build
       - name: Test
         run: make test
         working-directory: build
