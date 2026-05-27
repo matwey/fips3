@@ -25,7 +25,7 @@ assignees: matwey, hombit
 3. `git push origin —tags`
 
 ### Wait for CI
-1. Wait for [travis](https://travis-ci.org/matwey/fips) and [appvevor](https://ci.appveyor.com/project/matwey/fips3)
+1. Wait for [GitHub Actions](https://github.com/matwey/fips3/actions)
 
 ### Homebrew Caskroom
 1. Check no PR is open in [Homebrew Casroom repo](https://github.com/Homebrew/homebrew-cask/pulls?utf8=✓&q=is%3Apr+fips)

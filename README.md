@@ -1,7 +1,7 @@
 ![LOGO](/dist/freedesktop/128x128/space.fips.Fips.png)
 
 [![Build Status](https://github.com/matwey/fips3/actions/workflows/tests.yml/badge.svg)](https://github.com/matwey/fips3/actions/workflows/tests.yml)
-[![Build Status](https://ci.appveyor.com/api/projects/status/github/matwey/fips3?branch=master&svg=true)](https://ci.appveyor.com/project/matwey/fips3)
+
 [![ascl:1808.006](https://img.shields.io/badge/ascl-1808.006-blue.svg?colorB=262255)](https://ascl.net/1808.006)
 
 FIPS — OpenGL based FITS image viewer
@@ -23,7 +23,7 @@ Build requirements
 
 -   [Cmake](https://cmake.org)
 
--   [Qt](https://www.qt.io) 5.6+
+-   [Qt](https://www.qt.io) 6.0+
 
 -   C++11 compatible C++ compiler, e.g. `gcc` 4.8+ or `clang` 3.4+
 
