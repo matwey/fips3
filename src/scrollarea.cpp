@@ -152,13 +152,13 @@ bool ScrollArea::MouseMoveEventFilter::eventFilter(QObject* object, QEvent* even
 		case QEvent::MouseButtonPress: {
 			if (mouse_event->buttons() != Qt::LeftButton) break;
 
-			last_ = mouse_event->screenPos();
+			last_ = mouse_event->globalPosition();
 			return true;
 		}
 		case QEvent::MouseMove: {
 			if (mouse_event->buttons() != Qt::LeftButton) break;
 
-			const auto current = mouse_event->screenPos();
+			const auto current = mouse_event->globalPosition();
 			const int hpos = scroll_area_->horizontalScrollBar()->value() + last_.x() - current.x();
 			const int vpos = scroll_area_->verticalScrollBar()->value() + last_.y() - current.y();
 

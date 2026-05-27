@@ -176,9 +176,9 @@ void OpenGLWidget::resizeEvent(QResizeEvent* event) {
 void OpenGLWidget::wheelEvent(QWheelEvent* event) {
 	/* One wheel tick is 120 eighths of degree */
 	const double log_factor_per_eighth = 0.05 / 120;
-	const auto zoom_factor = std::exp(log_factor_per_eighth * event->delta());
+	const auto zoom_factor = std::exp(log_factor_per_eighth * event->angleDelta().y());
 
-	zoom(zoom_factor, event->pos());
+	zoom(zoom_factor, event->position().toPoint());
 }
 
 void OpenGLWidget::paintGL() {
