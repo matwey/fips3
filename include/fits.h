@@ -22,6 +22,9 @@
 #include <QFileDevice>
 #include <QSize>
 #include <QVariant>
+#include <QMetaType>
+#include <QString>
+#include <QException>
 
 #include <abstractfitsstorage.h>
 #include <utils/exception.h>
@@ -96,7 +99,7 @@ public:
 			const auto& str_v = headers_.at(key);
 
 			QVariant v(str_v);
-			if (!v.convert(qMetaTypeId<T>()))
+			if (!v.convert(QMetaType::fromType<T>()))
 				throw WrongHeaderValue(key, str_v);
 
 			return v.value<T>();
@@ -107,7 +110,7 @@ public:
 				return def;
 
 			QVariant v(it->second);
-			if (!v.convert(qMetaTypeId<T>()))
+			if (!v.convert(QMetaType::fromType<T>()))
 				throw WrongHeaderValue(key, it->second);
 
 			return v.value<T>();

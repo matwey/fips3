@@ -19,8 +19,9 @@
 #include <memory>
 
 #include <QApplication>
+#include <QGuiApplication>
 #include <QDesktopServices>
-#include <QDesktopWidget>
+#include <QScreen>
 #include <QFile>
 #include <QFileDialog>
 #include <QListWidget>
@@ -112,7 +113,7 @@ MainWindow::MainWindow(const QString& fits_filename, QWidget *parent):
 	setAcceptDrops(true);
 
 	// Resize window to fit FITS image
-	const auto desktop_size = QApplication::desktop()->screenGeometry();
+	const auto desktop_size = QGuiApplication::primaryScreen()->geometry();
 	const QSize maximum_initial_window_size(desktop_size.width() * 2 / 3, desktop_size.height() * 2 / 3);
 	resize(state_->fits().first_hdu().data().imageDataUnit()->size().boundedTo(maximum_initial_window_size));
 
