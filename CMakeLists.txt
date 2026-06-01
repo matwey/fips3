@@ -39,7 +39,7 @@ qt_generate_deploy_app_script(
 
 install(SCRIPT ${deploy_script})
 
-if (UNIX)
+if (UNIX AND NOT APPLE)
 	set(XDG_PREFIX "${CMAKE_INSTALL_PREFIX}/share")
 	set(XDG_DESKTOP_DIR "${XDG_PREFIX}/applications")
 	set(XDG_METAINFO_DIR "${XDG_PREFIX}/metainfo")
@@ -52,6 +52,26 @@ if (UNIX)
 	install(FILES "${PROJECT_SOURCE_DIR}/dist/freedesktop/scalable/space.fips.Fips.svg" DESTINATION "${XDG_ICONS_DIR}/hicolor/scalable/apps")
 	install(FILES "${PROJECT_SOURCE_DIR}/dist/freedesktop/128x128/space.fips.Fips.png" DESTINATION "${XDG_ICONS_DIR}/hicolor/128x128/apps")
 	install(FILES "${PROJECT_SOURCE_DIR}/dist/freedesktop/256x256/space.fips.Fips.png" DESTINATION "${XDG_ICONS_DIR}/hicolor/256x256/apps")
+endif()
+
+if(APPLE)
+	set(MACOS_RESOURCES_DIR "${PROJECT_SOURCE_DIR}/dist/macos")
+	set_target_properties(fips PROPERTIES
+		MACOSX_BUNDLE_INFO_PLIST "${MACOS_RESOURCES_DIR}/Info.plist.in"
+		MACOSX_BUNDLE_ICON_FILE fips.icns
+		MACOSX_BUNDLE_GUI_IDENTIFIER space.fips.Fips
+		MACOSX_BUNDLE_BUNDLE_NAME Fips
+		MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION}"
+		MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION}"
+		MACOSX_BUNDLE_COPYRIGHT "")
+	set(MACOSX_BUNDLE_DOC_ICON_FILE fips_fits.icns)
+	target_sources(fips PRIVATE
+		"${MACOS_RESOURCES_DIR}/fips.icns"
+		"${MACOS_RESOURCES_DIR}/fips_fits.icns")
+	set_source_files_properties(
+		"${MACOS_RESOURCES_DIR}/fips.icns"
+		"${MACOS_RESOURCES_DIR}/fips_fits.icns"
+		PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 endif()
 
 if(WIN32)
@@ -115,3 +135,11 @@ add_test(test_utils_swapbytes test_utils_swapbytes)
 add_executable(test_utils_optional test/utils/optional.cpp src/utils/exception.cpp)
 target_link_libraries(test_utils_optional Qt6::Test)
 add_test(test_utils_optional test_utils_optional)
+
+if(APPLE)
+	set(CPACK_GENERATOR "DragNDrop")
+	set(CPACK_PACKAGE_NAME "Fips")
+	set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
+	set(CPACK_DMG_VOLUME_NAME "Fips")
+	include(CPack)
+endif()
