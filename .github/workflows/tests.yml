@@ -1,51 +1,179 @@
 name: Tests
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [ "master" ]
+    tags: [ "*" ]
+  pull_request:
+    branches: [ "master" ]
 
 jobs:
   linux:
     runs-on: ubuntu-latest
-
     strategy:
       fail-fast: false
       matrix:
-        docker_image_tag: ["gcc9-qt515", "gcc11-qt515", "gcc10-qt515", "gcc10-qt512", "gcc9-qt512", "clang9-qt512", "gcc11-qt512", "clang7-qt512", "gcc7-qt515", "gcc7-qt512", "clang7-qt515", "clang9-qt515"]
+        container:
+          - image: gcc:14
+          - image: gcc:15
+          - image: silkeh/clang:20
+        qt_version: ["6.8", "6.11"]
 
-    container:
-      image: ghcr.io/matwey/docker/opensuse-ci:${{ matrix.docker_image_tag }}
+    container: ${{ matrix.container }}
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          apt-get update
+          apt-get install -y libfreetype-dev libfontconfig1-dev libgl1-mesa-dev libpulse-dev libxkbcommon-dev libxcb-xkb-dev pkg-config python3-pip
+
+      - name: Configure pip
+        run: |
+          python3 -m pip config set global.break-system-packages true
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ matrix.qt_version }}
+          cache: true
+          install-deps: false
+          # actions/setup-python is incompatible with silkeh/clang image
+          setup-python: false
+          tools: 'tools_cmake'
+        env:
+          PKG_CONFIG_PATH: "/usr/lib/pkgconfig:/usr/share/pkgconfig"
+
+      - name: Configure CMake
+        run: |
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=Release
+
       - name: Build
         run: |
-          mkdir build && cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Release
-          make VERBOSE=1
-          make VERBOSE=1 install
-      - name: Test
-        run: make test
-        working-directory: build
+          cmake --build build \
+            --config Release \
+            --parallel $(nproc) \
+            --verbose
+
+      - name: Run tests
+        run: |
+          ctest --test-dir build --output-on-failure
 
   macos:
-    runs-on: ${{ matrix.os }}
-
+    runs-on: macos-latest
     strategy:
-      fail-fast: false
       matrix:
-        os: ["macos-10.15", "macos-11"]
-    
+        qt_version: ["6.8", "6.11"]
+
     steps:
-      - uses: actions/checkout@v2
-      - name: Install dependencies
+      - uses: actions/checkout@v4
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ matrix.qt_version }}
+          cache: true
+          tools: 'tools_cmake'
+
+      - name: Configure CMake
         run: |
-          brew update
-          brew install qt@5
-          brew link --force qt@5
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=Release
+
       - name: Build
         run: |
-          mkdir build && cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$(brew --prefix qt@5)
-          make package VERBOSE=1 DESTDIR=$(pwd)/install
-      - name: Test
-        run: make test
-        working-directory: build
+          cmake --build build \
+            --config Release \
+            --parallel $(sysctl -n hw.ncpu) \
+            --verbose
+
+      - name: Run tests
+        run: |
+          ctest --test-dir build --output-on-failure
+
+      - name: Package
+        run: |
+          cmake --build build --target package
+
+      - name: Upload DMG
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-qt-${{ matrix.qt_version }}
+          path: build/Fips-*-Darwin.dmg
+
+  windows:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        qt_version: ["6.8"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ matrix.qt_version }}
+          cache: true
+          tools: 'tools_cmake'
+
+      - name: Configure CMake
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: |
+          cmake --build build --config Release --parallel --verbose
+
+      - name: Run tests
+        run: |
+          ctest --test-dir build --output-on-failure
+
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v1.1
+
+      - name: Install WiX
+        run: |
+          dotnet tool install --global wix
+          wix.exe eula accept wix7
+          wix.exe extension add --global WixToolset.UI.wixext
+
+      - name: Set up MSVC Developer Command Prompt
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Package
+        run: |
+          cmake --build build --config Release --target package
+
+      - name: Debug WiX log
+        if: failure()
+        run: |
+          type ./build/_CPack_Packages/win64/WIX/wix.log
+
+      - name: Upload MSI
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-qt-${{ matrix.qt_version }}
+          path: build/Fips-*-win64.msi
+
+  publish:
+    needs: [macos, windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: macos-qt-6.11
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-qt-6.8
+
+      - name: Upload artifacts to Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            Fips-*-Darwin.dmg
+            Fips-*-win64.msi
