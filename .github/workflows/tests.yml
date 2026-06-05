@@ -98,7 +98,7 @@ jobs:
           cmake --build build --target package
 
       - name: Upload DMG
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: macos-qt-${{ matrix.qt_version }}
           path: build/Fips-*-Darwin.dmg
@@ -153,7 +153,7 @@ jobs:
           type ./build/_CPack_Packages/win64/WIX/wix.log
 
       - name: Upload MSI
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: windows-qt-${{ matrix.qt_version }}
           path: build/Fips-*-win64.msi
