@@ -112,6 +112,9 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Set up MSVC Developer Command Prompt
+        uses: ilammy/msvc-dev-cmd@v1
+
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
         with:
@@ -139,9 +142,6 @@ jobs:
           dotnet tool install --global wix
           wix.exe eula accept wix7
           wix.exe extension add --global WixToolset.UI.wixext
-
-      - name: Set up MSVC Developer Command Prompt
-        uses: ilammy/msvc-dev-cmd@v1
 
       - name: Package
         run: |
