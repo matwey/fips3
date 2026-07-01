@@ -22,7 +22,7 @@ jobs:
     container: ${{ matrix.container }}
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Install system dependencies
         run: |
@@ -68,7 +68,7 @@ jobs:
         qt_version: ["6.8", "6.11"]
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
@@ -110,7 +110,7 @@ jobs:
         qt_version: ["6.8"]
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Set up MSVC Developer Command Prompt
         uses: ilammy/msvc-dev-cmd@v1
